@@ -29,8 +29,16 @@ export const listAudit = createServerFn({ method: "POST" })
     if (data.from) q = q.gte("occurred_at", data.from);
     if (data.to) q = q.lte("occurred_at", data.to);
     if (data.q) {
-      const like = `%${data.q}%`;
-      q = q.or(`action.ilike.${like},entity.ilike.${like},entity_id.ilike.${like},ip.ilike.${like}`);
+      // PostgREST `.or()` is comma/parenthesis-delimited. Any of those in raw
+      // user input breaks out of the ilike value and can inject extra filters.
+      // Strip the delimiters and wildcard-escape the rest before interpolating.
+      const safe = data.q.replace(/[(),*%]/g, " ").trim();
+      if (safe) {
+        const like = `*${safe}*`;
+        q = q.or(
+          `action.ilike.${like},entity.ilike.${like},entity_id.ilike.${like},ip.ilike.${like}`,
+        );
+      }
     }
     const { data: rows, error } = await q;
     if (error) { console.error(error); throw new Error("Request failed."); }
