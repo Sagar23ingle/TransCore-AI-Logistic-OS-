@@ -1,0 +1,7 @@
+# TransCore AI
+
+> AI-powered fleet management and logistics marketplace for Indian truck owners and brokers. Real-time GPS tracking, expense analytics, driver scoring, load matching, and smart document alerts.
+
+## Product
+- [Home](/): Landing page with product overview.
+- [Sign in](/auth): Sign in or create a TransCore AI account.

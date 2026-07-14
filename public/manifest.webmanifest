@@ -1,0 +1,14 @@
+{
+  "name": "TransCore AI — Fleet & Logistics",
+  "short_name": "TransCore AI",
+  "description": "AI-powered fleet management: vehicles, drivers, live GPS tracking, load marketplace, expense analytics and smart alerts.",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0B1220",
+  "theme_color": "#0B1220",
+  "categories": ["business", "productivity", "utilities"],
+  "icons": [
+    { "src": "/favicon.ico", "sizes": "64x64 32x32 24x24 16x16", "type": "image/x-icon" }
+  ]
+}
