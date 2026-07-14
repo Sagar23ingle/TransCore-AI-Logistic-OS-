@@ -1,0 +1,22 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /vehicles
+Disallow: /drivers
+Disallow: /trips
+Disallow: /expenses
+Disallow: /documents
+Disallow: /alerts
+Disallow: /tracking
+Disallow: /ai
+Disallow: /billing
+Disallow: /settings
+Disallow: /admin
+Disallow: /fuel
+Disallow: /maintenance
+Disallow: /analytics
+Disallow: /marketplace
+Disallow: /drivers-scoreboard
+Disallow: /api/
+
+Sitemap: /sitemap.xml

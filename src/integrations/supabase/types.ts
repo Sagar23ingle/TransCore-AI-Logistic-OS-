@@ -56,6 +56,42 @@ export type Database = {
         }
         Relationships: []
       }
+      alert_prefs: {
+        Row: {
+          document_expiry: boolean
+          email_enabled: boolean
+          emi_reminders: boolean
+          maintenance: boolean
+          marketplace_matches: boolean
+          push_enabled: boolean
+          trip_updates: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          document_expiry?: boolean
+          email_enabled?: boolean
+          emi_reminders?: boolean
+          maintenance?: boolean
+          marketplace_matches?: boolean
+          push_enabled?: boolean
+          trip_updates?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          document_expiry?: boolean
+          email_enabled?: boolean
+          emi_reminders?: boolean
+          maintenance?: boolean
+          marketplace_matches?: boolean
+          push_enabled?: boolean
+          trip_updates?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       alerts: {
         Row: {
           created_at: string
@@ -146,6 +182,42 @@ export type Database = {
         }
         Relationships: []
       }
+      audit_log: {
+        Row: {
+          action: string
+          actor_id: string | null
+          entity: string | null
+          entity_id: string | null
+          id: number
+          ip: string | null
+          metadata: Json | null
+          occurred_at: string
+          user_agent: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          entity?: string | null
+          entity_id?: string | null
+          id?: number
+          ip?: string | null
+          metadata?: Json | null
+          occurred_at?: string
+          user_agent?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          entity?: string | null
+          entity_id?: string | null
+          id?: number
+          ip?: string | null
+          metadata?: Json | null
+          occurred_at?: string
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       documents: {
         Row: {
           created_at: string
@@ -208,6 +280,71 @@ export type Database = {
             columns: ["vehicle_id"]
             isOneToOne: false
             referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      driver_scores: {
+        Row: {
+          avg_speed_kmh: number | null
+          computed_at: string
+          distance_km: number
+          driver_id: string
+          fuel_efficiency_kmpl: number | null
+          id: string
+          max_speed_kmh: number | null
+          overall_score: number
+          owner_id: string
+          performance_score: number
+          period_end: string
+          period_start: string
+          safety_score: number
+          speed_violations: number
+          trips_completed: number
+          trips_delayed: number
+        }
+        Insert: {
+          avg_speed_kmh?: number | null
+          computed_at?: string
+          distance_km?: number
+          driver_id: string
+          fuel_efficiency_kmpl?: number | null
+          id?: string
+          max_speed_kmh?: number | null
+          overall_score?: number
+          owner_id: string
+          performance_score?: number
+          period_end: string
+          period_start: string
+          safety_score?: number
+          speed_violations?: number
+          trips_completed?: number
+          trips_delayed?: number
+        }
+        Update: {
+          avg_speed_kmh?: number | null
+          computed_at?: string
+          distance_km?: number
+          driver_id?: string
+          fuel_efficiency_kmpl?: number | null
+          id?: string
+          max_speed_kmh?: number | null
+          overall_score?: number
+          owner_id?: string
+          performance_score?: number
+          period_end?: string
+          period_start?: string
+          safety_score?: number
+          speed_violations?: number
+          trips_completed?: number
+          trips_delayed?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "driver_scores_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
             referencedColumns: ["id"]
           },
         ]
@@ -350,6 +487,173 @@ export type Database = {
           },
         ]
       }
+      fuel_logs: {
+        Row: {
+          created_at: string
+          driver_id: string | null
+          filled_on: string
+          id: string
+          is_full_tank: boolean
+          litres: number
+          notes: string | null
+          odometer_km: number
+          owner_id: string
+          price_per_litre: number
+          station: string | null
+          total_amount: number
+          trip_id: string | null
+          updated_at: string
+          vehicle_id: string
+        }
+        Insert: {
+          created_at?: string
+          driver_id?: string | null
+          filled_on?: string
+          id?: string
+          is_full_tank?: boolean
+          litres: number
+          notes?: string | null
+          odometer_km: number
+          owner_id: string
+          price_per_litre: number
+          station?: string | null
+          total_amount: number
+          trip_id?: string | null
+          updated_at?: string
+          vehicle_id: string
+        }
+        Update: {
+          created_at?: string
+          driver_id?: string | null
+          filled_on?: string
+          id?: string
+          is_full_tank?: boolean
+          litres?: number
+          notes?: string | null
+          odometer_km?: number
+          owner_id?: string
+          price_per_litre?: number
+          station?: string | null
+          total_amount?: number
+          trip_id?: string | null
+          updated_at?: string
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fuel_logs_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fuel_logs_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fuel_logs_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      geofence_events: {
+        Row: {
+          event_type: Database["public"]["Enums"]["geofence_event_type"]
+          geofence_id: string
+          id: number
+          owner_id: string
+          recorded_at: string
+          trip_id: string | null
+          vehicle_id: string
+        }
+        Insert: {
+          event_type: Database["public"]["Enums"]["geofence_event_type"]
+          geofence_id: string
+          id?: number
+          owner_id: string
+          recorded_at?: string
+          trip_id?: string | null
+          vehicle_id: string
+        }
+        Update: {
+          event_type?: Database["public"]["Enums"]["geofence_event_type"]
+          geofence_id?: string
+          id?: number
+          owner_id?: string
+          recorded_at?: string
+          trip_id?: string | null
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "geofence_events_geofence_id_fkey"
+            columns: ["geofence_id"]
+            isOneToOne: false
+            referencedRelation: "geofences"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "geofence_events_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "geofence_events_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      geofences: {
+        Row: {
+          center_lat: number
+          center_lng: number
+          color: string
+          created_at: string
+          id: string
+          name: string
+          notes: string | null
+          owner_id: string
+          radius_m: number
+          updated_at: string
+        }
+        Insert: {
+          center_lat: number
+          center_lng: number
+          color?: string
+          created_at?: string
+          id?: string
+          name: string
+          notes?: string | null
+          owner_id: string
+          radius_m: number
+          updated_at?: string
+        }
+        Update: {
+          center_lat?: number
+          center_lng?: number
+          color?: string
+          created_at?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          owner_id?: string
+          radius_m?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       gps_pings: {
         Row: {
           accuracy_m: number | null
@@ -407,6 +711,334 @@ export type Database = {
           },
         ]
       }
+      invoices: {
+        Row: {
+          amount_inr: number
+          created_at: string
+          gst_amount: number
+          id: string
+          invoice_number: string
+          issued_at: string | null
+          owner_id: string
+          paid_at: string | null
+          period_end: string | null
+          period_start: string | null
+          plan_id: string | null
+          status: Database["public"]["Enums"]["invoice_status"]
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          amount_inr: number
+          created_at?: string
+          gst_amount?: number
+          id?: string
+          invoice_number: string
+          issued_at?: string | null
+          owner_id: string
+          paid_at?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          plan_id?: string | null
+          status?: Database["public"]["Enums"]["invoice_status"]
+          total_amount: number
+          updated_at?: string
+        }
+        Update: {
+          amount_inr?: number
+          created_at?: string
+          gst_amount?: number
+          id?: string
+          invoice_number?: string
+          issued_at?: string | null
+          owner_id?: string
+          paid_at?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          plan_id?: string | null
+          status?: Database["public"]["Enums"]["invoice_status"]
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      load_bids: {
+        Row: {
+          bid_amount: number
+          bidder_id: string
+          created_at: string
+          id: string
+          load_id: string
+          message: string | null
+          status: Database["public"]["Enums"]["match_status"]
+          updated_at: string
+        }
+        Insert: {
+          bid_amount: number
+          bidder_id: string
+          created_at?: string
+          id?: string
+          load_id: string
+          message?: string | null
+          status?: Database["public"]["Enums"]["match_status"]
+          updated_at?: string
+        }
+        Update: {
+          bid_amount?: number
+          bidder_id?: string
+          created_at?: string
+          id?: string
+          load_id?: string
+          message?: string | null
+          status?: Database["public"]["Enums"]["match_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "load_bids_load_id_fkey"
+            columns: ["load_id"]
+            isOneToOne: false
+            referencedRelation: "loads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      loads: {
+        Row: {
+          assigned_owner_id: string | null
+          assigned_vehicle_id: string | null
+          broker_id: string
+          budget_amount: number
+          contact_name: string | null
+          contact_phone: string | null
+          created_at: string
+          delivery_by: string | null
+          destination: string
+          destination_lat: number | null
+          destination_lng: number | null
+          distance_km: number | null
+          goods_type: string
+          id: string
+          notes: string | null
+          origin: string
+          origin_lat: number | null
+          origin_lng: number | null
+          pickup_at: string
+          status: Database["public"]["Enums"]["load_status"]
+          title: string
+          updated_at: string
+          vehicle_type: string
+          weight_tons: number
+        }
+        Insert: {
+          assigned_owner_id?: string | null
+          assigned_vehicle_id?: string | null
+          broker_id: string
+          budget_amount?: number
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          delivery_by?: string | null
+          destination: string
+          destination_lat?: number | null
+          destination_lng?: number | null
+          distance_km?: number | null
+          goods_type: string
+          id?: string
+          notes?: string | null
+          origin: string
+          origin_lat?: number | null
+          origin_lng?: number | null
+          pickup_at: string
+          status?: Database["public"]["Enums"]["load_status"]
+          title: string
+          updated_at?: string
+          vehicle_type: string
+          weight_tons: number
+        }
+        Update: {
+          assigned_owner_id?: string | null
+          assigned_vehicle_id?: string | null
+          broker_id?: string
+          budget_amount?: number
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          delivery_by?: string | null
+          destination?: string
+          destination_lat?: number | null
+          destination_lng?: number | null
+          distance_km?: number | null
+          goods_type?: string
+          id?: string
+          notes?: string | null
+          origin?: string
+          origin_lat?: number | null
+          origin_lng?: number | null
+          pickup_at?: string
+          status?: Database["public"]["Enums"]["load_status"]
+          title?: string
+          updated_at?: string
+          vehicle_type?: string
+          weight_tons?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loads_assigned_vehicle_id_fkey"
+            columns: ["assigned_vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      maintenance_logs: {
+        Row: {
+          cost: number
+          created_at: string
+          id: string
+          next_service_due_km: number | null
+          next_service_due_on: string | null
+          notes: string | null
+          odometer_km: number | null
+          owner_id: string
+          service_type: string
+          serviced_on: string
+          updated_at: string
+          vehicle_id: string
+          vendor: string | null
+        }
+        Insert: {
+          cost?: number
+          created_at?: string
+          id?: string
+          next_service_due_km?: number | null
+          next_service_due_on?: string | null
+          notes?: string | null
+          odometer_km?: number | null
+          owner_id: string
+          service_type: string
+          serviced_on?: string
+          updated_at?: string
+          vehicle_id: string
+          vendor?: string | null
+        }
+        Update: {
+          cost?: number
+          created_at?: string
+          id?: string
+          next_service_due_km?: number | null
+          next_service_due_on?: string | null
+          notes?: string | null
+          odometer_km?: number | null
+          owner_id?: string
+          service_type?: string
+          serviced_on?: string
+          updated_at?: string
+          vehicle_id?: string
+          vendor?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_logs_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_transactions: {
+        Row: {
+          amount_inr: number
+          created_at: string
+          id: string
+          invoice_id: string | null
+          owner_id: string
+          provider: string
+          provider_order_id: string | null
+          provider_payment_id: string | null
+          raw: Json | null
+          status: string
+        }
+        Insert: {
+          amount_inr: number
+          created_at?: string
+          id?: string
+          invoice_id?: string | null
+          owner_id: string
+          provider?: string
+          provider_order_id?: string | null
+          provider_payment_id?: string | null
+          raw?: Json | null
+          status: string
+        }
+        Update: {
+          amount_inr?: number
+          created_at?: string
+          id?: string
+          invoice_id?: string | null
+          owner_id?: string
+          provider?: string
+          provider_order_id?: string | null
+          provider_payment_id?: string | null
+          raw?: Json | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_transactions_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plans: {
+        Row: {
+          ai_monthly_limit: number
+          features: Json
+          id: string
+          interval: string
+          is_active: boolean
+          name: string
+          price_inr: number
+          sort_order: number
+          vehicle_limit: number
+        }
+        Insert: {
+          ai_monthly_limit?: number
+          features?: Json
+          id: string
+          interval?: string
+          is_active?: boolean
+          name: string
+          price_inr?: number
+          sort_order?: number
+          vehicle_limit?: number
+        }
+        Update: {
+          ai_monthly_limit?: number
+          features?: Json
+          id?: string
+          interval?: string
+          is_active?: boolean
+          name?: string
+          price_inr?: number
+          sort_order?: number
+          vehicle_limit?: number
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -434,6 +1066,39 @@ export type Database = {
           id?: string
           phone?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string
+          endpoint: string
+          id: string
+          last_seen_at: string
+          p256dh: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          auth: string
+          created_at?: string
+          endpoint: string
+          id?: string
+          last_seen_at?: string
+          p256dh: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string
+          endpoint?: string
+          id?: string
+          last_seen_at?: string
+          p256dh?: string
+          user_agent?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -483,20 +1148,25 @@ export type Database = {
           advance_paid: number | null
           client_name: string | null
           created_at: string
+          current_lat: number | null
+          current_lng: number | null
           destination: string
           destination_lat: number | null
           destination_lng: number | null
           distance_km: number | null
           driver_id: string | null
+          end_odometer_km: number | null
           freight_amount: number | null
           goods_description: string | null
           id: string
+          last_ping_at: string | null
           notes: string | null
           origin: string
           origin_lat: number | null
           origin_lng: number | null
           owner_id: string
           scheduled_start: string | null
+          start_odometer_km: number | null
           status: Database["public"]["Enums"]["trip_status"]
           updated_at: string
           vehicle_id: string | null
@@ -507,20 +1177,25 @@ export type Database = {
           advance_paid?: number | null
           client_name?: string | null
           created_at?: string
+          current_lat?: number | null
+          current_lng?: number | null
           destination: string
           destination_lat?: number | null
           destination_lng?: number | null
           distance_km?: number | null
           driver_id?: string | null
+          end_odometer_km?: number | null
           freight_amount?: number | null
           goods_description?: string | null
           id?: string
+          last_ping_at?: string | null
           notes?: string | null
           origin: string
           origin_lat?: number | null
           origin_lng?: number | null
           owner_id: string
           scheduled_start?: string | null
+          start_odometer_km?: number | null
           status?: Database["public"]["Enums"]["trip_status"]
           updated_at?: string
           vehicle_id?: string | null
@@ -531,20 +1206,25 @@ export type Database = {
           advance_paid?: number | null
           client_name?: string | null
           created_at?: string
+          current_lat?: number | null
+          current_lng?: number | null
           destination?: string
           destination_lat?: number | null
           destination_lng?: number | null
           distance_km?: number | null
           driver_id?: string | null
+          end_odometer_km?: number | null
           freight_amount?: number | null
           goods_description?: string | null
           id?: string
+          last_ping_at?: string | null
           notes?: string | null
           origin?: string
           origin_lat?: number | null
           origin_lng?: number | null
           owner_id?: string
           scheduled_start?: string | null
+          start_odometer_km?: number | null
           status?: Database["public"]["Enums"]["trip_status"]
           updated_at?: string
           vehicle_id?: string | null
@@ -559,6 +1239,77 @@ export type Database = {
           },
           {
             foreignKeyName: "trips_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      truck_posts: {
+        Row: {
+          available_from: string
+          capacity_tons: number
+          contact_phone: string | null
+          created_at: string
+          expected_rate: number | null
+          from_lat: number | null
+          from_lng: number | null
+          from_location: string
+          id: string
+          is_active: boolean
+          notes: string | null
+          owner_id: string
+          to_lat: number | null
+          to_lng: number | null
+          to_location: string | null
+          updated_at: string
+          vehicle_id: string | null
+          vehicle_type: string
+        }
+        Insert: {
+          available_from: string
+          capacity_tons: number
+          contact_phone?: string | null
+          created_at?: string
+          expected_rate?: number | null
+          from_lat?: number | null
+          from_lng?: number | null
+          from_location: string
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          owner_id: string
+          to_lat?: number | null
+          to_lng?: number | null
+          to_location?: string | null
+          updated_at?: string
+          vehicle_id?: string | null
+          vehicle_type: string
+        }
+        Update: {
+          available_from?: string
+          capacity_tons?: number
+          contact_phone?: string | null
+          created_at?: string
+          expected_rate?: number | null
+          from_lat?: number | null
+          from_lng?: number | null
+          from_location?: string
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          owner_id?: string
+          to_lat?: number | null
+          to_lng?: number | null
+          to_location?: string | null
+          updated_at?: string
+          vehicle_id?: string | null
+          vehicle_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "truck_posts_vehicle_id_fkey"
             columns: ["vehicle_id"]
             isOneToOne: false
             referencedRelation: "vehicles"
@@ -669,6 +1420,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      haversine_km: {
+        Args: { lat1: number; lat2: number; lng1: number; lng2: number }
+        Returns: number
+      }
     }
     Enums: {
       alert_severity: "info" | "warning" | "critical"
@@ -691,6 +1446,20 @@ export type Database = {
         | "loading"
         | "unloading"
         | "other"
+      geofence_event_type: "enter" | "exit"
+      invoice_status: "draft" | "issued" | "paid" | "void" | "failed"
+      load_status:
+        | "open"
+        | "assigned"
+        | "in_transit"
+        | "delivered"
+        | "cancelled"
+      match_status:
+        | "suggested"
+        | "offered"
+        | "accepted"
+        | "rejected"
+        | "expired"
       subscription_plan: "free" | "starter" | "professional" | "enterprise"
       subscription_status: "active" | "cancelled" | "past_due" | "trialing"
       trip_status: "planned" | "in_progress" | "completed" | "cancelled"
@@ -851,6 +1620,10 @@ export const Constants = {
         "unloading",
         "other",
       ],
+      geofence_event_type: ["enter", "exit"],
+      invoice_status: ["draft", "issued", "paid", "void", "failed"],
+      load_status: ["open", "assigned", "in_transit", "delivered", "cancelled"],
+      match_status: ["suggested", "offered", "accepted", "rejected", "expired"],
       subscription_plan: ["free", "starter", "professional", "enterprise"],
       subscription_status: ["active", "cancelled", "past_due", "trialing"],
       trip_status: ["planned", "in_progress", "completed", "cancelled"],
