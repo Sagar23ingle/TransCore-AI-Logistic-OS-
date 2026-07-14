@@ -23,7 +23,7 @@ export const listDrivers = createServerFn({ method: "GET" })
       .select("*")
       .eq("owner_id", context.userId)
       .order("created_at", { ascending: false });
-    if (error) throw new Error(error.message);
+    if (error) { console.error(error); throw new Error("Request failed. Please try again."); }
     return data ?? [];
   });
 
@@ -37,7 +37,7 @@ export const upsertDriver = createServerFn({ method: "POST" })
       .upsert(payload as never, { onConflict: "id" })
       .select("*")
       .single();
-    if (error) throw new Error(error.message);
+    if (error) { console.error(error); throw new Error("Request failed. Please try again."); }
     return row;
   });
 
@@ -50,6 +50,6 @@ export const deleteDriver = createServerFn({ method: "POST" })
       .delete()
       .eq("id", data.id)
       .eq("owner_id", context.userId);
-    if (error) throw new Error(error.message);
+    if (error) { console.error(error); throw new Error("Request failed. Please try again."); }
     return { ok: true };
   });

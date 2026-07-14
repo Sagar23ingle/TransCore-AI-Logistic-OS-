@@ -62,7 +62,7 @@ export const getTripRoute = createServerFn({ method: "GET" })
       .eq("trip_id", data.trip_id)
       .order("recorded_at", { ascending: true })
       .limit(5000);
-    if (error) throw new Error(error.message);
+    if (error) { console.error(error); throw new Error("Request failed. Please try again."); }
     return (rows ?? []).map((r) => ({
       lat: Number(r.lat),
       lng: Number(r.lng),
@@ -90,7 +90,7 @@ export const getVehicleHistory = createServerFn({ method: "GET" })
       .gte("recorded_at", since)
       .order("recorded_at", { ascending: true })
       .limit(5000);
-    if (error) throw new Error(error.message);
+    if (error) { console.error(error); throw new Error("Request failed. Please try again."); }
     return (rows ?? []).map((r) => ({
       lat: Number(r.lat),
       lng: Number(r.lng),
@@ -129,6 +129,6 @@ export const submitBrowserPing = createServerFn({ method: "POST" })
       accuracy_m: data.accuracy_m ?? null,
       source: "browser",
     } as never);
-    if (error) throw new Error(error.message);
+    if (error) { console.error(error); throw new Error("Request failed. Please try again."); }
     return { ok: true };
   });

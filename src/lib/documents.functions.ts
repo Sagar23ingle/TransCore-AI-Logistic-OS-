@@ -24,7 +24,7 @@ export const listDocuments = createServerFn({ method: "GET" })
       .select("*, vehicle:vehicles(id, registration_number), driver:drivers(id, full_name)")
       .eq("owner_id", context.userId)
       .order("created_at", { ascending: false });
-    if (error) throw new Error(error.message);
+    if (error) { console.error(error); throw new Error("Request failed. Please try again."); }
     return data ?? [];
   });
 
@@ -43,7 +43,7 @@ export const createDocument = createServerFn({ method: "POST" })
       .upsert(payload as never, { onConflict: "id" })
       .select("*")
       .single();
-    if (error) throw new Error(error.message);
+    if (error) { console.error(error); throw new Error("Request failed. Please try again."); }
     return row;
   });
 
@@ -57,7 +57,7 @@ export const signDocumentUrl = createServerFn({ method: "POST" })
     const { data: signed, error } = await context.supabase.storage
       .from("documents")
       .createSignedUrl(row.storage_path, 60 * 10);
-    if (error) throw new Error(error.message);
+    if (error) { console.error(error); throw new Error("Request failed. Please try again."); }
     return { url: signed.signedUrl };
   });
 
@@ -70,6 +70,6 @@ export const deleteDocument = createServerFn({ method: "POST" })
     if (row) await context.supabase.storage.from("documents").remove([row.storage_path]);
     const { error } = await context.supabase
       .from("documents").delete().eq("id", data.id).eq("owner_id", context.userId);
-    if (error) throw new Error(error.message);
+    if (error) { console.error(error); throw new Error("Request failed. Please try again."); }
     return { ok: true };
   });

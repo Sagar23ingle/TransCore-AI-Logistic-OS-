@@ -20,7 +20,7 @@ export const listExpenses = createServerFn({ method: "GET" })
       .select("*, vehicle:vehicles(id, registration_number), trip:trips(id, origin, destination)")
       .eq("owner_id", context.userId)
       .order("incurred_on", { ascending: false });
-    if (error) throw new Error(error.message);
+    if (error) { console.error(error); throw new Error("Request failed. Please try again."); }
     return data ?? [];
   });
 
@@ -34,7 +34,7 @@ export const upsertExpense = createServerFn({ method: "POST" })
       .upsert(payload as never, { onConflict: "id" })
       .select("*")
       .single();
-    if (error) throw new Error(error.message);
+    if (error) { console.error(error); throw new Error("Request failed. Please try again."); }
     return row;
   });
 
@@ -47,6 +47,6 @@ export const deleteExpense = createServerFn({ method: "POST" })
       .delete()
       .eq("id", data.id)
       .eq("owner_id", context.userId);
-    if (error) throw new Error(error.message);
+    if (error) { console.error(error); throw new Error("Request failed. Please try again."); }
     return { ok: true };
   });
