@@ -68,7 +68,7 @@ function Landing() {
         <div className="mx-auto max-w-6xl px-6 pb-20 pt-16 text-center sm:pt-24">
           <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-border bg-secondary/60 px-3 py-1 text-xs text-muted-foreground">
             <Sparkles className="h-3 w-3 text-primary" />
-            Powered by Gemini and Lovable AI
+            AI-native fleet OS
           </div>
           <h1 className="mt-6 text-balance text-4xl font-semibold tracking-tight sm:text-6xl">
             The AI-native <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">operating system</span> for truck fleets.
