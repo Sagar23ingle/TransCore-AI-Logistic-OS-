@@ -90,11 +90,27 @@ export const addCompanyMember = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((raw: unknown) => InviteInput.parse(raw))
   .handler(async ({ context, data }) => {
-    // Requires write permission (enforced by RLS via can_write_company).
-    // Resolve email → user_id via admin.
+    // Privileged (admin listUsers). Verify the CALLER is an owner/manager of
+    // this company before doing anything — otherwise any signed-in user can
+    // probe whether an email has an account here.
+    const { data: canWrite, error: permErr } = await context.supabase
+      .rpc("can_write_company", { _company: data.company_id });
+    if (permErr) { console.error(permErr); throw new Error("Permission check failed."); }
+    if (!canWrite) throw new Error("You do not have permission to add members to this company.");
+
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: userList } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 200 });
-    const target = userList?.users?.find((u) => u.email?.toLowerCase() === data.email.toLowerCase());
+    // listUsers is paginated (default perPage=50, cap 1000). Walk pages until
+    // we find the target or run out — the old `perPage: 200` silently missed
+    // any user past the first page.
+    const needle = data.email.toLowerCase();
+    let target: { id: string } | undefined;
+    for (let page = 1; page <= 20; page++) {
+      const { data: list, error: lErr } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 1000 });
+      if (lErr) { console.error(lErr); throw new Error("Could not look up user."); }
+      target = list?.users?.find((u) => u.email?.toLowerCase() === needle);
+      if (target) break;
+      if (!list?.users || list.users.length < 1000) break;
+    }
     if (!target) throw new Error("No user with that email. Ask them to sign up first.");
     const { error } = await context.supabase
       .from("company_members")

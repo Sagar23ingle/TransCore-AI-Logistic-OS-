@@ -33,9 +33,13 @@ export function setActiveCompanyId(id: string) {
 export function useCompanies() {
   const listFn = useServerFn(listMyCompanies);
   const q = useQuery({ queryKey: ["my-companies"], queryFn: () => listFn(), staleTime: 30_000 });
-  const [activeId, setActive] = useState<string | null>(readActive);
+  // NOTE: never read localStorage in the useState initializer — SSR returns null
+  // while the client returns the stored id, which hydration-mismatches every
+  // consumer of activeCompanyId. Read it in an effect after mount.
+  const [activeId, setActive] = useState<string | null>(null);
 
   useEffect(() => {
+    setActive(readActive());
     function onChange(e: Event) {
       const id = (e as CustomEvent<string>).detail;
       setActive(id ?? null);
