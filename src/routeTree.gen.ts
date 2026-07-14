@@ -21,15 +21,18 @@ import { Route as AuthenticatedMarketplaceIndexRouteImport } from './routes/_aut
 import { Route as AuthenticatedMaintenanceIndexRouteImport } from './routes/_authenticated/maintenance.index'
 import { Route as AuthenticatedFuelIndexRouteImport } from './routes/_authenticated/fuel.index'
 import { Route as AuthenticatedExpensesIndexRouteImport } from './routes/_authenticated/expenses.index'
+import { Route as AuthenticatedExecutiveIndexRouteImport } from './routes/_authenticated/executive.index'
 import { Route as AuthenticatedDriversIndexRouteImport } from './routes/_authenticated/drivers.index'
 import { Route as AuthenticatedDriversScoreboardIndexRouteImport } from './routes/_authenticated/drivers-scoreboard.index'
 import { Route as AuthenticatedDocumentsIndexRouteImport } from './routes/_authenticated/documents.index'
 import { Route as AuthenticatedBillingIndexRouteImport } from './routes/_authenticated/billing.index'
+import { Route as AuthenticatedAuditIndexRouteImport } from './routes/_authenticated/audit.index'
 import { Route as AuthenticatedAnalyticsIndexRouteImport } from './routes/_authenticated/analytics.index'
 import { Route as AuthenticatedAlertsIndexRouteImport } from './routes/_authenticated/alerts.index'
 import { Route as AuthenticatedAiIndexRouteImport } from './routes/_authenticated/ai.index'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as AuthenticatedMarketplaceTrucksRouteImport } from './routes/_authenticated/marketplace.trucks'
+import { Route as ApiPublicHooksComplianceScanRouteImport } from './routes/api/public/hooks/compliance-scan'
 import { Route as ApiPublicGpsIngestRouteImport } from './routes/api/public/gps/ingest'
 
 const AuthRoute = AuthRouteImport.update({
@@ -97,6 +100,12 @@ const AuthenticatedExpensesIndexRoute =
     path: '/expenses/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedExecutiveIndexRoute =
+  AuthenticatedExecutiveIndexRouteImport.update({
+    id: '/executive/',
+    path: '/executive/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedDriversIndexRoute =
   AuthenticatedDriversIndexRouteImport.update({
     id: '/drivers/',
@@ -121,6 +130,11 @@ const AuthenticatedBillingIndexRoute =
     path: '/billing/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAuditIndexRoute = AuthenticatedAuditIndexRouteImport.update({
+  id: '/audit/',
+  path: '/audit/',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAnalyticsIndexRoute =
   AuthenticatedAnalyticsIndexRouteImport.update({
     id: '/analytics/',
@@ -149,6 +163,12 @@ const AuthenticatedMarketplaceTrucksRoute =
     path: '/marketplace/trucks',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const ApiPublicHooksComplianceScanRoute =
+  ApiPublicHooksComplianceScanRouteImport.update({
+    id: '/api/public/hooks/compliance-scan',
+    path: '/api/public/hooks/compliance-scan',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicGpsIngestRoute = ApiPublicGpsIngestRouteImport.update({
   id: '/api/public/gps/ingest',
   path: '/api/public/gps/ingest',
@@ -164,10 +184,12 @@ export interface FileRoutesByFullPath {
   '/ai/': typeof AuthenticatedAiIndexRoute
   '/alerts/': typeof AuthenticatedAlertsIndexRoute
   '/analytics/': typeof AuthenticatedAnalyticsIndexRoute
+  '/audit/': typeof AuthenticatedAuditIndexRoute
   '/billing/': typeof AuthenticatedBillingIndexRoute
   '/documents/': typeof AuthenticatedDocumentsIndexRoute
   '/drivers-scoreboard/': typeof AuthenticatedDriversScoreboardIndexRoute
   '/drivers/': typeof AuthenticatedDriversIndexRoute
+  '/executive/': typeof AuthenticatedExecutiveIndexRoute
   '/expenses/': typeof AuthenticatedExpensesIndexRoute
   '/fuel/': typeof AuthenticatedFuelIndexRoute
   '/maintenance/': typeof AuthenticatedMaintenanceIndexRoute
@@ -177,6 +199,7 @@ export interface FileRoutesByFullPath {
   '/trips/': typeof AuthenticatedTripsIndexRoute
   '/vehicles/': typeof AuthenticatedVehiclesIndexRoute
   '/api/public/gps/ingest': typeof ApiPublicGpsIngestRoute
+  '/api/public/hooks/compliance-scan': typeof ApiPublicHooksComplianceScanRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -187,10 +210,12 @@ export interface FileRoutesByTo {
   '/ai': typeof AuthenticatedAiIndexRoute
   '/alerts': typeof AuthenticatedAlertsIndexRoute
   '/analytics': typeof AuthenticatedAnalyticsIndexRoute
+  '/audit': typeof AuthenticatedAuditIndexRoute
   '/billing': typeof AuthenticatedBillingIndexRoute
   '/documents': typeof AuthenticatedDocumentsIndexRoute
   '/drivers-scoreboard': typeof AuthenticatedDriversScoreboardIndexRoute
   '/drivers': typeof AuthenticatedDriversIndexRoute
+  '/executive': typeof AuthenticatedExecutiveIndexRoute
   '/expenses': typeof AuthenticatedExpensesIndexRoute
   '/fuel': typeof AuthenticatedFuelIndexRoute
   '/maintenance': typeof AuthenticatedMaintenanceIndexRoute
@@ -200,6 +225,7 @@ export interface FileRoutesByTo {
   '/trips': typeof AuthenticatedTripsIndexRoute
   '/vehicles': typeof AuthenticatedVehiclesIndexRoute
   '/api/public/gps/ingest': typeof ApiPublicGpsIngestRoute
+  '/api/public/hooks/compliance-scan': typeof ApiPublicHooksComplianceScanRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -212,10 +238,12 @@ export interface FileRoutesById {
   '/_authenticated/ai/': typeof AuthenticatedAiIndexRoute
   '/_authenticated/alerts/': typeof AuthenticatedAlertsIndexRoute
   '/_authenticated/analytics/': typeof AuthenticatedAnalyticsIndexRoute
+  '/_authenticated/audit/': typeof AuthenticatedAuditIndexRoute
   '/_authenticated/billing/': typeof AuthenticatedBillingIndexRoute
   '/_authenticated/documents/': typeof AuthenticatedDocumentsIndexRoute
   '/_authenticated/drivers-scoreboard/': typeof AuthenticatedDriversScoreboardIndexRoute
   '/_authenticated/drivers/': typeof AuthenticatedDriversIndexRoute
+  '/_authenticated/executive/': typeof AuthenticatedExecutiveIndexRoute
   '/_authenticated/expenses/': typeof AuthenticatedExpensesIndexRoute
   '/_authenticated/fuel/': typeof AuthenticatedFuelIndexRoute
   '/_authenticated/maintenance/': typeof AuthenticatedMaintenanceIndexRoute
@@ -225,6 +253,7 @@ export interface FileRoutesById {
   '/_authenticated/trips/': typeof AuthenticatedTripsIndexRoute
   '/_authenticated/vehicles/': typeof AuthenticatedVehiclesIndexRoute
   '/api/public/gps/ingest': typeof ApiPublicGpsIngestRoute
+  '/api/public/hooks/compliance-scan': typeof ApiPublicHooksComplianceScanRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -237,10 +266,12 @@ export interface FileRouteTypes {
     | '/ai/'
     | '/alerts/'
     | '/analytics/'
+    | '/audit/'
     | '/billing/'
     | '/documents/'
     | '/drivers-scoreboard/'
     | '/drivers/'
+    | '/executive/'
     | '/expenses/'
     | '/fuel/'
     | '/maintenance/'
@@ -250,6 +281,7 @@ export interface FileRouteTypes {
     | '/trips/'
     | '/vehicles/'
     | '/api/public/gps/ingest'
+    | '/api/public/hooks/compliance-scan'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -260,10 +292,12 @@ export interface FileRouteTypes {
     | '/ai'
     | '/alerts'
     | '/analytics'
+    | '/audit'
     | '/billing'
     | '/documents'
     | '/drivers-scoreboard'
     | '/drivers'
+    | '/executive'
     | '/expenses'
     | '/fuel'
     | '/maintenance'
@@ -273,6 +307,7 @@ export interface FileRouteTypes {
     | '/trips'
     | '/vehicles'
     | '/api/public/gps/ingest'
+    | '/api/public/hooks/compliance-scan'
   id:
     | '__root__'
     | '/'
@@ -284,10 +319,12 @@ export interface FileRouteTypes {
     | '/_authenticated/ai/'
     | '/_authenticated/alerts/'
     | '/_authenticated/analytics/'
+    | '/_authenticated/audit/'
     | '/_authenticated/billing/'
     | '/_authenticated/documents/'
     | '/_authenticated/drivers-scoreboard/'
     | '/_authenticated/drivers/'
+    | '/_authenticated/executive/'
     | '/_authenticated/expenses/'
     | '/_authenticated/fuel/'
     | '/_authenticated/maintenance/'
@@ -297,6 +334,7 @@ export interface FileRouteTypes {
     | '/_authenticated/trips/'
     | '/_authenticated/vehicles/'
     | '/api/public/gps/ingest'
+    | '/api/public/hooks/compliance-scan'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -304,6 +342,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   ApiPublicGpsIngestRoute: typeof ApiPublicGpsIngestRoute
+  ApiPublicHooksComplianceScanRoute: typeof ApiPublicHooksComplianceScanRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -392,6 +431,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedExpensesIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/executive/': {
+      id: '/_authenticated/executive/'
+      path: '/executive'
+      fullPath: '/executive/'
+      preLoaderRoute: typeof AuthenticatedExecutiveIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/drivers/': {
       id: '/_authenticated/drivers/'
       path: '/drivers'
@@ -418,6 +464,13 @@ declare module '@tanstack/react-router' {
       path: '/billing'
       fullPath: '/billing/'
       preLoaderRoute: typeof AuthenticatedBillingIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/audit/': {
+      id: '/_authenticated/audit/'
+      path: '/audit'
+      fullPath: '/audit/'
+      preLoaderRoute: typeof AuthenticatedAuditIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/analytics/': {
@@ -455,6 +508,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMarketplaceTrucksRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/hooks/compliance-scan': {
+      id: '/api/public/hooks/compliance-scan'
+      path: '/api/public/hooks/compliance-scan'
+      fullPath: '/api/public/hooks/compliance-scan'
+      preLoaderRoute: typeof ApiPublicHooksComplianceScanRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/gps/ingest': {
       id: '/api/public/gps/ingest'
       path: '/api/public/gps/ingest'
@@ -472,10 +532,12 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAiIndexRoute: typeof AuthenticatedAiIndexRoute
   AuthenticatedAlertsIndexRoute: typeof AuthenticatedAlertsIndexRoute
   AuthenticatedAnalyticsIndexRoute: typeof AuthenticatedAnalyticsIndexRoute
+  AuthenticatedAuditIndexRoute: typeof AuthenticatedAuditIndexRoute
   AuthenticatedBillingIndexRoute: typeof AuthenticatedBillingIndexRoute
   AuthenticatedDocumentsIndexRoute: typeof AuthenticatedDocumentsIndexRoute
   AuthenticatedDriversScoreboardIndexRoute: typeof AuthenticatedDriversScoreboardIndexRoute
   AuthenticatedDriversIndexRoute: typeof AuthenticatedDriversIndexRoute
+  AuthenticatedExecutiveIndexRoute: typeof AuthenticatedExecutiveIndexRoute
   AuthenticatedExpensesIndexRoute: typeof AuthenticatedExpensesIndexRoute
   AuthenticatedFuelIndexRoute: typeof AuthenticatedFuelIndexRoute
   AuthenticatedMaintenanceIndexRoute: typeof AuthenticatedMaintenanceIndexRoute
@@ -493,11 +555,13 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAiIndexRoute: AuthenticatedAiIndexRoute,
   AuthenticatedAlertsIndexRoute: AuthenticatedAlertsIndexRoute,
   AuthenticatedAnalyticsIndexRoute: AuthenticatedAnalyticsIndexRoute,
+  AuthenticatedAuditIndexRoute: AuthenticatedAuditIndexRoute,
   AuthenticatedBillingIndexRoute: AuthenticatedBillingIndexRoute,
   AuthenticatedDocumentsIndexRoute: AuthenticatedDocumentsIndexRoute,
   AuthenticatedDriversScoreboardIndexRoute:
     AuthenticatedDriversScoreboardIndexRoute,
   AuthenticatedDriversIndexRoute: AuthenticatedDriversIndexRoute,
+  AuthenticatedExecutiveIndexRoute: AuthenticatedExecutiveIndexRoute,
   AuthenticatedExpensesIndexRoute: AuthenticatedExpensesIndexRoute,
   AuthenticatedFuelIndexRoute: AuthenticatedFuelIndexRoute,
   AuthenticatedMaintenanceIndexRoute: AuthenticatedMaintenanceIndexRoute,
@@ -516,17 +580,8 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   ApiPublicGpsIngestRoute: ApiPublicGpsIngestRoute,
+  ApiPublicHooksComplianceScanRoute: ApiPublicHooksComplianceScanRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

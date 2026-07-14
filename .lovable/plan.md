@@ -1,139 +1,91 @@
 
-# TransCore AI — Web SaaS Build Plan
+# Scope reality check
 
-## Reality check
-- This project is a **fresh TanStack Start scaffold**, not an existing app to refactor. Everything in your 18-point spec is net-new.
-- Lovable builds **web apps**. This will be a responsive, installable PWA — not an Android APK. Same product surface (works on phone browsers, installable to home screen).
-- Firebase → replaced with **Lovable Cloud** (Postgres + Auth + Storage). Cloud Functions → **TanStack server functions**. FCM → **Web Push (VAPID)**. Crashlytics → **client error logger table**. Firebase Analytics → **events table + dashboard**. Same capabilities, web-native.
-- Gemini → **Lovable AI Gateway** (server-side, key never exposed).
-- Razorpay → real integration via server functions + webhooks.
-- GPS → **integration-ready ingestion endpoints** (Traccar/Teltonika/MapMyIndia can POST to `/api/public/gps/ingest`) + browser Geolocation for driver phones. No simulated movement anywhere.
+You picked **full multi-tenant** + **Audit Log/Fleet Manager** + **Compliance engine/Executive dashboard**. That touches ~24 tables, every RLS policy, and every server function. Doing it all in one turn guarantees regressions in your existing working modules (trips, vehicles, fuel, dashboard, tracking, marketplace).
 
-## Phasing (each phase ships working, tested, buildable)
-I'll do phases 1–3 in this first pass. After you see it working, we do 4, then 5.
+I'll deliver it in **3 sequential turns**, each fully working and tested before the next. This turn = Phase 1. Say "go" and I'll ship it.
 
-### Phase 1 — Foundation (this pass)
-- Enable Lovable Cloud
-- Design system: dark premium logistics theme (semantic tokens in `styles.css`), typography, layout shell, sidebar nav
-- Database schema + RLS + GRANTs:
-  - `profiles`, `user_roles` (enum: super_admin, fleet_owner, driver, broker), `has_role()` SDF
-  - `vehicles`, `drivers`, `trips`, `documents`, `expenses`, `gps_pings`, `alerts`, `notifications`, `subscriptions`, `ai_requests`, `audit_log`, `error_reports`, `analytics_events`
-  - All owner-scoped RLS; role-based policies for super admin
-- Auth: email/password + Google, `_authenticated/` gate, role-aware routing, sign-out hygiene
+---
 
-### Phase 2 — Core fleet modules (this pass)
-- Dashboard (real aggregates only — zero-state when empty)
-- Vehicles CRUD
-- Drivers CRUD (with driver-user linking)
-- Trips CRUD (assign driver + vehicle, status lifecycle)
-- Expenses (fuel, maintenance, tolls, other)
-- All charts driven by real Postgres queries via server functions
+## Phase 1 — this turn
 
-### Phase 3 — Documents + Alerts + AI (this pass)
-- Document Vault: upload/preview/replace/delete via Lovable Cloud Storage, per-owner RLS, expiry dates
-- Smart Alerts engine: server function computes alerts at 30/15/7/3/0 days from real expiry dates (insurance, permit, fitness, PUC, DL, EMI, maintenance)
-- AI (Gemini via Lovable AI Gateway): trip analysis, expense insights, document OCR summary — server-only, real errors surfaced ("AI service temporarily unavailable"), no fake fallbacks, retry with backoff
+### A. Multi-tenant foundation (migration 1)
 
-### Phase 4 — GPS, Payments, Notifications (next pass)
-- GPS ingestion: public signed endpoint `/api/public/gps/ingest` (HMAC) that accepts Traccar/Teltonika/MapMyIndia payloads; live map with Leaflet + OSM; route polyline; distance (Haversine); ETA; speed
-- Driver PWA mode: browser Geolocation background updates while trip is active
-- Razorpay subscriptions: Free/Starter/Pro/Enterprise, order creation server fn, webhook verification, plan gating middleware
-- Web Push notifications (VAPID) for document expiry, trip assignment, payment reminders
+New tables:
+- `companies` (name, gstin, contact, plan_id, created_by)
+- `company_members` (company_id, user_id, role: `owner|manager|driver|broker|viewer`, unique(company_id,user_id))
 
-### Phase 5 — Admin, Offline, Hardening (final pass)
-- Super Admin panel: users, fleets, revenue, subscriptions, AI usage, system health
-- Offline-first: IndexedDB queue for writes, sync worker, connection status indicator
-- Security hardening: Zod validation everywhere, rate-limit middleware on write endpoints, audit log, session review
-- Final implementation report
+Enum change:
+- Add `fleet_manager` to `app_role` (global admin-style role stays; `company_members.role` is the company-scoped role).
 
-## Technical details
+Helpers (SECURITY DEFINER, search_path=public):
+- `is_company_member(_company uuid)` → boolean
+- `company_role(_company uuid)` → text
+- `user_companies()` → setof uuid
+- `current_company_id()` → uuid (reads `request.jwt.claims->>'active_company'` set by app, falls back to first membership)
 
-**Stack additions**
-- `@supabase/supabase-js` (via Cloud integration)
-- `recharts` for charts
-- `leaflet` + `react-leaflet` for maps
-- `zod` + `react-hook-form` for validation
-- `date-fns` (already installed)
-- `idb` for offline queue
-- `web-push` (server) for notifications
-- Razorpay REST (fetch-based, no SDK — Worker compatible)
+Add `company_id uuid REFERENCES companies` to the **core operational tables** (nullable, backfilled):
+`vehicles, drivers, trips, expenses, fuel_logs, maintenance_logs, documents, alerts, audit_log, driver_scores, gps_pings, geofences, geofence_events, invoices`.
 
-**File layout (real SaaS split, not one file)**
-```text
-src/
-  routes/
-    __root.tsx
-    index.tsx                       # marketing landing
-    auth.tsx                        # sign in / sign up
-    _authenticated/
-      route.tsx                     # managed gate
-      dashboard.tsx
-      vehicles.index.tsx
-      vehicles.$id.tsx
-      drivers.index.tsx
-      drivers.$id.tsx
-      trips.index.tsx
-      trips.$id.tsx
-      documents.index.tsx
-      expenses.index.tsx
-      alerts.index.tsx
-      tracking.index.tsx            # live map
-      ai.index.tsx                  # AI assistant
-      billing.index.tsx             # subscription
-      admin/                        # super-admin only
-        users.tsx
-        overview.tsx
-        subscriptions.tsx
-        health.tsx
-    api/public/
-      gps/ingest.ts                 # HMAC-signed GPS ingest
-      razorpay/webhook.ts
-      push/subscribe.ts
-  components/
-    layout/ (Sidebar, TopBar, Shell)
-    dashboard/ (KpiCard, RevenueChart, FleetUtilChart, ...)
-    vehicles/ (VehicleForm, VehicleCard, ...)
-    drivers/ ...
-    trips/ ...
-    documents/ (DocumentUploader, DocumentCard, ExpiryBadge)
-    alerts/ (AlertList, AlertBadge)
-    tracking/ (LiveMap, VehicleMarker, RouteLayer)
-    ai/ (AiChat, AiInsightCard)
-    billing/ (PlanCard, CheckoutButton)
-    admin/ ...
-    ui/ (existing shadcn)
-  lib/
-    dashboard.functions.ts
-    vehicles.functions.ts
-    drivers.functions.ts
-    trips.functions.ts
-    documents.functions.ts
-    alerts.functions.ts
-    gps.functions.ts
-    ai.functions.ts
-    billing.functions.ts
-    admin.functions.ts
-    rbac.ts
-    validation/ (zod schemas per domain)
-    offline/ (IndexedDB queue)
-  integrations/supabase/   # generated by Cloud
-```
+**Backfill**: for each existing user with data, create one company (`"<full_name>'s Fleet"`), add them as `owner`, stamp all their rows with that company_id. After backfill, set `company_id NOT NULL` on the same tables.
 
-**Design language**
-Dark theme, deep navy background, electric-cyan accent, generous spacing, glass-card surfaces, mono for numbers. All colors as HSL semantic tokens in `src/styles.css`. No hardcoded Tailwind color utilities in components.
+**RLS rewrite** for those tables: `USING (is_company_member(company_id))` plus role-scoped write policies (owner/manager can write; driver/broker read-only or scoped). Keep existing `owner_id` column and its policies as a compatibility fallback for one phase, then drop in Phase 3.
 
-**Explicit "no fake data" guarantees**
-- New user dashboard shows zero-state empty cards ("Add your first vehicle") — never seeded rows.
-- Every chart queries the DB; empty result → empty state component.
-- AI failures render an `AiUnavailable` component with the exact copy you specified.
-- GPS map shows "No active vehicles" when no pings in the last N minutes; never animated markers.
+Grants: `authenticated` gets SELECT/INSERT/UPDATE/DELETE on companies + company_members with policies scoped to `auth.uid()`.
 
-## What you'll see after this first pass (phases 1–3)
-A working, signed-in dashboard with vehicles, drivers, trips, expenses, documents (upload/preview/delete with real Storage), an alerts page driven by real expiry math, and a working AI assistant powered by Gemini via the gateway. GPS map, payments, push, admin, and offline follow in the next passes.
+### B. Company switcher
 
-## Ask before I start
-1. Confirm phases 1–3 in this pass is OK (single pass = a few thousand LOC across ~40+ files; if you want smaller increments say so).
-2. Do you have a preferred **brand color** for the accent (default: electric cyan `#22D3EE`)?
-3. Are the 4 roles (super_admin, fleet_owner, driver, broker) final, or should I skip `broker` until you define its modules?
+- `src/hooks/use-company.ts` — reads memberships, keeps active company in `localStorage` + broadcasts change.
+- `src/components/layout/CompanySwitcher.tsx` — dropdown in TopBar (create company, switch).
+- All server functions in `vehicles/drivers/trips/expenses/fuel/maintenance/documents/alerts/dashboard/analytics.functions.ts` get an `active_company_id` input from the client and use it as the primary filter (RLS still enforces).
 
-Reply "go" (with any color/role tweaks) and I'll start building.
+### C. Audit Log surface
+
+- `src/lib/audit.functions.ts` — `listAudit({ company_id, filters, cursor })` returning paginated entries with actor profile join.
+- `src/routes/_authenticated/audit.index.tsx` — filterable timeline (actor, action, entity, date range, IP), searchable.
+- Extend `audit()` helper to always stamp `company_id`.
+- Wire audit calls into: vehicle/driver/trip create/update/delete, settings changes, document upload/delete, login (via auth state change).
+
+### D. Fleet Manager role
+
+- Sidebar/route visibility: manager sees everything owner sees except billing + company settings destructive actions.
+- Server functions check `company_role()` for write ops on settings/billing.
+- Admin page gains a "Team" tab: invite by email, assign company role, remove.
+
+### E. Compliance alert engine (cron)
+
+- `src/routes/api/public/hooks/compliance-scan.ts` — scans vehicles (insurance/permit/fitness/puc/maintenance_next_due) and drivers (license_expiry) across all companies, inserts `alerts` rows with severity=`critical|warning|info` based on days-to-expiry (<0/≤7/≤30), dedupes on (entity_id, kind, due_date).
+- `pg_cron` daily at 03:00 IST → POST to that route (via insert tool, not migration).
+- Alerts page already exists; add severity filter + "expiring soon" grouping.
+
+### F. Executive dashboard
+
+- New route `/_authenticated/executive.tsx` (fleet_owner + fleet_manager + super_admin only).
+- `src/lib/executive.functions.ts` — one server fn returning: revenue/expense/profit (MTD, YTD), active vehicles/drivers, trips today, expiring-docs count, maintenance-due count, top 5 vehicles by profit, top 5 drivers by score, open cost-leakage alerts count.
+- Charts reuse existing recharts setup. Zero hardcoded numbers.
+
+### Verification this turn
+
+- `tsgo` clean.
+- Manual: log in → switch/create company → old data appears under new company → create vehicle → audit row appears in Audit page → run compliance cron manually via curl → alerts appear → executive dashboard shows real numbers.
+
+---
+
+## Phase 2 — next turn
+
+Global search · Data export (CSV/Excel) · OCR on document upload (Lovable AI Gemini vision) · Trip settlement PDF/Excel · Fuel anomaly detection (rolling z-score) · Route deviation analytics (from gps_pings vs planned route) · Predictive maintenance (interval-based projection) · Cost leakage AI (Lovable AI over rolled-up per-vehicle costs).
+
+## Phase 3 — final turn
+
+Drop legacy `owner_id` columns and policies · super-admin cross-company read views · permission matrix admin UI · audit retention/archive · full RBAC test pass.
+
+---
+
+## Technical notes
+
+- Zero data loss: backfill is idempotent, wrapped in a transaction, verifies row counts before flipping NOT NULL.
+- No breaking changes to existing routes this turn — every current page keeps working because we keep `owner_id` populated in parallel.
+- `active_company` is client-set (localStorage → passed on every server fn call). RLS is the security boundary, not the client value.
+- `has_role` / `current_user_is_admin` stay for global admin. Company-scoped checks use the new `company_role()` helper — no privilege-escalation path.
+
+Reply **"go"** to start Phase 1.
