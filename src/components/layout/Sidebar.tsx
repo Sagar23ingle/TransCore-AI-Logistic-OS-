@@ -18,13 +18,16 @@ import {
   Store,
   BarChart3,
   Trophy,
+  ScrollText,
+  Gauge,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
-import { isAdmin } from "@/lib/rbac";
+import { isAdmin, canManageFleet } from "@/lib/rbac";
 import { cn } from "@/lib/utils";
 
 const NAV = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/executive", label: "Executive", icon: Gauge },
   { to: "/tracking", label: "Live Tracking", icon: MapPin },
   { to: "/vehicles", label: "Vehicles", icon: Truck },
   { to: "/drivers", label: "Drivers", icon: Users },
@@ -37,6 +40,7 @@ const NAV = [
   { to: "/analytics", label: "Analytics", icon: BarChart3 },
   { to: "/drivers-scoreboard", label: "Driver Scores", icon: Trophy },
   { to: "/alerts", label: "Alerts", icon: Bell },
+  { to: "/audit", label: "Audit log", icon: ScrollText },
   { to: "/ai", label: "AI Assistant", icon: Sparkles },
   { to: "/billing", label: "Billing", icon: CreditCard },
   { to: "/settings", label: "Settings", icon: Settings },
@@ -54,6 +58,7 @@ export function SidebarInner({ onNavigate }: { onNavigate?: () => void } = {}) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { roles } = useAuth();
   const showAdmin = isAdmin(roles);
+  const showExecutive = canManageFleet(roles);
 
   return (
     <div className="flex h-full flex-col">
@@ -67,7 +72,7 @@ export function SidebarInner({ onNavigate }: { onNavigate?: () => void } = {}) {
         </div>
       </div>
       <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
-        {NAV.map((item) => {
+        {NAV.filter((item) => item.to !== "/executive" || showExecutive).map((item) => {
           const active = pathname === item.to || pathname.startsWith(item.to + "/");
           const Icon = item.icon;
           return (

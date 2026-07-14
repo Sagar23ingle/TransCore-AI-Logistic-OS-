@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/use-auth";
 import { ROLE_LABELS } from "@/lib/rbac";
+import { CompanySwitcher } from "./CompanySwitcher";
 
 export function TopBar() {
   const navigate = useNavigate();
@@ -46,7 +47,7 @@ export function TopBar() {
           <SidebarInner onNavigate={() => setMobileOpen(false)} />
         </SheetContent>
       </Sheet>
-      <div className="hidden lg:block" />
+      <div className="flex-1"><CompanySwitcher /></div>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="sm" className="gap-2">
