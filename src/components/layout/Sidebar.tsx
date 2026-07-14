@@ -1,4 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
+import { type ReactNode } from "react";
 import {
   LayoutDashboard,
   Truck,
@@ -42,12 +43,20 @@ const NAV = [
 ] as const;
 
 export function Sidebar() {
+  return (
+    <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-sidebar-border bg-sidebar lg:flex">
+      <SidebarInner />
+    </aside>
+  );
+}
+
+export function SidebarInner({ onNavigate }: { onNavigate?: () => void } = {}) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { roles } = useAuth();
   const showAdmin = isAdmin(roles);
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-sidebar-border bg-sidebar lg:flex">
+    <div className="flex h-full flex-col">
       <div className="flex h-16 items-center gap-2 border-b border-sidebar-border px-6">
         <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
           <Truck className="h-5 w-5" />
@@ -65,6 +74,7 @@ export function Sidebar() {
             <Link
               key={item.to}
               to={item.to}
+              onClick={onNavigate}
               className={cn(
                 "group flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
                 active
@@ -84,6 +94,7 @@ export function Sidebar() {
             </div>
             <Link
               to="/admin"
+              onClick={onNavigate}
               className={cn(
                 "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
                 pathname.startsWith("/admin")
@@ -97,6 +108,9 @@ export function Sidebar() {
           </>
         )}
       </nav>
-    </aside>
+    </div>
   );
 }
+
+// Silence unused-symbol warnings for shared ReactNode type import.
+export type _SidebarNode = ReactNode;

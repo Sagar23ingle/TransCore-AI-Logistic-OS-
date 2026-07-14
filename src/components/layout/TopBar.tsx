@@ -1,8 +1,11 @@
 import { useNavigate } from "@tanstack/react-router";
-import { LogOut, User } from "lucide-react";
+import { LogOut, Menu, User } from "lucide-react";
+import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
+import { SidebarInner } from "./Sidebar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,6 +21,7 @@ export function TopBar() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user, roles } = useAuth();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   async function handleSignOut() {
     await queryClient.cancelQueries();
@@ -30,7 +34,19 @@ export function TopBar() {
   const initials = email.slice(0, 2).toUpperCase();
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center justify-end gap-3 border-b border-border bg-background/70 px-4 backdrop-blur sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-3 border-b border-border bg-background/70 px-4 backdrop-blur sm:px-6 lg:px-8">
+      <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+        <SheetTrigger asChild>
+          <Button variant="ghost" size="icon" className="lg:hidden" aria-label="Open navigation menu">
+            <Menu className="h-5 w-5" />
+          </Button>
+        </SheetTrigger>
+        <SheetContent side="left" className="w-64 border-sidebar-border bg-sidebar p-0">
+          <SheetTitle className="sr-only">Navigation</SheetTitle>
+          <SidebarInner onNavigate={() => setMobileOpen(false)} />
+        </SheetContent>
+      </Sheet>
+      <div className="hidden lg:block" />
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="sm" className="gap-2">
