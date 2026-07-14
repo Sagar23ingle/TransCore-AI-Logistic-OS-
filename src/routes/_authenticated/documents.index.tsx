@@ -53,6 +53,11 @@ function DocumentsPage() {
     const file = v.file?.[0];
     if (!file) { toast.error("Choose a file"); return; }
     if (file.size > 20 * 1024 * 1024) { toast.error("Max file size is 20 MB"); return; }
+    const allowed = ["application/pdf","image/jpeg","image/png","image/webp","image/heic","image/heif"];
+    if (file.type && !allowed.includes(file.type)) {
+      toast.error("Unsupported file type. Allowed: PDF, JPEG, PNG, WebP, HEIC.");
+      return;
+    }
     setUploading(true);
     try {
       const { data: userRes } = await supabase.auth.getUser();
