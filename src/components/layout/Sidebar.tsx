@@ -12,6 +12,11 @@ import {
   CreditCard,
   Settings,
   ShieldCheck,
+  Fuel,
+  Wrench,
+  Store,
+  BarChart3,
+  Trophy,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { isAdmin } from "@/lib/rbac";
@@ -19,13 +24,18 @@ import { cn } from "@/lib/utils";
 
 const NAV = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/tracking", label: "Live Tracking", icon: MapPin },
   { to: "/vehicles", label: "Vehicles", icon: Truck },
   { to: "/drivers", label: "Drivers", icon: Users },
   { to: "/trips", label: "Trips", icon: Map },
+  { to: "/marketplace", label: "Load Marketplace", icon: Store },
+  { to: "/fuel", label: "Fuel", icon: Fuel },
+  { to: "/maintenance", label: "Maintenance", icon: Wrench },
   { to: "/expenses", label: "Expenses", icon: Receipt },
   { to: "/documents", label: "Documents", icon: FileText },
+  { to: "/analytics", label: "Analytics", icon: BarChart3 },
+  { to: "/drivers-scoreboard", label: "Driver Scores", icon: Trophy },
   { to: "/alerts", label: "Alerts", icon: Bell },
-  { to: "/tracking", label: "Live Tracking", icon: MapPin },
   { to: "/ai", label: "AI Assistant", icon: Sparkles },
   { to: "/billing", label: "Billing", icon: CreditCard },
   { to: "/settings", label: "Settings", icon: Settings },
