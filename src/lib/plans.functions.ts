@@ -9,7 +9,7 @@ export const listPlans = createServerFn({ method: "GET" })
       .select("*")
       .eq("is_active", true)
       .order("sort_order", { ascending: true });
-    if (error) throw new Error(error.message);
+    if (error) { console.error(error); throw new Error("Request failed. Please try again."); }
     return data ?? [];
   });
 
@@ -22,6 +22,6 @@ export const listInvoices = createServerFn({ method: "GET" })
       .eq("owner_id", context.userId)
       .order("created_at", { ascending: false })
       .limit(50);
-    if (error) throw new Error(error.message);
+    if (error) { console.error(error); throw new Error("Request failed. Please try again."); }
     return data ?? [];
   });

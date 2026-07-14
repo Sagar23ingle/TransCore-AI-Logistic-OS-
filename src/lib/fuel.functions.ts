@@ -26,7 +26,7 @@ export const listFuelLogs = createServerFn({ method: "GET" })
       .eq("owner_id", context.userId)
       .order("filled_on", { ascending: false })
       .limit(500);
-    if (error) throw new Error(error.message);
+    if (error) { console.error(error); throw new Error("Request failed. Please try again."); }
     return data ?? [];
   });
 
@@ -39,7 +39,7 @@ export const upsertFuelLog = createServerFn({ method: "POST" })
       .upsert({ ...data, owner_id: context.userId } as never, { onConflict: "id" })
       .select("*")
       .single();
-    if (error) throw new Error(error.message);
+    if (error) { console.error(error); throw new Error("Request failed. Please try again."); }
     await context.supabase.from("expenses").insert({
       owner_id: context.userId,
       vehicle_id: data.vehicle_id,
@@ -61,7 +61,7 @@ export const deleteFuelLog = createServerFn({ method: "POST" })
       .delete()
       .eq("id", data.id)
       .eq("owner_id", context.userId);
-    if (error) throw new Error(error.message);
+    if (error) { console.error(error); throw new Error("Request failed. Please try again."); }
     return { ok: true };
   });
 
@@ -75,7 +75,7 @@ export const getFuelAnalytics = createServerFn({ method: "GET" })
       .eq("owner_id", userId)
       .order("filled_on", { ascending: true })
       .limit(2000);
-    if (error) throw new Error(error.message);
+    if (error) { console.error(error); throw new Error("Request failed. Please try again."); }
 
     const byVehicle = new Map<string, NonNullable<typeof logs>>();
     for (const l of logs ?? []) {

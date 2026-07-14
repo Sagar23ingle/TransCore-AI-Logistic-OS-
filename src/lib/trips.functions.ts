@@ -28,7 +28,7 @@ export const listTrips = createServerFn({ method: "GET" })
       .select("*, vehicle:vehicles(id, registration_number), driver:drivers(id, full_name)")
       .eq("owner_id", context.userId)
       .order("created_at", { ascending: false });
-    if (error) throw new Error(error.message);
+    if (error) { console.error(error); throw new Error("Request failed. Please try again."); }
     return data ?? [];
   });
 
@@ -42,7 +42,7 @@ export const upsertTrip = createServerFn({ method: "POST" })
       .upsert(payload as never, { onConflict: "id" })
       .select("*")
       .single();
-    if (error) throw new Error(error.message);
+    if (error) { console.error(error); throw new Error("Request failed. Please try again."); }
     return row;
   });
 
@@ -55,6 +55,6 @@ export const deleteTrip = createServerFn({ method: "POST" })
       .delete()
       .eq("id", data.id)
       .eq("owner_id", context.userId);
-    if (error) throw new Error(error.message);
+    if (error) { console.error(error); throw new Error("Request failed. Please try again."); }
     return { ok: true };
   });

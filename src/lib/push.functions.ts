@@ -16,7 +16,7 @@ export const savePushSubscription = createServerFn({ method: "POST" })
     const { error } = await context.supabase
       .from("push_subscriptions")
       .upsert({ ...data, user_id: context.userId, last_seen_at: new Date().toISOString() } as never, { onConflict: "endpoint" });
-    if (error) throw new Error(error.message);
+    if (error) { console.error(error); throw new Error("Request failed. Please try again."); }
     return { ok: true };
   });
 
@@ -29,7 +29,7 @@ export const removePushSubscription = createServerFn({ method: "POST" })
       .delete()
       .eq("endpoint", data.endpoint)
       .eq("user_id", context.userId);
-    if (error) throw new Error(error.message);
+    if (error) { console.error(error); throw new Error("Request failed. Please try again."); }
     return { ok: true };
   });
 
@@ -53,6 +53,6 @@ export const saveAlertPrefs = createServerFn({ method: "POST" })
     const { error } = await context.supabase
       .from("alert_prefs")
       .upsert({ user_id: context.userId, ...data, updated_at: new Date().toISOString() } as never, { onConflict: "user_id" });
-    if (error) throw new Error(error.message);
+    if (error) { console.error(error); throw new Error("Request failed. Please try again."); }
     return { ok: true };
   });

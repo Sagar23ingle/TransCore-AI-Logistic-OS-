@@ -50,7 +50,7 @@ export const listAlerts = createServerFn({ method: "GET" })
       .eq("is_dismissed", false)
       .order("severity", { ascending: false })
       .order("days_remaining", { ascending: true });
-    if (error) throw new Error(error.message);
+    if (error) { console.error(error); throw new Error("Request failed. Please try again."); }
     return data ?? [];
   });
 
@@ -133,7 +133,7 @@ export const recomputeAlerts = createServerFn({ method: "POST" })
 
     if (rows.length) {
       const { error } = await supabase.from("alerts").upsert(rows as never, { onConflict: "owner_id,dedup_key", ignoreDuplicates: false });
-      if (error) throw new Error(error.message);
+      if (error) { console.error(error); throw new Error("Request failed. Please try again."); }
     }
 
     return { generated: rows.length };
@@ -145,6 +145,6 @@ export const dismissAlert = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const { error } = await context.supabase
       .from("alerts").update({ is_dismissed: true }).eq("id", data.id).eq("owner_id", context.userId);
-    if (error) throw new Error(error.message);
+    if (error) { console.error(error); throw new Error("Request failed. Please try again."); }
     return { ok: true };
   });

@@ -51,7 +51,7 @@ export const listOpenLoads = createServerFn({ method: "GET" })
       .in("status", ["open", "assigned"])
       .order("pickup_at", { ascending: true })
       .limit(200);
-    if (error) throw new Error(error.message);
+    if (error) { console.error(error); throw new Error("Request failed. Please try again."); }
     return data ?? [];
   });
 
@@ -63,7 +63,7 @@ export const listMyLoads = createServerFn({ method: "GET" })
       .select("*")
       .eq("broker_id", context.userId)
       .order("created_at", { ascending: false });
-    if (error) throw new Error(error.message);
+    if (error) { console.error(error); throw new Error("Request failed. Please try again."); }
     return data ?? [];
   });
 
@@ -76,7 +76,7 @@ export const upsertLoad = createServerFn({ method: "POST" })
       .upsert({ ...data, broker_id: context.userId } as never, { onConflict: "id" })
       .select("*")
       .single();
-    if (error) throw new Error(error.message);
+    if (error) { console.error(error); throw new Error("Request failed. Please try again."); }
     return row;
   });
 
@@ -89,7 +89,7 @@ export const cancelLoad = createServerFn({ method: "POST" })
       .update({ status: "cancelled" } as never)
       .eq("id", data.id)
       .eq("broker_id", context.userId);
-    if (error) throw new Error(error.message);
+    if (error) { console.error(error); throw new Error("Request failed. Please try again."); }
     return { ok: true };
   });
 
@@ -102,7 +102,7 @@ export const listAvailableTrucks = createServerFn({ method: "GET" })
       .eq("is_active", true)
       .order("available_from", { ascending: true })
       .limit(200);
-    if (error) throw new Error(error.message);
+    if (error) { console.error(error); throw new Error("Request failed. Please try again."); }
     return data ?? [];
   });
 
@@ -114,7 +114,7 @@ export const listMyTruckPosts = createServerFn({ method: "GET" })
       .select("*, vehicle:vehicles(id, registration_number)")
       .eq("owner_id", context.userId)
       .order("created_at", { ascending: false });
-    if (error) throw new Error(error.message);
+    if (error) { console.error(error); throw new Error("Request failed. Please try again."); }
     return data ?? [];
   });
 
@@ -127,7 +127,7 @@ export const upsertTruckPost = createServerFn({ method: "POST" })
       .upsert({ ...data, owner_id: context.userId } as never, { onConflict: "id" })
       .select("*")
       .single();
-    if (error) throw new Error(error.message);
+    if (error) { console.error(error); throw new Error("Request failed. Please try again."); }
     return row;
   });
 
@@ -140,7 +140,7 @@ export const deactivateTruckPost = createServerFn({ method: "POST" })
       .update({ is_active: false } as never)
       .eq("id", data.id)
       .eq("owner_id", context.userId);
-    if (error) throw new Error(error.message);
+    if (error) { console.error(error); throw new Error("Request failed. Please try again."); }
     return { ok: true };
   });
 
@@ -161,7 +161,7 @@ export const placeBid = createServerFn({ method: "POST" })
       } as never, { onConflict: "load_id,bidder_id" })
       .select("*")
       .single();
-    if (error) throw new Error(error.message);
+    if (error) { console.error(error); throw new Error("Request failed. Please try again."); }
     return row;
   });
 
@@ -174,7 +174,7 @@ export const listBidsForLoad = createServerFn({ method: "GET" })
       .select("*")
       .eq("load_id", data.load_id)
       .order("bid_amount", { ascending: true });
-    if (error) throw new Error(error.message);
+    if (error) { console.error(error); throw new Error("Request failed. Please try again."); }
     return rows ?? [];
   });
 

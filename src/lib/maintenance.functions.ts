@@ -24,7 +24,7 @@ export const listMaintenance = createServerFn({ method: "GET" })
       .eq("owner_id", context.userId)
       .order("serviced_on", { ascending: false })
       .limit(500);
-    if (error) throw new Error(error.message);
+    if (error) { console.error(error); throw new Error("Request failed. Please try again."); }
     return data ?? [];
   });
 
@@ -37,7 +37,7 @@ export const upsertMaintenance = createServerFn({ method: "POST" })
       .upsert({ ...data, owner_id: context.userId } as never, { onConflict: "id" })
       .select("*")
       .single();
-    if (error) throw new Error(error.message);
+    if (error) { console.error(error); throw new Error("Request failed. Please try again."); }
     if (data.next_service_due_on) {
       await context.supabase
         .from("vehicles")
@@ -67,7 +67,7 @@ export const deleteMaintenance = createServerFn({ method: "POST" })
       .delete()
       .eq("id", data.id)
       .eq("owner_id", context.userId);
-    if (error) throw new Error(error.message);
+    if (error) { console.error(error); throw new Error("Request failed. Please try again."); }
     return { ok: true };
   });
 

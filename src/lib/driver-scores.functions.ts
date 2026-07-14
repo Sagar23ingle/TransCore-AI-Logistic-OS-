@@ -71,6 +71,6 @@ export const listDriverScores = createServerFn({ method: "GET" })
       .select("*, driver:drivers(id, full_name, status)")
       .eq("owner_id", context.userId)
       .order("overall_score", { ascending: false });
-    if (error) throw new Error(error.message);
+    if (error) { console.error(error); throw new Error("Request failed. Please try again."); }
     return data ?? [];
   });
