@@ -5,7 +5,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
-import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { SidebarInner } from "./Sidebar";
 import {
   DropdownMenu,
@@ -43,7 +42,7 @@ export function TopBar() {
           </Button>
         </SheetTrigger>
         <SheetContent side="left" className="w-64 border-sidebar-border bg-sidebar p-0">
-          <VisuallyHidden asChild><SheetTitle>Navigation</SheetTitle></VisuallyHidden>
+          <SheetTitle className="sr-only">Navigation</SheetTitle>
           <SidebarInner onNavigate={() => setMobileOpen(false)} />
         </SheetContent>
       </Sheet>
