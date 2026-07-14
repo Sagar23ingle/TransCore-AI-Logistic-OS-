@@ -12,6 +12,27 @@ type MarkerData = {
 type Polyline = { path: Array<{ lat: number; lng: number }>; color?: string };
 type Circle = { center: { lat: number; lng: number }; radius: number; color?: string };
 
+type LatLngLiteral = { lat: number; lng: number };
+type MapInstance = { fitBounds: (bounds: LatLngBoundsInstance, padding?: number) => void };
+type OverlayInstance = { setMap: (map: MapInstance | null) => void };
+type MarkerInstance = OverlayInstance & { addListener: (eventName: "click", handler: () => void) => unknown };
+type PolylineInstance = OverlayInstance;
+type CircleInstance = OverlayInstance & { getBounds: () => LatLngBoundsInstance | null };
+type LatLngBoundsInstance = {
+  extend: (point: LatLngLiteral) => void;
+  union: (bounds: LatLngBoundsInstance) => void;
+};
+type GoogleMapsApi = {
+  maps: {
+    Map: new (element: HTMLElement, options: Record<string, unknown>) => MapInstance;
+    Marker: new (options: Record<string, unknown>) => MarkerInstance;
+    Polyline: new (options: Record<string, unknown>) => PolylineInstance;
+    Circle: new (options: Record<string, unknown>) => CircleInstance;
+    LatLngBounds: new () => LatLngBoundsInstance;
+    SymbolPath: { CIRCLE: unknown };
+  };
+};
+
 interface Props {
   markers?: MarkerData[];
   polylines?: Polyline[];
@@ -23,7 +44,8 @@ interface Props {
 
 declare global {
   interface Window {
-    google?: typeof google;
+    google?: GoogleMapsApi;
+    __transcoreInitMap?: () => void;
     __transcoreMapReady?: boolean;
     __transcoreMapCallbacks?: Array<() => void>;
   }
@@ -39,7 +61,7 @@ function loadGoogleMaps(): Promise<void> {
     const key = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY;
     const channel = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_TRACKING_ID;
     if (!key) return reject(new Error("Google Maps key not configured"));
-    (window as unknown as { __transcoreInitMap: () => void }).__transcoreInitMap = () => {
+    window.__transcoreInitMap = () => {
       window.__transcoreMapReady = true;
       (window.__transcoreMapCallbacks ?? []).forEach((cb) => cb());
       window.__transcoreMapCallbacks = [];
@@ -61,8 +83,8 @@ const STATUS_COLOR: Record<NonNullable<MarkerData["status"]>, string> = {
 
 export function GoogleMapView({ markers = [], polylines = [], circles = [], center, zoom = 5, className }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const mapRef = useRef<google.maps.Map | null>(null);
-  const overlaysRef = useRef<Array<google.maps.Marker | google.maps.Polyline | google.maps.Circle>>([]);
+  const mapRef = useRef<MapInstance | null>(null);
+  const overlaysRef = useRef<OverlayInstance[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
