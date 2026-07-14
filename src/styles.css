@@ -149,6 +149,13 @@
 }
 
 @layer base {
+  #lovable-badge,
+  #lovable-badge * {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+
   * {
     border-color: var(--color-border);
   }
