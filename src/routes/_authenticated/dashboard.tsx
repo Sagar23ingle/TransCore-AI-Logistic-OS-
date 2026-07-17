@@ -12,6 +12,8 @@ import { AppShell } from "@/components/layout/AppShell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Button } from "@/components/ui/button";
 import { getDashboardStats, getRevenueByMonth, getExpenseBreakdown } from "@/lib/dashboard.functions";
 import { getDailyOps } from "@/lib/daily-ops.functions";
 import { recomputeAlerts } from "@/lib/alerts.functions";
@@ -71,38 +73,77 @@ function Dashboard() {
       {isEmpty ? (
         <OnboardingHero daily={d} />
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-4 md:space-y-6">
           {d && <WelcomeHeader daily={d} />}
-          {d && <TodaySnapshot daily={d} />}
+
+          {/* Mobile command center: health summary + KPI grid + priorities */}
           {d && (
-            <div className="grid gap-4 lg:grid-cols-3">
-              <FleetHealthCard daily={d} />
-              <div className="space-y-4 lg:col-span-2">
-                <PrioritiesCard daily={d} />
-              </div>
+            <div className="space-y-3 md:hidden">
+              <CompactHealthCard daily={d} />
+              <MobileKpiGrid daily={d} stats={s!} />
+              <PrioritiesCard daily={d} />
+              <TopInsights daily={d} />
             </div>
           )}
-          {d && d.insights.length > 0 && <InsightsGrid daily={d} />}
-          {d && <GoalsCard daily={d} />}
-          {d && <TrendCard daily={d} />}
 
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <Kpi icon={<IndianRupee className="h-4 w-4" />} label="Revenue (MTD)" value={formatINR(s!.revenueMTD)} />
-            <Kpi icon={<TrendingDown className="h-4 w-4" />} label="Expenses (MTD)" value={formatINR(s!.expensesMTD)} />
-            <Kpi icon={<Fuel className="h-4 w-4" />} label="Fuel cost (MTD)" value={formatINR(s!.fuelMTD)} />
-            <Kpi
-              icon={<Activity className="h-4 w-4" />}
-              label="Profit (MTD)"
-              value={formatINR(s!.profitMTD)}
-              tone={s!.profitMTD >= 0 ? "positive" : "negative"}
-            />
-            <Kpi icon={<Truck className="h-4 w-4" />} label="Vehicles" value={`${s!.activeVehicles} / ${s!.totalVehicles}`} sub="active / total" />
-            <Kpi icon={<Users className="h-4 w-4" />} label="Drivers" value={formatNumber(s!.totalDrivers)} />
-            <Kpi icon={<MapIcon className="h-4 w-4" />} label="Active trips" value={formatNumber(s!.activeTrips)} sub={`${s!.completedTrips} completed`} />
-            <Kpi icon={<Percent className="h-4 w-4" />} label="Fleet utilization" value={`${s!.fleetUtilization}%`} />
+          {/* Desktop / tablet layout unchanged */}
+          <div className="hidden md:block space-y-6">
+            {d && <TodaySnapshot daily={d} />}
+            {d && (
+              <div className="grid gap-4 lg:grid-cols-3">
+                <FleetHealthCard daily={d} />
+                <div className="space-y-4 lg:col-span-2">
+                  <PrioritiesCard daily={d} />
+                </div>
+              </div>
+            )}
+            {d && d.insights.length > 0 && <InsightsGrid daily={d} />}
+            {d && <GoalsCard daily={d} />}
+            {d && <TrendCard daily={d} />}
+
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <Kpi icon={<IndianRupee className="h-4 w-4" />} label="Revenue (MTD)" value={formatINR(s!.revenueMTD)} />
+              <Kpi icon={<TrendingDown className="h-4 w-4" />} label="Expenses (MTD)" value={formatINR(s!.expensesMTD)} />
+              <Kpi icon={<Fuel className="h-4 w-4" />} label="Fuel cost (MTD)" value={formatINR(s!.fuelMTD)} />
+              <Kpi
+                icon={<Activity className="h-4 w-4" />}
+                label="Profit (MTD)"
+                value={formatINR(s!.profitMTD)}
+                tone={s!.profitMTD >= 0 ? "positive" : "negative"}
+              />
+              <Kpi icon={<Truck className="h-4 w-4" />} label="Vehicles" value={`${s!.activeVehicles} / ${s!.totalVehicles}`} sub="active / total" />
+              <Kpi icon={<Users className="h-4 w-4" />} label="Drivers" value={formatNumber(s!.totalDrivers)} />
+              <Kpi icon={<MapIcon className="h-4 w-4" />} label="Active trips" value={formatNumber(s!.activeTrips)} sub={`${s!.completedTrips} completed`} />
+              <Kpi icon={<Percent className="h-4 w-4" />} label="Fleet utilization" value={`${s!.fleetUtilization}%`} />
+            </div>
           </div>
 
-          <div className="grid gap-6 lg:grid-cols-2">
+          {/* Mobile: collapsed detail sections */}
+          {d && (
+            <Accordion type="multiple" className="space-y-2 md:hidden">
+              <AccordionItem value="health" className="rounded-xl border border-border/60 bg-card px-3">
+                <AccordionTrigger className="py-3 text-sm font-medium">Fleet health breakdown</AccordionTrigger>
+                <AccordionContent className="pb-4"><FleetHealthCard daily={d} /></AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="analytics" className="rounded-xl border border-border/60 bg-card px-3">
+                <AccordionTrigger className="py-3 text-sm font-medium">Analytics & trends</AccordionTrigger>
+                <AccordionContent className="pb-4 space-y-3">
+                  <TrendCard daily={d} />
+                  <MobileCharts revenue={revenue.data ?? []} breakdown={breakdown.data ?? []} />
+                </AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="goals" className="rounded-xl border border-border/60 bg-card px-3">
+                <AccordionTrigger className="py-3 text-sm font-medium">Monthly goals</AccordionTrigger>
+                <AccordionContent className="pb-4"><GoalsCard daily={d} /></AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="reports" className="rounded-xl border border-border/60 bg-card px-3">
+                <AccordionTrigger className="py-3 text-sm font-medium">All insights ({d.insights.length})</AccordionTrigger>
+                <AccordionContent className="pb-4"><InsightsGrid daily={d} /></AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          )}
+
+          <div className="hidden md:grid gap-6 lg:grid-cols-2">
             <Card>
               <CardHeader><CardTitle className="text-base">Revenue vs Expenses (6 mo)</CardTitle></CardHeader>
               <CardContent className="h-72">
@@ -140,6 +181,128 @@ function Dashboard() {
         </div>
       )}
     </AppShell>
+  );
+}
+
+/* -------------------- Mobile-first sub-components -------------------- */
+
+function CompactHealthCard({ daily }: { daily: Daily }) {
+  const { score, band, reasons } = daily.health;
+  const color = band === "excellent" ? "text-emerald-500" : band === "good" ? "text-primary" : band === "attention" ? "text-amber-500" : "text-destructive";
+  const top = reasons.slice().sort((a, b) => a.score - b.score)[0];
+  return (
+    <Card className="overflow-hidden">
+      <CardContent className="flex items-center gap-4 p-4">
+        <div className="relative grid h-16 w-16 shrink-0 place-items-center rounded-full border-4 border-border/60">
+          <div className={`text-lg font-semibold ${color}`}><AnimatedNumber value={score} /></div>
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <Heart className="h-3.5 w-3.5 text-primary" />
+            <span className="text-xs uppercase tracking-wider text-muted-foreground">Fleet health</span>
+            <Badge variant="outline" className={`ml-auto capitalize text-[10px] ${color}`}>{band}</Badge>
+          </div>
+          <div className="mt-1 truncate text-sm font-medium">{top ? `Lowest: ${top.label} (${top.score})` : "All systems healthy"}</div>
+          <Progress value={score} className="mt-2 h-1.5" />
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function MobileKpiTile({ icon, label, value, tone }: { icon: React.ReactNode; label: string; value: string; tone?: "positive" | "negative" | "warn" }) {
+  const toneCls = tone === "negative" ? "text-destructive" : tone === "warn" ? "text-amber-500" : tone === "positive" ? "text-emerald-500" : "";
+  return (
+    <div className="rounded-xl border border-border/60 bg-card p-3">
+      <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-muted-foreground">
+        <span className="opacity-70">{icon}</span>
+        <span className="truncate">{label}</span>
+      </div>
+      <div className={`num mt-1 text-base font-semibold leading-tight ${toneCls}`}>{value}</div>
+    </div>
+  );
+}
+
+function MobileKpiGrid({ daily, stats }: { daily: Daily; stats: NonNullable<ReturnType<typeof useDailyPlaceholder>> extends never ? never : any }) {
+  const attention = daily.today.pendingDocs + daily.today.overdueDocs;
+  return (
+    <div className="grid grid-cols-2 gap-2">
+      <MobileKpiTile icon={<IndianRupee className="h-3 w-3" />} label="Revenue today" value={formatINR(daily.today.revenue)} tone="positive" />
+      <MobileKpiTile icon={<Truck className="h-3 w-3" />} label="Active trucks" value={`${daily.today.trucksActive}`} />
+      <MobileKpiTile icon={<Fuel className="h-3 w-3" />} label="Fuel today" value={formatINR(daily.today.fuelCost)} />
+      <MobileKpiTile icon={<AlertTriangle className="h-3 w-3" />} label="Alerts" value={`${attention}`} tone={daily.today.overdueDocs > 0 ? "negative" : attention > 0 ? "warn" : undefined} />
+    </div>
+  );
+}
+
+function TopInsights({ daily }: { daily: Daily }) {
+  const [expanded, setExpanded] = useState(false);
+  if (daily.insights.length === 0) return null;
+  const shown = expanded ? daily.insights : daily.insights.slice(0, 2);
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="flex items-center gap-2 text-sm"><Lightbulb className="h-4 w-4 text-primary" /> AI insights</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-2 pt-0">
+        {shown.map((ins) => (
+          <div key={ins.id} className="rounded-lg border border-border/60 bg-muted/20 p-3">
+            <div className="mb-1 flex items-center gap-2"><InsightIcon tone={ins.tone} /><span className="text-[10px] uppercase tracking-wider text-muted-foreground">{ins.tone}</span></div>
+            <div className="text-sm font-semibold leading-snug">{ins.issue}</div>
+            <div className="mt-0.5 text-xs text-muted-foreground">{ins.impact}</div>
+            {ins.href && (
+              <Link to={ins.href} className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline">
+                {ins.action} <ChevronRight className="h-3.5 w-3.5" />
+              </Link>
+            )}
+          </div>
+        ))}
+        {daily.insights.length > 2 && (
+          <Button variant="ghost" size="sm" className="w-full" onClick={() => setExpanded((v) => !v)}>
+            {expanded ? "Show less" : `View ${daily.insights.length - 2} more`}
+          </Button>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function MobileCharts({ revenue, breakdown }: { revenue: any[]; breakdown: any[] }) {
+  return (
+    <div className="space-y-3">
+      <Card>
+        <CardHeader className="pb-2"><CardTitle className="text-sm">Revenue vs Expenses</CardTitle></CardHeader>
+        <CardContent className="h-56">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={revenue}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+              <XAxis dataKey="label" stroke="var(--color-muted-foreground)" fontSize={11} />
+              <YAxis stroke="var(--color-muted-foreground)" fontSize={11} />
+              <Tooltip contentStyle={{ background: "var(--color-popover)", border: "1px solid var(--color-border)", borderRadius: 8 }} />
+              <Bar dataKey="revenue" fill="var(--color-primary)" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="expenses" fill="var(--color-destructive)" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader className="pb-2"><CardTitle className="text-sm">Expense breakdown</CardTitle></CardHeader>
+        <CardContent className="h-56">
+          {breakdown.length === 0 ? (
+            <div className="flex h-full items-center justify-center text-sm text-muted-foreground">No expenses this month.</div>
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie data={breakdown} dataKey="amount" nameKey="category" innerRadius={40} outerRadius={75}>
+                  {breakdown.map((_, i) => (<Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />))}
+                </Pie>
+                <Tooltip contentStyle={{ background: "var(--color-popover)", border: "1px solid var(--color-border)", borderRadius: 8 }} />
+              </PieChart>
+            </ResponsiveContainer>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 }
 
