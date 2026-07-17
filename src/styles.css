@@ -1,6 +1,7 @@
 @import "tailwindcss" source(none);
 @source "../src";
 @import "tw-animate-css";
+@import "@fontsource-variable/geist";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -66,8 +67,8 @@
   /* TransCore AI — Fleet Command Center theme.
      Background #0B0F14 · Cards #121923 · Surface #182230
      Primary #00D1B2 · Secondary #38BDF8 · Success #22C55E · Warning #F59E0B · Danger #EF4444 */
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Sora", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Geist Variable", "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Geist Variable", "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --background: oklch(0.17 0.018 240);          /* #0B0F14 */
   --foreground: oklch(0.96 0.008 240);
   --card: oklch(0.22 0.020 240);                /* #121923 */
