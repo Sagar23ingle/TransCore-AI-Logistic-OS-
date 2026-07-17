@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { createContext, createElement, useContext, useEffect, useState, type ReactNode } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import type { AppRole } from "@/lib/rbac";
@@ -10,7 +10,9 @@ export interface AuthState {
   roles: AppRole[];
 }
 
-export function useAuth(): AuthState {
+const AuthContext = createContext<AuthState | null>(null);
+
+function useAuthInternal(): AuthState {
   const [state, setState] = useState<AuthState>({
     ready: false,
     session: null,
@@ -27,7 +29,6 @@ export function useAuth(): AuthState {
       return data.map((r) => r.role as AppRole);
     }
 
-    // Subscribe first, then hydrate
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!mounted) return;
       setState((s) => ({ ...s, session, user: session?.user ?? null }));
@@ -56,4 +57,16 @@ export function useAuth(): AuthState {
   }, []);
 
   return state;
+}
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const value = useAuthInternal();
+  return createElement(AuthContext.Provider, { value }, children);
+}
+
+export function useAuth(): AuthState {
+  const ctx = useContext(AuthContext);
+  if (ctx) return ctx;
+  // Fallback: standalone usage (e.g. outside provider during tests)
+  return useAuthInternal();
 }
