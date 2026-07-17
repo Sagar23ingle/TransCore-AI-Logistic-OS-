@@ -15,6 +15,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { Toaster } from "@/components/ui/sonner";
 
 function NotFoundComponent() {
+  if (typeof document !== "undefined") {
+    const existing = document.querySelector('meta[name="robots"][data-nf]');
+    if (!existing) {
+      const m = document.createElement("meta");
+      m.setAttribute("name", "robots");
+      m.setAttribute("content", "noindex");
+      m.setAttribute("data-nf", "1");
+      document.head.appendChild(m);
+    }
+  }
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
@@ -85,6 +95,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:title", content: "TransCore AI — Fleet & Logistics Platform" },
       { property: "og:description", content: "AI-powered fleet management for real truck owners: trips, documents, live tracking, expense analytics, and smart alerts." },
       { property: "og:type", content: "website" },
+      { property: "og:site_name", content: "TransCore AI" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "theme-color", content: "#111111" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
@@ -99,6 +110,29 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
       { rel: "manifest", href: "/manifest.webmanifest" },
       { rel: "apple-touch-icon", href: "/favicon.ico" },
+    ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Organization",
+          name: "TransCore AI",
+          url: "https://transcoreai.lovable.app",
+          logo: "https://transcoreai.lovable.app/favicon.ico",
+          description:
+            "AI-powered fleet management platform for truck owners, fleet managers and brokers.",
+        }),
+      },
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          name: "TransCore AI",
+          url: "https://transcoreai.lovable.app",
+        }),
+      },
     ],
   }),
   shellComponent: RootShell,

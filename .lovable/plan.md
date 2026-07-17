@@ -1,91 +1,96 @@
+# SEO Plan — TransCore AI
 
-# Scope reality check
+TransCore AI is 99% authenticated app (dashboards, tracking, admin). Google only indexes public pages, so SEO here means **creating a real public marketing surface** in front of the app, plus wiring the technical basics. This is both a content plan and an implementation plan.
 
-You picked **full multi-tenant** + **Audit Log/Fleet Manager** + **Compliance engine/Executive dashboard**. That touches ~24 tables, every RLS policy, and every server function. Doing it all in one turn guarantees regressions in your existing working modules (trips, vehicles, fuel, dashboard, tracking, marketplace).
+## Goals
+- Rank for buyer-intent queries: "fleet management software India", "truck GPS tracking app", "logistics SaaS for truck owners", "AI trip & expense tracker", "load marketplace for brokers".
+- Establish authority for informational queries: fuel efficiency, driver scoring, vehicle compliance, cost-per-km.
+- Convert organic visitors → signups on `/auth`.
 
-I'll deliver it in **3 sequential turns**, each fully working and tested before the next. This turn = Phase 1. Say "go" and I'll ship it.
+## 1. Public marketing routes (new)
+All rendered SSR with unique `head()` metadata, canonical, og:url, JSON-LD.
 
----
+- `/` — Home (rewrite current index as a real landing page: hero, problem, features grid, social proof, CTA to `/auth`).
+- `/features` — overview + anchored sections.
+- `/features/gps-tracking`
+- `/features/trip-expense-management`
+- `/features/document-vault`
+- `/features/driver-scoring`
+- `/features/load-marketplace`
+- `/features/ai-insights`
+- `/pricing` — plans from DB (Free / Pro / Fleet) with FAQ.
+- `/for/truck-owners`
+- `/for/fleet-managers`
+- `/for/brokers`
+- `/about`
+- `/contact` — form → `contact_messages` table.
+- `/blog` + `/blog/$slug` — DB-backed articles (`posts` table, `published=true`).
+- `/legal/privacy`, `/legal/terms`
+- `/404` handled by existing `notFoundComponent`.
 
-## Phase 1 — this turn
+## 2. Per-route head metadata
+Every public route defines: `title` (<60 chars, keyword-led), `description` (<160 chars), `og:title`, `og:description`, `og:url`, `og:type` (`article` for blog, else `website`), `twitter:card=summary_large_image`, and a leaf-only `<link rel="canonical">`. Root keeps sitewide defaults only — remove page-specific title from `__root.tsx`. Add `og:image` per route only when a real hero image exists (blog covers, feature hero); otherwise omit and let hosting inject.
 
-### A. Multi-tenant foundation (migration 1)
+## 3. Structured data (JSON-LD)
+- Root: `Organization` + `WebSite` with `SearchAction`.
+- `/pricing`: `Product` + `Offer` per plan.
+- `/blog/$slug`: `Article` + `BreadcrumbList`, headline/image/date from loader.
+- `/contact`, `/about`: `ContactPage` / `AboutPage`.
+- Feature pages: `SoftwareApplication` on `/` and `/features/*`.
 
-New tables:
-- `companies` (name, gstin, contact, plan_id, created_by)
-- `company_members` (company_id, user_id, role: `owner|manager|driver|broker|viewer`, unique(company_id,user_id))
+## 4. Technical SEO
+- **Dynamic sitemap** at `src/routes/sitemap[.]xml.ts` — enumerates all public routes + all `published` blog posts, `BASE_URL = https://transcoreai.lovable.app`.
+- **robots.txt** — keep the app-route disallows, keep `Sitemap: https://transcoreai.lovable.app/sitemap.xml` absolute.
+- **404**: already set; add `noindex` meta on it.
+- **Auth pages** (`/auth`): add `noindex` meta (not useful in search).
+- **Performance**: lazy-load below-the-fold images with `loading="lazy"`, add `width`/`height`, use responsive `<img srcset>` for hero, prefetch `/auth` on CTA hover (TanStack `preload="intent"`).
+- **Accessibility/semantics**: single `<h1>` per page, semantic `<header>/<main>/<footer>`, descriptive `alt` on every image, skip-to-content link.
+- **Internal linking**: footer with links to every public route, contextual cross-links between feature pages and matching blog posts.
 
-Enum change:
-- Add `fleet_manager` to `app_role` (global admin-style role stays; `company_members.role` is the company-scoped role).
+## 5. Content plan (blog seed — 12 posts)
+Buyer-intent + informational, one post per fortnight:
 
-Helpers (SECURITY DEFINER, search_path=public):
-- `is_company_member(_company uuid)` → boolean
-- `company_role(_company uuid)` → text
-- `user_companies()` → setof uuid
-- `current_company_id()` → uuid (reads `request.jwt.claims->>'active_company'` set by app, falls back to first membership)
+1. Best fleet management software for Indian truck owners (2026)
+2. How to calculate true cost-per-km for your truck
+3. GPS tracking vs telematics: what small fleets actually need
+4. Driver scoring: 6 metrics that predict accidents & fuel waste
+5. Document expiry alerts: the compliance checklist for Indian trucks (RC, FC, insurance, PUC)
+6. Reducing fuel theft: anomaly detection with real fuel logs
+7. Load marketplace guide: how brokers and truck owners settle fair rates
+8. Predictive maintenance: turning odometer data into service alerts
+9. Trip settlement without spreadsheets
+10. GST invoicing for transporters — a practical primer
+11. AI in logistics: what actually works in 2026
+12. Case study template — publish real customer stories as they come
 
-Add `company_id uuid REFERENCES companies` to the **core operational tables** (nullable, backfilled):
-`vehicles, drivers, trips, expenses, fuel_logs, maintenance_logs, documents, alerts, audit_log, driver_scores, gps_pings, geofences, geofence_events, invoices`.
+Each post: 1,200–1,800 words, primary keyword in title/H1/first 100 words/URL, one internal link to the matching `/features/*` and `/pricing`, one external authoritative reference.
 
-**Backfill**: for each existing user with data, create one company (`"<full_name>'s Fleet"`), add them as `owner`, stamp all their rows with that company_id. After backfill, set `company_id NOT NULL` on the same tables.
+## 6. Off-page & discovery
+- **Google Search Console**: verify via META token (agent runs the verification flow), submit sitemap.
+- **Bing Webmaster Tools**: import from GSC.
+- **Business listings**: Google Business Profile, Crunchbase, ProductHunt launch, LinkedIn company page, relevant Indian logistics directories.
+- **Backlinks**: guest posts on logistics blogs, answer relevant Quora/Reddit threads with post links, partner with driver-community forums.
 
-**RLS rewrite** for those tables: `USING (is_company_member(company_id))` plus role-scoped write policies (owner/manager can write; driver/broker read-only or scoped). Keep existing `owner_id` column and its policies as a compatibility fallback for one phase, then drop in Phase 3.
+## 7. Analytics & monitoring
+- Wire lightweight page-view + `signup_click` events into existing `analytics_events` table on public routes.
+- Weekly Search Console review (impressions, CTR, position) — decide next content topic from actual queries.
+- Monthly SEO scan via built-in tool; track fixes.
 
-Grants: `authenticated` gets SELECT/INSERT/UPDATE/DELETE on companies + company_members with policies scoped to `auth.uid()`.
+## 8. Rollout order (build phases)
+1. **Foundation** — dynamic sitemap route, `noindex` on `/auth` + 404, footer with public links, sitewide JSON-LD.
+2. **Landing + top funnel** — rewrite `/`, add `/features`, `/pricing`, `/for/truck-owners`, `/for/fleet-managers`, `/for/brokers`.
+3. **Deep feature pages** — 6 `/features/*` routes with unique metadata + `SoftwareApplication` schema.
+4. **Blog infrastructure** — `posts` table (title, slug, excerpt, cover_url, body_md, author, published, published_at) with RLS (public read where `published=true`, author write), `/blog` index, `/blog/$slug` with `Article` JSON-LD, cover → og:image.
+5. **Company pages** — `/about`, `/contact` (+ `contact_messages` table), `/legal/*`.
+6. **Content push** — seed the 12 posts.
+7. **Search Console + GBP + first backlinks**.
 
-### B. Company switcher
+## Technical details (for the engineer)
+- New routes use `createFileRoute` with `head({ params, loaderData })`; leaf routes carry canonical in `links`.
+- Origin helper (`src/lib/origin.functions.ts`) via `getRequestOrigin` for absolute og:image URLs on dynamic blog posts.
+- Sitemap loads posts inside handler with server-side publishable Supabase client (public `TO anon` SELECT on `posts` where `published`).
+- `posts` and `contact_messages` migrations include `GRANT`s per project rules; `posts` gets `GRANT SELECT ON public.posts TO anon` scoped by RLS to published rows.
+- Preserve current `_authenticated` layout and all existing app routes untouched.
+- After foundation ships, trigger an SEO scan and mark passing findings fixed.
 
-- `src/hooks/use-company.ts` — reads memberships, keeps active company in `localStorage` + broadcasts change.
-- `src/components/layout/CompanySwitcher.tsx` — dropdown in TopBar (create company, switch).
-- All server functions in `vehicles/drivers/trips/expenses/fuel/maintenance/documents/alerts/dashboard/analytics.functions.ts` get an `active_company_id` input from the client and use it as the primary filter (RLS still enforces).
-
-### C. Audit Log surface
-
-- `src/lib/audit.functions.ts` — `listAudit({ company_id, filters, cursor })` returning paginated entries with actor profile join.
-- `src/routes/_authenticated/audit.index.tsx` — filterable timeline (actor, action, entity, date range, IP), searchable.
-- Extend `audit()` helper to always stamp `company_id`.
-- Wire audit calls into: vehicle/driver/trip create/update/delete, settings changes, document upload/delete, login (via auth state change).
-
-### D. Fleet Manager role
-
-- Sidebar/route visibility: manager sees everything owner sees except billing + company settings destructive actions.
-- Server functions check `company_role()` for write ops on settings/billing.
-- Admin page gains a "Team" tab: invite by email, assign company role, remove.
-
-### E. Compliance alert engine (cron)
-
-- `src/routes/api/public/hooks/compliance-scan.ts` — scans vehicles (insurance/permit/fitness/puc/maintenance_next_due) and drivers (license_expiry) across all companies, inserts `alerts` rows with severity=`critical|warning|info` based on days-to-expiry (<0/≤7/≤30), dedupes on (entity_id, kind, due_date).
-- `pg_cron` daily at 03:00 IST → POST to that route (via insert tool, not migration).
-- Alerts page already exists; add severity filter + "expiring soon" grouping.
-
-### F. Executive dashboard
-
-- New route `/_authenticated/executive.tsx` (fleet_owner + fleet_manager + super_admin only).
-- `src/lib/executive.functions.ts` — one server fn returning: revenue/expense/profit (MTD, YTD), active vehicles/drivers, trips today, expiring-docs count, maintenance-due count, top 5 vehicles by profit, top 5 drivers by score, open cost-leakage alerts count.
-- Charts reuse existing recharts setup. Zero hardcoded numbers.
-
-### Verification this turn
-
-- `tsgo` clean.
-- Manual: log in → switch/create company → old data appears under new company → create vehicle → audit row appears in Audit page → run compliance cron manually via curl → alerts appear → executive dashboard shows real numbers.
-
----
-
-## Phase 2 — next turn
-
-Global search · Data export (CSV/Excel) · OCR on document upload (Lovable AI Gemini vision) · Trip settlement PDF/Excel · Fuel anomaly detection (rolling z-score) · Route deviation analytics (from gps_pings vs planned route) · Predictive maintenance (interval-based projection) · Cost leakage AI (Lovable AI over rolled-up per-vehicle costs).
-
-## Phase 3 — final turn
-
-Drop legacy `owner_id` columns and policies · super-admin cross-company read views · permission matrix admin UI · audit retention/archive · full RBAC test pass.
-
----
-
-## Technical notes
-
-- Zero data loss: backfill is idempotent, wrapped in a transaction, verifies row counts before flipping NOT NULL.
-- No breaking changes to existing routes this turn — every current page keeps working because we keep `owner_id` populated in parallel.
-- `active_company` is client-set (localStorage → passed on every server fn call). RLS is the security boundary, not the client value.
-- `has_role` / `current_user_is_admin` stay for global admin. Company-scoped checks use the new `company_role()` helper — no privilege-escalation path.
-
-Reply **"go"** to start Phase 1.
+Reply "go" to start phase 1, or tell me which phase to run first.

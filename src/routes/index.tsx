@@ -26,6 +26,25 @@ export const Route = createFileRoute("/")({
         content:
           "The logistics OS for real truck owners. Live tracking, smart alerts, AI insights, document vault, expense analytics.",
       },
+      { property: "og:url", content: "https://transcoreai.lovable.app/" },
+      { property: "og:type", content: "website" },
+    ],
+    links: [{ rel: "canonical", href: "https://transcoreai.lovable.app/" }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "SoftwareApplication",
+          name: "TransCore AI",
+          applicationCategory: "BusinessApplication",
+          operatingSystem: "Web",
+          url: "https://transcoreai.lovable.app/",
+          description:
+            "AI-powered fleet management: vehicles, drivers, trips, GPS tracking, documents, expenses and smart alerts for truck owners, fleet managers and brokers.",
+          offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+        }),
+      },
     ],
   }),
   component: Landing,
