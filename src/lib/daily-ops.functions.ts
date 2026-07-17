@@ -244,8 +244,8 @@ export const getDailyOps = createServerFn({ method: "GET" })
       insights.push({
         id: `alert-${critAlert.id}`,
         tone: "critical",
-        issue: critAlert.title,
-        impact: critAlert.message,
+        issue: critAlert.title ?? "Critical compliance alert",
+        impact: critAlert.message ?? "",
         action: "Renew now to avoid penalties",
         href: "/alerts",
       });
