@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, forwardRef } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { useMutation } from "@tanstack/react-query";
@@ -433,19 +433,17 @@ function FieldWrap({ label, children }: { label: string; children: React.ReactNo
   );
 }
 
-const RegPart = (() => {
-  const Comp = (
-    {
-      label, value, onChange, placeholder, list,
-    }: {
-      label: string;
-      value: string;
-      onChange: (v: string) => void;
-      placeholder: string;
-      list?: string;
-    },
-    ref: React.Ref<HTMLInputElement>,
-  ) => (
+type RegPartProps = {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder: string;
+  list?: string;
+};
+const RegPart = forwardRef<HTMLInputElement, RegPartProps>(function RegPart(
+  { label, value, onChange, placeholder, list }, ref,
+) {
+  return (
     <div className="space-y-1">
       <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</Label>
       <Input
@@ -458,9 +456,7 @@ const RegPart = (() => {
       />
     </div>
   );
-  Comp.displayName = "RegPart";
-  return (require("react") as typeof import("react")).forwardRef(Comp);
-})();
+});
 
 function ChipRow<T extends string>({
   options, value, onChange,
