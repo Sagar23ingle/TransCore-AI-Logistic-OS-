@@ -1,6 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { useNavigate } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
+import { LogOut } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -17,10 +20,13 @@ export const Route = createFileRoute("/_authenticated/settings/")({
 
 function SettingsPage() {
   const { user, roles } = useAuth();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [company, setCompany] = useState("");
   const [loading, setLoading] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -41,6 +47,19 @@ function SettingsPage() {
     });
     setLoading(false);
     if (error) toast.error(error.message); else toast.success("Profile updated");
+  }
+
+  async function handleSignOut() {
+    setSigningOut(true);
+    try {
+      await queryClient.cancelQueries();
+      queryClient.clear();
+      await supabase.auth.signOut();
+      navigate({ to: "/auth", replace: true });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Sign-out failed");
+      setSigningOut(false);
+    }
   }
 
   return (
@@ -70,6 +89,16 @@ function SettingsPage() {
           </CardContent>
         </Card>
       </div>
+      <Card className="mt-4 border-destructive/40">
+        <CardHeader><CardTitle className="text-base text-destructive">Account</CardTitle></CardHeader>
+        <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-muted-foreground">Sign out of TransCore AI on this device.</p>
+          <Button variant="destructive" onClick={handleSignOut} disabled={signingOut} className="gap-2">
+            <LogOut className="h-4 w-4" />
+            {signingOut ? "Signing out..." : "Sign out"}
+          </Button>
+        </CardContent>
+      </Card>
     </AppShell>
   );
 }
