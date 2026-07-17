@@ -19,4 +19,4 @@ Disallow: /marketplace
 Disallow: /drivers-scoreboard
 Disallow: /api/
 
-Sitemap: /sitemap.xml
+Sitemap: https://transcoreai.lovable.app/sitemap.xml
