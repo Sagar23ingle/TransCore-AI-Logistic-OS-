@@ -1,5 +1,5 @@
 import { useNavigate } from "@tanstack/react-router";
-import { LogOut, Menu, User } from "lucide-react";
+import { LogOut, Menu, Moon, Sun, User } from "lucide-react";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,12 +17,14 @@ import {
 import { useAuth } from "@/hooks/use-auth";
 import { ROLE_LABELS } from "@/lib/rbac";
 import { CompanySwitcher } from "./CompanySwitcher";
+import { useTheme } from "@/hooks/use-theme";
 
 export function TopBar() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user, roles } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { theme, toggleTheme } = useTheme();
 
   async function handleSignOut() {
     await queryClient.cancelQueries();
@@ -48,6 +50,15 @@ export function TopBar() {
         </SheetContent>
       </Sheet>
       <div className="flex-1"><CompanySwitcher /></div>
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={toggleTheme}
+        aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+        title={theme === "dark" ? "Light mode" : "Dark mode"}
+      >
+        {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+      </Button>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="sm" className="gap-2">
