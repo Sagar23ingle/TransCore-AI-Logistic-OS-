@@ -9,6 +9,7 @@ import {
   Heart, Lightbulb, Sparkles, Target, TrendingUp, Zap,
 } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
@@ -49,6 +50,7 @@ function Dashboard() {
   const dailyFn = useServerFn(getDailyOps);
   const recompute = useServerFn(recomputeAlerts);
   const qc = useQueryClient();
+  const isMobile = useIsMobile();
 
   const stats = useQuery(queryOptions({ queryKey: ["dashboard-stats"], queryFn: () => statsFn() }));
   const revenue = useQuery(queryOptions({ queryKey: ["dashboard-revenue"], queryFn: () => revenueFn() }));
@@ -86,8 +88,9 @@ function Dashboard() {
             </div>
           )}
 
-          {/* Desktop / tablet layout unchanged */}
-          <div className="hidden md:block space-y-6">
+          {/* Desktop / tablet layout — unmounted on mobile to avoid 0-width chart warnings */}
+          {!isMobile && (
+          <div className="space-y-6">
             {d && <TodaySnapshot daily={d} />}
             {d && (
               <div className="grid gap-4 lg:grid-cols-3">
@@ -117,6 +120,7 @@ function Dashboard() {
               <Kpi icon={<Percent className="h-4 w-4" />} label="Fleet utilization" value={`${s!.fleetUtilization}%`} />
             </div>
           </div>
+          )}
 
           {/* Mobile: collapsed detail sections */}
           {d && (
@@ -143,7 +147,8 @@ function Dashboard() {
             </Accordion>
           )}
 
-          <div className="hidden md:grid gap-6 lg:grid-cols-2">
+          {!isMobile && (
+          <div className="grid gap-6 lg:grid-cols-2">
             <Card>
               <CardHeader><CardTitle className="text-base">Revenue vs Expenses (6 mo)</CardTitle></CardHeader>
               <CardContent className="h-72">
@@ -178,6 +183,7 @@ function Dashboard() {
               </CardContent>
             </Card>
           </div>
+          )}
         </div>
       )}
     </AppShell>
