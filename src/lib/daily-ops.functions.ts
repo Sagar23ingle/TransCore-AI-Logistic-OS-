@@ -40,7 +40,7 @@ export const getDailyOps = createServerFn({ method: "GET" })
       supabase.from("drivers").select("id, full_name, status, license_expiry").eq("owner_id", userId),
       supabase.from("trips").select("id, vehicle_id, driver_id, status, freight_amount, distance_km, actual_start, actual_end, created_at").eq("owner_id", userId).gte("created_at", last90.toISOString()),
       supabase.from("expenses").select("amount, category, vehicle_id, incurred_on").eq("owner_id", userId).gte("incurred_on", last90.toISOString().slice(0, 10)),
-      supabase.from("fuel_logs").select("vehicle_id, litres, cost, odometer, filled_on").eq("owner_id", userId).gte("filled_on", last90.toISOString().slice(0, 10)).order("filled_on", { ascending: true }),
+      supabase.from("fuel_logs").select("vehicle_id, litres, total_amount, odometer_km, filled_on").eq("owner_id", userId).gte("filled_on", last90.toISOString().slice(0, 10)).order("filled_on", { ascending: true }),
       supabase.from("alerts").select("id, severity, kind, title, message, days_remaining, due_date, vehicle_id, driver_id").eq("owner_id", userId).eq("is_dismissed", false).order("days_remaining", { ascending: true }),
       supabase.from("driver_scores").select("driver_id, overall_score, period_end").eq("owner_id", userId).order("period_end", { ascending: false }).limit(200),
       supabase.from("maintenance_logs").select("vehicle_id, serviced_on, cost").eq("owner_id", userId).gte("serviced_on", last90.toISOString().slice(0, 10)),
@@ -138,17 +138,19 @@ export const getDailyOps = createServerFn({ method: "GET" })
     const completionScore = denom30 === 0 ? 100 : Math.round((completed30 / denom30) * 100);
 
     // Fuel efficiency: km/L from fuel logs across fleet (last 90d)
-    const byVeh = new Map<string, typeof fuel>();
+    type FuelRow = { vehicle_id: string; litres: number; odometer_km: number | null; filled_on: string };
+    const byVeh = new Map<string, FuelRow[]>();
     for (const f of fuel) {
       if (!f.vehicle_id) continue;
       const arr = byVeh.get(f.vehicle_id) ?? [];
-      arr.push(f); byVeh.set(f.vehicle_id, arr);
+      arr.push({ vehicle_id: f.vehicle_id, litres: Number(f.litres || 0), odometer_km: f.odometer_km ?? null, filled_on: f.filled_on });
+      byVeh.set(f.vehicle_id, arr);
     }
     let totalKm = 0, totalL = 0;
     for (const arr of byVeh.values()) {
-      const sorted = arr.filter((x) => x.odometer != null).sort((a, b) => (a.filled_on! < b.filled_on! ? -1 : 1));
+      const sorted = arr.filter((x) => x.odometer_km != null).sort((a, b) => (a.filled_on < b.filled_on ? -1 : 1));
       if (sorted.length >= 2) {
-        const km = Number(sorted[sorted.length - 1].odometer) - Number(sorted[0].odometer);
+        const km = Number(sorted[sorted.length - 1].odometer_km) - Number(sorted[0].odometer_km);
         const l = sorted.slice(1).reduce((s, x) => s + Number(x.litres || 0), 0);
         if (km > 0 && l > 0) { totalKm += km; totalL += l; }
       }
@@ -267,8 +269,8 @@ export const getDailyOps = createServerFn({ method: "GET" })
     const priorities: Priority[] = alerts.slice(0, 8).map((a) => ({
       id: `alert-${a.id}`,
       severity: (a.severity as Priority["severity"]) ?? "info",
-      title: a.title,
-      message: a.message,
+      title: a.title ?? "",
+      message: a.message ?? "",
       href: a.kind?.startsWith("license") ? "/drivers" : a.kind?.startsWith("maintenance") ? "/maintenance" : "/alerts",
     }));
 
