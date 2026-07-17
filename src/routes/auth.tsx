@@ -29,9 +29,17 @@ function AuthPage() {
   const [fullName, setFullName] = useState("");
 
   useEffect(() => {
+    let cancelled = false;
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/dashboard", replace: true });
+      if (!cancelled && data.session) navigate({ to: "/dashboard", replace: true });
     });
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_IN" && session) navigate({ to: "/dashboard", replace: true });
+    });
+    return () => {
+      cancelled = true;
+      sub.subscription.unsubscribe();
+    };
   }, [navigate]);
 
   async function handleSignIn(e: React.FormEvent) {
@@ -41,10 +49,10 @@ function AuthPage() {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
       toast.success("Welcome back");
-      navigate({ to: "/dashboard", replace: true });
+      // onAuthStateChange handles navigation once the session is persisted,
+      // which avoids the _authenticated guard racing an unpersisted session.
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Sign-in failed");
-    } finally {
       setLoading(false);
     }
   }
