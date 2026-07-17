@@ -14,6 +14,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { supabase } from "@/integrations/supabase/client";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/hooks/use-auth";
+import { ThemeProvider, useTheme } from "@/hooks/use-theme";
 
 function NotFoundComponent() {
   if (typeof document !== "undefined") {
@@ -114,6 +115,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     ],
     scripts: [
       {
+        children:
+          "(function(){try{var t=localStorage.getItem('transcore-theme');if(!t){t=window.matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';}var r=document.documentElement;if(t==='dark'){r.classList.add('dark');}r.style.colorScheme=t;}catch(e){}})();",
+      },
+      {
         type: "application/ld+json",
         children: JSON.stringify({
           "@context": "https://schema.org",
@@ -171,11 +176,18 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-        <Outlet />
-        <Toaster richColors position="top-right" theme="dark" />
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+          <Outlet />
+          <ThemedToaster />
+        </AuthProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
+}
+
+function ThemedToaster() {
+  const { theme } = useTheme();
+  return <Toaster richColors position="top-right" theme={theme} />;
 }
