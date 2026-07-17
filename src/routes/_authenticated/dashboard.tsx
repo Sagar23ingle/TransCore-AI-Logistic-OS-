@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Link } from "@tanstack/react-router";
-import { useQuery, useSuspenseQuery, queryOptions, useQueryClient } from "@tanstack/react-query";
+import { useQuery, queryOptions, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -281,7 +281,7 @@ function FleetHealthCard({ daily }: { daily: Daily }) {
         <Badge variant="outline" className={`capitalize ${healthTone(band)}`}>{band}</Badge>
       </CardHeader>
       <CardContent>
-        <div className="flex items-center justify-center">
+        <div className="relative flex items-center justify-center">
           <svg width={size} height={size} className="-rotate-90">
             <circle cx={size / 2} cy={size / 2} r={r} strokeWidth={stroke} className="fill-none stroke-border/60" />
             <circle
@@ -291,7 +291,7 @@ function FleetHealthCard({ daily }: { daily: Daily }) {
               style={{ transition: "stroke-dasharray 800ms ease-out" }}
             />
           </svg>
-          <div className="pointer-events-none absolute text-center">
+          <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
             <div className={`text-4xl font-semibold ${healthTone(band)}`}><AnimatedNumber value={score} /></div>
             <div className="text-[11px] uppercase tracking-wider text-muted-foreground">out of 100</div>
           </div>
