@@ -129,13 +129,11 @@ export function SidebarInner({ onNavigate }: { onNavigate?: () => void } = {}) {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex h-16 items-center gap-2 border-b border-sidebar-border px-6">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-          <Truck className="h-5 w-5" />
-        </div>
+      <div className="flex h-12 items-center gap-2 border-b border-sidebar-border px-6">
+        <Truck className="h-5 w-5 text-primary" />
         <div>
           <div className="text-sm font-semibold tracking-tight text-sidebar-foreground">TransCore AI</div>
-          <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Fleet OS</div>
+          <div className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground">Fleet OS</div>
         </div>
       </div>
       <nav className="flex-1 overflow-y-auto px-3 py-4">
@@ -143,9 +141,9 @@ export function SidebarInner({ onNavigate }: { onNavigate?: () => void } = {}) {
           to="/dashboard"
           onClick={onNavigate}
           className={cn(
-            "mb-2 flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+            "mb-2 flex items-center gap-3 rounded-sm px-3 py-2 text-sm font-medium transition-colors relative",
             dashboardActive
-              ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm"
+              ? "text-sidebar-foreground before:absolute before:left-0 before:top-1/2 before:h-4 before:w-0.5 before:-translate-y-1/2 before:rounded-full before:bg-primary"
               : "text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground",
           )}
         >
@@ -161,7 +159,7 @@ export function SidebarInner({ onNavigate }: { onNavigate?: () => void } = {}) {
               <AccordionItem key={group.id} value={group.id} className="border-b-0">
                 <AccordionTrigger
                   className={cn(
-                    "group flex items-center gap-3 rounded-lg px-3 py-2 text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/60 hover:bg-sidebar-accent/40 hover:no-underline",
+                    "group flex items-center gap-3 rounded-sm px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-sidebar-foreground/50 hover:bg-sidebar-accent/40 hover:no-underline",
                     groupActive && "text-sidebar-foreground",
                   )}
                 >
@@ -171,7 +169,7 @@ export function SidebarInner({ onNavigate }: { onNavigate?: () => void } = {}) {
                   </span>
                 </AccordionTrigger>
                 <AccordionContent className="pb-1 pt-1">
-                  <div className="ml-2 space-y-0.5 border-l border-sidebar-border/50 pl-2">
+                  <div className="ml-2 space-y-0.5 pl-2">
                     {group.items.map((item) => {
                       const active = isItemActive(pathname, item.to);
                       const ItemIcon = item.icon;
@@ -181,9 +179,9 @@ export function SidebarInner({ onNavigate }: { onNavigate?: () => void } = {}) {
                           to={item.to}
                           onClick={onNavigate}
                           className={cn(
-                            "relative flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm transition-colors",
+                            "relative flex items-center gap-2.5 rounded-sm px-2.5 py-1.5 text-sm transition-colors",
                             active
-                              ? "bg-sidebar-accent text-sidebar-accent-foreground before:absolute before:-left-2.5 before:top-1/2 before:h-4 before:w-0.5 before:-translate-y-1/2 before:rounded-full before:bg-primary"
+                              ? "text-sidebar-foreground before:absolute before:-left-2.5 before:top-1/2 before:h-4 before:w-0.5 before:-translate-y-1/2 before:rounded-full before:bg-primary"
                               : "text-sidebar-foreground/75 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
                           )}
                         >
@@ -204,9 +202,9 @@ export function SidebarInner({ onNavigate }: { onNavigate?: () => void } = {}) {
             to="/admin"
             onClick={onNavigate}
             className={cn(
-              "mt-3 flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
+              "mt-3 flex items-center gap-3 rounded-sm px-3 py-2 text-sm transition-colors relative",
               pathname.startsWith("/admin")
-                ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                ? "text-sidebar-foreground before:absolute before:left-0 before:top-1/2 before:h-4 before:w-0.5 before:-translate-y-1/2 before:rounded-full before:bg-primary"
                 : "text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground",
             )}
           >
