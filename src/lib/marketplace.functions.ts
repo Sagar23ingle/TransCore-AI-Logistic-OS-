@@ -184,9 +184,9 @@ export const acceptBid = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
     const { data: bid, error: be } = await supabase.from("load_bids").select("id, load_id, bidder_id, bid_amount").eq("id", data.bid_id).single();
-    if (be || !bid) throw new Error(be?.message ?? "Bid not found");
+    if (be || !bid) { if (be) console.error(be); throw new Error("Bid not found"); }
     const { data: load, error: le } = await supabase.from("loads").select("id, broker_id").eq("id", bid.load_id).single();
-    if (le || !load) throw new Error(le?.message ?? "Load not found");
+    if (le || !load) { if (le) console.error(le); throw new Error("Load not found"); }
     if (load.broker_id !== userId) throw new Error("Only the load broker can accept a bid");
 
     await supabase.from("loads").update({ status: "assigned", assigned_owner_id: bid.bidder_id } as never).eq("id", load.id);
@@ -201,14 +201,14 @@ export const suggestMatchesForLoad = createServerFn({ method: "GET" })
   .handler(async ({ context, data }) => {
     const { supabase } = context;
     const { data: load, error: le } = await supabase.from("loads").select("*").eq("id", data.load_id).single();
-    if (le || !load) throw new Error(le?.message ?? "Load not found");
+    if (le || !load) { if (le) console.error(le); throw new Error("Load not found"); }
 
     const { data: trucks, error: te } = await supabase
       .from("truck_posts")
       .select("*")
       .eq("is_active", true)
       .gte("capacity_tons", load.weight_tons);
-    if (te) throw new Error(te.message);
+    if (te) { console.error(te); throw new Error("Request failed. Please try again."); }
 
     const R = 6371;
     const rad = (deg: number) => (deg * Math.PI) / 180;
