@@ -3,12 +3,13 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { CircleCheck, Clock, PauseCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { SelectPills } from "@/components/ui/smart-select";
 import { upsertDriver } from "@/lib/drivers.functions";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -19,6 +20,11 @@ type FormValues = {
   joined_on: string; notes: string;
 };
 const d = (v: string | null | undefined) => v ?? "";
+const STATUS_OPTIONS = [
+  { value: "active" as const, label: "Active", icon: CircleCheck },
+  { value: "on_leave" as const, label: "On leave", icon: Clock },
+  { value: "inactive" as const, label: "Inactive", icon: PauseCircle },
+];
 
 export function DriverFormDialog({ open, onOpenChange, initial, onSaved }: { open: boolean; onOpenChange: (v: boolean) => void; initial?: Driver; onSaved?: () => void }) {
   const upsert = useServerFn(upsertDriver);
@@ -58,10 +64,12 @@ export function DriverFormDialog({ open, onOpenChange, initial, onSaved }: { ope
           <F label="License number"><Input {...register("license_number")} /></F>
           <F label="License expiry"><Input type="date" {...register("license_expiry")} /></F>
           <F label="Status">
-            <Select value={watch("status")} onValueChange={(v) => setValue("status", v as FormValues["status"])}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>{(["active", "on_leave", "inactive"] as const).map((s) => (<SelectItem key={s} value={s}>{s}</SelectItem>))}</SelectContent>
-            </Select>
+            <SelectPills
+              ariaLabel="Driver status"
+              value={watch("status")}
+              onChange={(v) => setValue("status", v)}
+              options={STATUS_OPTIONS}
+            />
           </F>
           <F label="Monthly salary (₹)"><Input type="number" step="0.01" {...register("monthly_salary")} /></F>
           <F label="Joined on"><Input type="date" {...register("joined_on")} /></F>

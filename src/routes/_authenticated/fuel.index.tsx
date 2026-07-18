@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { SearchableDropdown } from "@/components/ui/smart-select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/common/EmptyState";
@@ -187,10 +187,12 @@ function FuelPage() {
           <DialogHeader><DialogTitle>Log fuel fill</DialogTitle></DialogHeader>
           <form onSubmit={handleSubmit((v) => mut.mutate(v))} className="grid gap-3 sm:grid-cols-2">
             <F label="Vehicle *" full>
-              <Select value={watch("vehicle_id")} onValueChange={(v) => setValue("vehicle_id", v)}>
-                <SelectTrigger><SelectValue placeholder="Select vehicle" /></SelectTrigger>
-                <SelectContent>{(vehiclesQ.data ?? []).map((v) => (<SelectItem key={v.id} value={v.id}>{v.registration_number}</SelectItem>))}</SelectContent>
-              </Select>
+              <SearchableDropdown
+                placeholder="Select vehicle" ariaLabel="Vehicle"
+                value={watch("vehicle_id")}
+                onChange={(v) => setValue("vehicle_id", v as string)}
+                options={(vehiclesQ.data ?? []).map((v) => ({ value: v.id, label: v.registration_number }))}
+              />
             </F>
             <F label="Date *"><Input type="date" required {...register("filled_on")} /></F>
             <F label="Odometer (km) *"><Input type="number" step="1" required {...register("odometer_km")} /></F>

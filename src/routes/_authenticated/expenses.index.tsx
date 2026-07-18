@@ -3,14 +3,14 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useMutation, useQuery, queryOptions, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Plus, Trash2, Receipt } from "lucide-react";
+import { Plus, Trash2, Receipt, Fuel, Milestone, Wrench, User, Package, Boxes, MoreHorizontal } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { SelectCards, SearchableDropdown } from "@/components/ui/smart-select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/common/EmptyState";
@@ -27,6 +27,15 @@ export const Route = createFileRoute("/_authenticated/expenses/")({
 
 const CATEGORIES = ["fuel", "toll", "maintenance", "driver_allowance", "loading", "unloading", "other"] as const;
 type Category = (typeof CATEGORIES)[number];
+const CATEGORY_OPTIONS = [
+  { value: "fuel" as const, label: "Fuel", icon: Fuel },
+  { value: "toll" as const, label: "Toll", icon: Milestone },
+  { value: "maintenance" as const, label: "Maintenance", icon: Wrench },
+  { value: "driver_allowance" as const, label: "Driver", icon: User },
+  { value: "loading" as const, label: "Loading", icon: Package },
+  { value: "unloading" as const, label: "Unloading", icon: Boxes },
+  { value: "other" as const, label: "Other", icon: MoreHorizontal },
+];
 type Values = { category: Category; amount: string; incurred_on: string; vehicle_id: string; trip_id: string; description: string };
 
 function ExpensesPage() {
@@ -101,31 +110,32 @@ function ExpensesPage() {
         <DialogContent className="max-w-lg">
           <DialogHeader><DialogTitle>Add expense</DialogTitle></DialogHeader>
           <form onSubmit={handleSubmit((v) => mut.mutate(v))} className="grid gap-3 sm:grid-cols-2">
-            <F label="Category">
-              <Select value={watch("category")} onValueChange={(v) => setValue("category", v as Category)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{CATEGORIES.map((c) => (<SelectItem key={c} value={c}>{c}</SelectItem>))}</SelectContent>
-              </Select>
+            <F label="Category" full>
+              <SelectCards
+                columns={4}
+                ariaLabel="Expense category"
+                value={watch("category")}
+                onChange={(v) => setValue("category", v)}
+                options={CATEGORY_OPTIONS}
+              />
             </F>
             <F label="Amount (₹) *"><Input type="number" step="0.01" required {...register("amount")} /></F>
             <F label="Date *"><Input type="date" required {...register("incurred_on")} /></F>
             <F label="Vehicle">
-              <Select value={watch("vehicle_id")} onValueChange={(v) => setValue("vehicle_id", v === "__none__" ? "" : v)}>
-                <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__none__">—</SelectItem>
-                  {(vehiclesQ.data ?? []).map((v) => (<SelectItem key={v.id} value={v.id}>{v.registration_number}</SelectItem>))}
-                </SelectContent>
-              </Select>
+              <SearchableDropdown
+                clearable placeholder="—" ariaLabel="Vehicle"
+                value={watch("vehicle_id")}
+                onChange={(v) => setValue("vehicle_id", v)}
+                options={(vehiclesQ.data ?? []).map((v) => ({ value: v.id, label: v.registration_number }))}
+              />
             </F>
             <F label="Trip" full>
-              <Select value={watch("trip_id")} onValueChange={(v) => setValue("trip_id", v === "__none__" ? "" : v)}>
-                <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__none__">—</SelectItem>
-                  {(tripsQ.data ?? []).map((t) => (<SelectItem key={t.id} value={t.id}>{t.origin} → {t.destination}</SelectItem>))}
-                </SelectContent>
-              </Select>
+              <SearchableDropdown
+                clearable placeholder="—" ariaLabel="Trip"
+                value={watch("trip_id")}
+                onChange={(v) => setValue("trip_id", v)}
+                options={(tripsQ.data ?? []).map((t) => ({ value: t.id, label: `${t.origin} → ${t.destination}` }))}
+              />
             </F>
             <F label="Description" full><Input {...register("description")} /></F>
             <DialogFooter className="sm:col-span-2">

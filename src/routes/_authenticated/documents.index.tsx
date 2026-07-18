@@ -3,14 +3,14 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useMutation, useQuery, queryOptions, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Plus, Trash2, FileText, ExternalLink } from "lucide-react";
+import { Plus, Trash2, FileText, ExternalLink, FileCheck2, ShieldCheck, ScrollText, Stamp, Leaf, IdCard, Camera, MoreHorizontal } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { SelectCards, SearchableDropdown } from "@/components/ui/smart-select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/common/EmptyState";
@@ -28,6 +28,16 @@ export const Route = createFileRoute("/_authenticated/documents/")({
 
 const DOC_TYPES = ["rc", "insurance", "permit", "fitness", "puc", "driving_license", "vehicle_photo", "other"] as const;
 type DocType = (typeof DOC_TYPES)[number];
+const DOC_TYPE_OPTIONS = [
+  { value: "rc" as const, label: "RC", icon: FileCheck2 },
+  { value: "insurance" as const, label: "Insurance", icon: ShieldCheck },
+  { value: "permit" as const, label: "Permit", icon: ScrollText },
+  { value: "fitness" as const, label: "Fitness", icon: Stamp },
+  { value: "puc" as const, label: "PUC", icon: Leaf },
+  { value: "driving_license" as const, label: "License", icon: IdCard },
+  { value: "vehicle_photo" as const, label: "Photo", icon: Camera },
+  { value: "other" as const, label: "Other", icon: MoreHorizontal },
+];
 type Values = { doc_type: DocType; title: string; vehicle_id: string; driver_id: string; expiry_date: string; issued_on: string; file: FileList };
 
 function DocumentsPage() {
@@ -141,30 +151,30 @@ function DocumentsPage() {
         <DialogContent className="max-w-lg">
           <DialogHeader><DialogTitle>Upload document</DialogTitle></DialogHeader>
           <form onSubmit={handleSubmit(onSubmit)} className="grid gap-3 sm:grid-cols-2">
-            <F label="Type">
-              <Select value={watch("doc_type")} onValueChange={(v) => setValue("doc_type", v as DocType)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{DOC_TYPES.map((t) => (<SelectItem key={t} value={t}>{t}</SelectItem>))}</SelectContent>
-              </Select>
+            <F label="Document type" full>
+              <SelectCards
+                columns={4} ariaLabel="Document type"
+                value={watch("doc_type")}
+                onChange={(v) => setValue("doc_type", v)}
+                options={DOC_TYPE_OPTIONS}
+              />
             </F>
             <F label="Title"><Input {...register("title")} placeholder="Insurance – MH12AB1234" /></F>
             <F label="Vehicle">
-              <Select value={watch("vehicle_id")} onValueChange={(v) => setValue("vehicle_id", v === "__none__" ? "" : v)}>
-                <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__none__">—</SelectItem>
-                  {(vehiclesQ.data ?? []).map((v) => (<SelectItem key={v.id} value={v.id}>{v.registration_number}</SelectItem>))}
-                </SelectContent>
-              </Select>
+              <SearchableDropdown
+                clearable placeholder="—" ariaLabel="Vehicle"
+                value={watch("vehicle_id")}
+                onChange={(v) => setValue("vehicle_id", v)}
+                options={(vehiclesQ.data ?? []).map((v) => ({ value: v.id, label: v.registration_number }))}
+              />
             </F>
             <F label="Driver">
-              <Select value={watch("driver_id")} onValueChange={(v) => setValue("driver_id", v === "__none__" ? "" : v)}>
-                <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__none__">—</SelectItem>
-                  {(driversQ.data ?? []).map((d) => (<SelectItem key={d.id} value={d.id}>{d.full_name}</SelectItem>))}
-                </SelectContent>
-              </Select>
+              <SearchableDropdown
+                clearable placeholder="—" ariaLabel="Driver"
+                value={watch("driver_id")}
+                onChange={(v) => setValue("driver_id", v)}
+                options={(driversQ.data ?? []).map((d) => ({ value: d.id, label: d.full_name }))}
+              />
             </F>
             <F label="Issued on"><Input type="date" {...register("issued_on")} /></F>
             <F label="Expiry"><Input type="date" {...register("expiry_date")} /></F>

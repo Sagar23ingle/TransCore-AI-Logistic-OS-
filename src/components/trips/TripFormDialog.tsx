@@ -3,12 +3,13 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { useMutation, useQuery, queryOptions } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { Calendar, Truck, CheckCircle2, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { SelectPills, SearchableDropdown } from "@/components/ui/smart-select";
 import { upsertTrip } from "@/lib/trips.functions";
 import { listVehicles } from "@/lib/vehicles.functions";
 import { listDrivers } from "@/lib/drivers.functions";
@@ -23,6 +24,12 @@ type Values = {
   goods_description: string; client_name: string; notes: string;
 };
 const d = (v: string | null | undefined) => v ?? "";
+const TRIP_STATUS = [
+  { value: "planned" as const, label: "Planned", icon: Calendar },
+  { value: "in_progress" as const, label: "Active", icon: Truck },
+  { value: "completed" as const, label: "Done", icon: CheckCircle2 },
+  { value: "cancelled" as const, label: "Cancelled", icon: XCircle },
+];
 
 export function TripFormDialog({ open, onOpenChange, initial, onSaved }: { open: boolean; onOpenChange: (v: boolean) => void; initial?: Trip; onSaved?: () => void }) {
   const upsert = useServerFn(upsertTrip);
@@ -76,28 +83,32 @@ export function TripFormDialog({ open, onOpenChange, initial, onSaved }: { open:
           <F label="Origin *"><Input {...register("origin", { required: true })} /></F>
           <F label="Destination *"><Input {...register("destination", { required: true })} /></F>
           <F label="Vehicle">
-            <Select value={watch("vehicle_id")} onValueChange={(v) => setValue("vehicle_id", v === "__none__" ? "" : v)}>
-              <SelectTrigger><SelectValue placeholder="Unassigned" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__none__">Unassigned</SelectItem>
-                {(vehiclesQ.data ?? []).map((v) => (<SelectItem key={v.id} value={v.id}>{v.registration_number}</SelectItem>))}
-              </SelectContent>
-            </Select>
+            <SearchableDropdown
+              ariaLabel="Vehicle"
+              placeholder="Unassigned"
+              clearable
+              value={watch("vehicle_id")}
+              onChange={(v) => setValue("vehicle_id", v)}
+              options={(vehiclesQ.data ?? []).map((v) => ({ value: v.id, label: v.registration_number }))}
+            />
           </F>
           <F label="Driver">
-            <Select value={watch("driver_id")} onValueChange={(v) => setValue("driver_id", v === "__none__" ? "" : v)}>
-              <SelectTrigger><SelectValue placeholder="Unassigned" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__none__">Unassigned</SelectItem>
-                {(driversQ.data ?? []).map((d2) => (<SelectItem key={d2.id} value={d2.id}>{d2.full_name}</SelectItem>))}
-              </SelectContent>
-            </Select>
+            <SearchableDropdown
+              ariaLabel="Driver"
+              placeholder="Unassigned"
+              clearable
+              value={watch("driver_id")}
+              onChange={(v) => setValue("driver_id", v)}
+              options={(driversQ.data ?? []).map((dr) => ({ value: dr.id, label: dr.full_name }))}
+            />
           </F>
-          <F label="Status">
-            <Select value={watch("status")} onValueChange={(v) => setValue("status", v as Values["status"])}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>{(["planned", "in_progress", "completed", "cancelled"] as const).map((s) => (<SelectItem key={s} value={s}>{s}</SelectItem>))}</SelectContent>
-            </Select>
+          <F label="Status" full>
+            <SelectPills
+              ariaLabel="Trip status"
+              value={watch("status")}
+              onChange={(v) => setValue("status", v)}
+              options={TRIP_STATUS}
+            />
           </F>
           <F label="Client name"><Input {...register("client_name")} /></F>
           <F label="Scheduled start"><Input type="datetime-local" {...register("scheduled_start")} /></F>
