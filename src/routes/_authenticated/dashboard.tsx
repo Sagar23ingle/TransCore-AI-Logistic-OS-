@@ -82,7 +82,7 @@ function Dashboard() {
           {d && (
             <div className="space-y-3 md:hidden">
               <CompactHealthCard daily={d} />
-              <MobileKpiGrid daily={d} stats={s!} />
+              <MobileKpiGrid daily={d} />
               <PrioritiesCard daily={d} />
               <TopInsights daily={d} />
             </div>
