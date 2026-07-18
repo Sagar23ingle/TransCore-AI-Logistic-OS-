@@ -975,6 +975,57 @@ export type Database = {
           },
         ]
       }
+      live_locations: {
+        Row: {
+          accuracy_m: number | null
+          driver_id: string | null
+          heading: number | null
+          latitude: number
+          longitude: number
+          speed_kmh: number | null
+          updated_at: string
+          user_id: string
+          vehicle_id: string | null
+        }
+        Insert: {
+          accuracy_m?: number | null
+          driver_id?: string | null
+          heading?: number | null
+          latitude: number
+          longitude: number
+          speed_kmh?: number | null
+          updated_at?: string
+          user_id: string
+          vehicle_id?: string | null
+        }
+        Update: {
+          accuracy_m?: number | null
+          driver_id?: string | null
+          heading?: number | null
+          latitude?: number
+          longitude?: number
+          speed_kmh?: number | null
+          updated_at?: string
+          user_id?: string
+          vehicle_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_locations_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "live_locations_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       load_bids: {
         Row: {
           bid_amount: number
