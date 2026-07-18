@@ -12,7 +12,7 @@ export function EmptyState({ icon, title, description, action }: EmptyStateProps
   return (
     <Card className="border-dashed">
       <CardContent className="flex flex-col items-center justify-center gap-3 py-12 text-center">
-        {icon && <div className="rounded-full bg-secondary p-3 text-primary">{icon}</div>}
+        {icon && <div className="text-primary">{icon}</div>}
         <div>
           <h3 className="text-base font-medium">{title}</h3>
           {description && (
