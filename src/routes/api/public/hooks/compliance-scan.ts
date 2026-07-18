@@ -3,7 +3,11 @@ import { createFileRoute } from "@tanstack/react-router";
 /**
  * Nightly compliance scanner (called by pg_cron).
  * POST /api/public/hooks/compliance-scan
- * Header: apikey: <SUPABASE_PUBLISHABLE_KEY>
+ * Auth: send the shared secret as either
+ *   X-Cron-Secret: <CRON_SECRET>
+ *   -- or --
+ *   Authorization: Bearer <CRON_SECRET>
+ * The value is validated with a constant-time compare against process.env.CRON_SECRET.
  *
  * Scans all vehicles + drivers, generates/updates alerts for expiring documents,
  * maintenance and license renewals. Idempotent — uses (company_id, dedup_key) upserts.
@@ -64,6 +68,15 @@ export const Route = createFileRoute("/api/public/hooks/compliance-scan")({
         if (diff !== 0) return json({ error: "unauthorized" }, 401);
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+        // Hard per-endpoint throttle: at most 6 successful runs / hour, regardless of caller.
+        // Prevents runaway loops if the cron misfires or the secret leaks.
+        const rl = await supabaseAdmin.rpc("check_rate_limit", {
+          _key: "compliance-scan:global",
+          _max: 6,
+          _window_seconds: 3600,
+        });
+        if (rl.data === false) return json({ error: "rate_limited" }, 429);
 
         const [vehR, driR] = await Promise.all([
           supabaseAdmin.from("vehicles").select("id, owner_id, company_id, registration_number, insurance_expiry, permit_expiry, fitness_expiry, puc_expiry, emi_next_due, maintenance_next_due"),

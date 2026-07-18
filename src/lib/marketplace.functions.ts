@@ -177,11 +177,26 @@ export const listBidsForLoad = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((raw: unknown) => z.object({ load_id: z.string().uuid() }).parse(raw))
   .handler(async ({ context, data }) => {
-    const { data: rows, error } = await context.supabase
+    const { supabase, userId } = context;
+
+    // Authorize: only the load's broker sees all bids; other authenticated users
+    // may only see their own bid on that load. Prevents competitor-bid enumeration.
+    const { data: load, error: le } = await supabase
+      .from("loads")
+      .select("id, broker_id")
+      .eq("id", data.load_id)
+      .single();
+    if (le || !load) { if (le) console.error(le); throw new Error("Load not found"); }
+
+    const isBroker = load.broker_id === userId;
+    let query = supabase
       .from("load_bids")
-      .select("*")
+      .select("id, load_id, bidder_id, bid_amount, message, status, created_at, updated_at")
       .eq("load_id", data.load_id)
       .order("bid_amount", { ascending: true });
+    if (!isBroker) query = query.eq("bidder_id", userId);
+
+    const { data: rows, error } = await query;
     if (error) { console.error(error); throw new Error("Request failed. Please try again."); }
     return rows ?? [];
   });

@@ -47,6 +47,16 @@ export const runAi = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
 
+    // Per-user cost guard: 20 AI calls / minute and 200 / hour.
+    // Uses a Postgres SECURITY DEFINER counter (see check_rate_limit).
+    const [minute, hour] = await Promise.all([
+      supabase.rpc("check_rate_limit", { _key: `ai:${userId}:m`, _max: 20, _window_seconds: 60 }),
+      supabase.rpc("check_rate_limit", { _key: `ai:${userId}:h`, _max: 200, _window_seconds: 3600 }),
+    ]);
+    if (minute.data === false || hour.data === false) {
+      return { ok: false as const, error: "You're sending AI requests too fast. Please wait a moment and try again." };
+    }
+
     try {
       const response = await callGemini(data.prompt, data.kind);
       await supabase.from("ai_requests").insert({
