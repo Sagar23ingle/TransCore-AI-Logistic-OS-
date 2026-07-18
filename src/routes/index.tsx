@@ -20,11 +20,11 @@ export const Route = createFileRoute("/")({
         content:
           "Run your entire trucking business from one dashboard: vehicles, drivers, trips, live GPS tracking, document vault, expense analytics, smart expiry alerts and Gemini-powered AI insights.",
       },
-      { property: "og:title", content: "TransCore AI — AI-Powered Fleet Management" },
+      { property: "og:title", content: "TransCore AI — AI-Powered Fleet Management for Truck Owners" },
       {
         property: "og:description",
         content:
-          "The logistics OS for real truck owners. Live tracking, smart alerts, AI insights, document vault, expense analytics.",
+          "Run your entire trucking business from one dashboard: vehicles, drivers, trips, live GPS tracking, document vault, expense analytics, smart expiry alerts and Gemini-powered AI insights.",
       },
       { property: "og:url", content: "https://transcoreai.lovable.app/" },
       { property: "og:type", content: "website" },
