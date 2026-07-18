@@ -21,6 +21,7 @@ export function SelectPills<T extends string>({
   options: SmartOption<T>[];
   ariaLabel?: string;
 }) {
+  const groupId = React.useId();
   return (
     <div role="radiogroup" aria-label={ariaLabel} className="flex flex-wrap gap-1.5 rounded-full bg-muted/50 p-1">
       {options.map((o) => {
@@ -39,7 +40,7 @@ export function SelectPills<T extends string>({
           >
             {active && (
               <motion.span
-                layoutId={`pill-${ariaLabel ?? "grp"}-${React.useId()}`}
+                layoutId={`pill-${groupId}`}
                 className="absolute inset-0 rounded-full bg-primary shadow-sm"
                 transition={{ type: "spring", stiffness: 400, damping: 32 }}
               />
