@@ -7,7 +7,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { runAi, buildFleetContext } from "@/lib/ai.functions";
+import { askCompanyAi } from "@/lib/ai.functions";
 
 export const Route = createFileRoute("/_authenticated/ai/")({
   head: () => ({ meta: [{ title: "AI Assistant — TransCore AI" }, { name: "robots", content: "noindex" }] }),
@@ -17,20 +17,12 @@ export const Route = createFileRoute("/_authenticated/ai/")({
 interface Msg { role: "user" | "assistant" | "error"; text: string }
 
 function AiPage() {
-  const runFn = useServerFn(runAi);
-  const ctxFn = useServerFn(buildFleetContext);
+  const askFn = useServerFn(askCompanyAi);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
 
   const send = useMutation({
-    mutationFn: async (prompt: string) => {
-      const ctx = await ctxFn();
-      const composed = `You may reference this fleet context (only what's below is real):
-${JSON.stringify(ctx, null, 2)}
-
-User question: ${prompt}`;
-      return runFn({ data: { kind: "chat", prompt: composed } });
-    },
+    mutationFn: async (question: string) => askFn({ data: { question } }),
     onSuccess: (r) => {
       if (r.ok) setMessages((m) => [...m, { role: "assistant", text: r.response }]);
       else setMessages((m) => [...m, { role: "error", text: r.error }]);
