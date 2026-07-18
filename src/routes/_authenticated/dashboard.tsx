@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { getDashboardStats, getRevenueByMonth, getExpenseBreakdown } from "@/lib/dashboard.functions";
 import { getDailyOps } from "@/lib/daily-ops.functions";
 import { recomputeAlerts } from "@/lib/alerts.functions";
+import { FleetInsightsCards } from "@/components/dashboard/FleetInsightsCards";
 import { formatINR, formatNumber } from "@/lib/format";
 import { EmptyState } from "@/components/common/EmptyState";
 import { LoadingState } from "@/components/common/LoadingState";
@@ -85,6 +86,7 @@ function Dashboard() {
               <MobileKpiGrid daily={d} />
               <PrioritiesCard daily={d} />
               <TopInsights daily={d} />
+              <FleetInsightsCards />
             </div>
           )}
 
@@ -101,6 +103,7 @@ function Dashboard() {
               </div>
             )}
             {d && d.insights.length > 0 && <InsightsGrid daily={d} />}
+            <FleetInsightsCards />
             {d && <GoalsCard daily={d} />}
             {d && <TrendCard daily={d} />}
 
