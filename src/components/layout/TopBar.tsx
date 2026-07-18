@@ -37,7 +37,10 @@ export function TopBar() {
   const initials = email.slice(0, 2).toUpperCase();
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-3 border-b border-border bg-background/70 px-4 backdrop-blur sm:px-6 lg:px-8">
+    <header
+      className="sticky top-0 z-30 flex h-12 items-center justify-between gap-3 bg-background/80 px-4 backdrop-blur-md sm:px-6 lg:px-8"
+      style={{ boxShadow: "0 1px 0 0 var(--color-border)" }}
+    >
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
         <SheetTrigger asChild>
           <Button variant="ghost" size="icon" className="lg:hidden" aria-label="Open navigation menu">
@@ -61,8 +64,8 @@ export function TopBar() {
       </Button>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="sm" className="gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary text-xs font-semibold">
+          <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground hover:text-foreground">
+            <span className="text-xs font-medium">
               {initials || <User className="h-4 w-4" />}
             </span>
             <span className="hidden max-w-[140px] truncate text-sm sm:inline">{email}</span>
