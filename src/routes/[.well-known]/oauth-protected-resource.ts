@@ -1,4 +1,3 @@
-// Owned locally: adds `as never` cast for TanStack Start's strict route options typing.
 // route: /.well-known/oauth-protected-resource
 // emitted to: src/routes/[.well-known]/oauth-protected-resource.ts
 

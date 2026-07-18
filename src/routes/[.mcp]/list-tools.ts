@@ -1,4 +1,3 @@
-// Owned locally: adds `as never` cast for TanStack Start's strict route options typing.
 // route: /.mcp/list-tools
 // emitted to: src/routes/[.mcp]/list-tools.ts
 
