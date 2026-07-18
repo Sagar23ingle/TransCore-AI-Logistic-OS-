@@ -1299,6 +1299,24 @@ export type Database = {
         }
         Relationships: []
       }
+      rate_limits: {
+        Row: {
+          count: number
+          key: string
+          window_start: string
+        }
+        Insert: {
+          count?: number
+          key: string
+          window_start: string
+        }
+        Update: {
+          count?: number
+          key?: string
+          window_start?: string
+        }
+        Relationships: []
+      }
       subscriptions: {
         Row: {
           created_at: string
@@ -1631,6 +1649,10 @@ export type Database = {
     }
     Functions: {
       can_write_company: { Args: { _company: string }; Returns: boolean }
+      check_rate_limit: {
+        Args: { _key: string; _max: number; _window_seconds: number }
+        Returns: boolean
+      }
       company_role_of: {
         Args: { _company: string; _user: string }
         Returns: Database["public"]["Enums"]["company_role"]

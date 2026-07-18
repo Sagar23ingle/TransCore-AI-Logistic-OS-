@@ -41,6 +41,17 @@ export const Route = createFileRoute("/api/public/gps/ingest")({
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
+        // Per-vehicle throttle: 60 ingest calls / minute, 1000 / hour.
+        // A well-behaved tracker pings every 5-30 seconds; this catches runaway devices
+        // or compromised secrets without blocking legitimate fleets.
+        const [rlM, rlH] = await Promise.all([
+          supabaseAdmin.rpc("check_rate_limit", { _key: `gps:${body.vehicle_id}:m`, _max: 60, _window_seconds: 60 }),
+          supabaseAdmin.rpc("check_rate_limit", { _key: `gps:${body.vehicle_id}:h`, _max: 1000, _window_seconds: 3600 }),
+        ]);
+        if (rlM.data === false || rlH.data === false) {
+          return json({ error: "rate_limited" }, 429);
+        }
+
         const { data: vehicle, error: vErr } = await supabaseAdmin
           .from("vehicles")
           .select("id, owner_id")

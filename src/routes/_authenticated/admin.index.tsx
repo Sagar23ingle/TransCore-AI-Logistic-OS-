@@ -7,7 +7,7 @@ import { EmptyState } from "@/components/common/EmptyState";
 import { LoadingState } from "@/components/common/LoadingState";
 import { useAuth } from "@/hooks/use-auth";
 import { isAdmin } from "@/lib/rbac";
-import { supabase } from "@/integrations/supabase/client";
+import { getAdminOverview } from "@/lib/admin.functions";
 import { formatNumber } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/admin/")({
@@ -21,17 +21,9 @@ function AdminPage() {
 
   const stats = useQuery(queryOptions({
     queryKey: ["admin-stats"],
-    queryFn: async () => {
-      const [users, vehicles, trips, ai] = await Promise.all([
-        supabase.from("profiles").select("id", { count: "exact", head: true }),
-        supabase.from("vehicles").select("id", { count: "exact", head: true }),
-        supabase.from("trips").select("id", { count: "exact", head: true }),
-        supabase.from("ai_requests").select("id", { count: "exact", head: true }),
-      ]);
-      return {
-        users: users.count ?? 0, vehicles: vehicles.count ?? 0, trips: trips.count ?? 0, ai: ai.count ?? 0,
-      };
-    },
+    // Admin gate is enforced server-side inside getAdminOverview (has_role check).
+    // The client `enabled: admin` is UX-only, not the authorization boundary.
+    queryFn: () => getAdminOverview(),
     enabled: admin,
   }));
 
