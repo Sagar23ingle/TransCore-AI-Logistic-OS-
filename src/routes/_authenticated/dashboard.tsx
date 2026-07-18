@@ -315,12 +315,12 @@ function MobileCharts({ revenue, breakdown }: { revenue: any[]; breakdown: any[]
 function Kpi({ icon, label, value, sub, tone }: { icon: React.ReactNode; label: string; value: string; sub?: string; tone?: "positive" | "negative" }) {
   return (
     <Card>
-      <CardContent className="pt-6">
+      <CardContent className="p-4">
         <div className="flex items-center justify-between text-muted-foreground">
-          <span className="text-xs uppercase tracking-wider">{label}</span>
+          <span className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground">{label}</span>
           <span className="opacity-70">{icon}</span>
         </div>
-        <div className={`num mt-2 text-2xl font-semibold ${tone === "negative" ? "text-destructive" : tone === "positive" ? "text-accent" : ""}`}>
+        <div className={`num font-mono mt-2 text-2xl font-semibold ${tone === "negative" ? "text-destructive" : tone === "positive" ? "text-accent" : ""}`}>
           {value}
         </div>
         {sub && <div className="mt-1 text-xs text-muted-foreground">{sub}</div>}
@@ -354,7 +354,7 @@ function WelcomeHeader({ daily }: { daily: Daily }) {
     return parts.join(" • ");
   }, [daily]);
   return (
-    <div className="rounded-2xl border border-border/60 bg-gradient-to-br from-primary/10 via-background to-accent/5 p-5 shadow-sm">
+    <div className="rounded-sm border border-border/60 bg-card p-5">
       <div className="flex items-center gap-2 text-xs text-muted-foreground">
         <Sparkles className="h-3.5 w-3.5 text-primary" /> Daily briefing
       </div>
@@ -379,7 +379,7 @@ function SnapshotChip({ icon, label, value, sub, tone }: { icon: React.ReactNode
       <div className="flex items-center gap-2 text-[11px] uppercase tracking-wider text-muted-foreground">
         <span className={toneCls}>{icon}</span>{label}
       </div>
-      <div className="num mt-2 text-xl font-semibold">{value}</div>
+      <div className="num font-mono mt-2 text-xl font-semibold">{value}</div>
       {sub && <div className="mt-1 text-xs text-muted-foreground">{sub}</div>}
     </div>
   );
@@ -461,7 +461,7 @@ function FleetHealthCard({ daily }: { daily: Daily }) {
             />
           </svg>
           <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
-            <div className={`text-4xl font-semibold ${healthTone(band)}`}><AnimatedNumber value={score} /></div>
+            <div className={`font-mono text-4xl font-semibold ${healthTone(band)}`}><AnimatedNumber value={score} /></div>
             <div className="text-[11px] uppercase tracking-wider text-muted-foreground">out of 100</div>
           </div>
         </div>
