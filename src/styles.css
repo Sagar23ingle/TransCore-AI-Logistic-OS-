@@ -215,4 +215,23 @@
   .loading-dot {
     animation: pulse-dot 1.2s ease-in-out infinite;
   }
+
+  /* Consistent, accessible focus ring across interactive elements */
+  :focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--color-background), 0 0 0 4px var(--color-ring);
+    border-radius: calc(var(--radius) - 2px);
+  }
+
+  a, button { -webkit-tap-highlight-color: transparent; }
+
+  /* Subtle rise on interactive surfaces */
+  .surface-hover {
+    transition: background-color 150ms ease, border-color 150ms ease, transform 150ms ease;
+  }
+  .surface-hover:hover { background-color: color-mix(in oklab, var(--color-card) 92%, var(--color-foreground) 8%); }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  }
 }
