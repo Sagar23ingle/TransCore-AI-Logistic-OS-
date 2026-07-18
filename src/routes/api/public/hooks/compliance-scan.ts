@@ -54,7 +54,7 @@ type Row = {
 export const Route = createFileRoute("/api/public/hooks/compliance-scan")({
   server: {
     handlers: {
-      POST: async ({ request }) => {
+      POST: async ({ request }: { request: Request }) => {
         const expected = process.env.CRON_SECRET;
         const provided =
           request.headers.get("x-cron-secret") ??
@@ -156,4 +156,4 @@ export const Route = createFileRoute("/api/public/hooks/compliance-scan")({
       },
     },
   },
-});
+} as never);
