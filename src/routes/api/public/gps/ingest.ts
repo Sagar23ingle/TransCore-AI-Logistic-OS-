@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { createHmac, timingSafeEqual } from "crypto";
 
 /**
  * HMAC-signed GPS ingest for external trackers (Traccar / Teltonika / MapMyIndia / custom).
@@ -19,6 +18,7 @@ export const Route = createFileRoute("/api/public/gps/ingest")({
         const secret = process.env.GPS_INGEST_SECRET;
         if (!secret) return json({ error: "server_misconfigured" }, 500);
 
+        const { createHmac, timingSafeEqual } = await import("crypto");
         const raw = await request.text();
         const provided = request.headers.get("x-signature") ?? "";
         const expected = createHmac("sha256", secret).update(raw).digest("hex");
