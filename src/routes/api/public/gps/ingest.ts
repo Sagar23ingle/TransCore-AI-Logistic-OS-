@@ -15,7 +15,7 @@ import { createHmac, timingSafeEqual } from "crypto";
 export const Route = createFileRoute("/api/public/gps/ingest")({
   server: {
     handlers: {
-      POST: async ({ request }) => {
+      POST: async ({ request }: { request: Request }) => {
         const secret = process.env.GPS_INGEST_SECRET;
         if (!secret) return json({ error: "server_misconfigured" }, 500);
 
@@ -99,7 +99,7 @@ export const Route = createFileRoute("/api/public/gps/ingest")({
       },
     },
   },
-});
+} as never);
 
 function json(body: unknown, status: number) {
   return new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
