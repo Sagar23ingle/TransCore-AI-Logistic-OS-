@@ -82,7 +82,7 @@ function Dashboard() {
           {d && (
             <div className="space-y-3 md:hidden">
               <CompactHealthCard daily={d} />
-              <MobileKpiGrid daily={d} stats={s!} />
+              <MobileKpiGrid daily={d} />
               <PrioritiesCard daily={d} />
               <TopInsights daily={d} />
             </div>
@@ -229,7 +229,7 @@ function MobileKpiTile({ icon, label, value, tone }: { icon: React.ReactNode; la
   );
 }
 
-function MobileKpiGrid({ daily, stats }: { daily: Daily; stats: NonNullable<ReturnType<typeof useDailyPlaceholder>> extends never ? never : any }) {
+function MobileKpiGrid({ daily }: { daily: Daily }) {
   const attention = daily.today.pendingDocs + daily.today.overdueDocs;
   return (
     <div className="grid grid-cols-2 gap-2">
@@ -273,7 +273,9 @@ function TopInsights({ daily }: { daily: Daily }) {
   );
 }
 
-function MobileCharts({ revenue, breakdown }: { revenue: any[]; breakdown: any[] }) {
+type RevenuePoint = { key: string; label: string; revenue: number; expenses: number };
+type BreakdownPoint = { category: string; amount: number };
+function MobileCharts({ revenue, breakdown }: { revenue: RevenuePoint[]; breakdown: BreakdownPoint[] }) {
   return (
     <div className="space-y-3">
       <Card>
