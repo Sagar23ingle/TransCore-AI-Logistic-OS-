@@ -18,11 +18,23 @@ export const Route = createFileRoute("/auth")({
       { name: "robots", content: "noindex" },
     ],
   }),
+  validateSearch: (s: Record<string, unknown>) => ({
+    next: typeof s.next === "string" ? s.next : undefined,
+  }),
   component: AuthPage,
 });
 
+// Only allow same-origin relative paths so `next` cannot open-redirect off-site.
+function safeNext(next: string | undefined): string | null {
+  if (!next) return null;
+  if (!next.startsWith("/") || next.startsWith("//")) return null;
+  return next;
+}
+
 function AuthPage() {
   const navigate = useNavigate();
+  const { next } = Route.useSearch();
+  const safe = safeNext(next);
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -30,17 +42,25 @@ function AuthPage() {
 
   useEffect(() => {
     let cancelled = false;
+    function goPostAuth() {
+      if (safe) {
+        // Full navigation so route-based query parsing picks up `authorization_id`.
+        window.location.replace(safe);
+      } else {
+        navigate({ to: "/dashboard", replace: true });
+      }
+    }
     supabase.auth.getSession().then(({ data }) => {
-      if (!cancelled && data.session) navigate({ to: "/dashboard", replace: true });
+      if (!cancelled && data.session) goPostAuth();
     });
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_IN" && session) navigate({ to: "/dashboard", replace: true });
+      if (event === "SIGNED_IN" && session) goPostAuth();
     });
     return () => {
       cancelled = true;
       sub.subscription.unsubscribe();
     };
-  }, [navigate]);
+  }, [navigate, safe]);
 
   async function handleSignIn(e: React.FormEvent) {
     e.preventDefault();
@@ -65,7 +85,7 @@ function AuthPage() {
         email,
         password,
         options: {
-          emailRedirectTo: window.location.origin + "/dashboard",
+          emailRedirectTo: window.location.origin + (safe ?? "/dashboard"),
           data: { full_name: fullName },
         },
       });
@@ -81,14 +101,17 @@ function AuthPage() {
   async function handleGoogle() {
     try {
       const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin,
+        // Same-origin public URL. We re-apply `next` after the session hydrates
+        // (goPostAuth in useEffect) — never send Google to a protected/consent URL.
+        redirect_uri: window.location.origin + "/auth" + (safe ? `?next=${encodeURIComponent(safe)}` : ""),
       });
       if (result.error) {
         toast.error(result.error.message ?? "Google sign-in failed");
         return;
       }
       if (result.redirected) return;
-      navigate({ to: "/dashboard", replace: true });
+      if (safe) window.location.replace(safe);
+      else navigate({ to: "/dashboard", replace: true });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Google sign-in failed");
     }

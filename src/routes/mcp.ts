@@ -1,0 +1,17 @@
+// Owned locally: adds `as never` cast for TanStack Start's strict route options typing.
+// route: /mcp
+// emitted to: src/routes/mcp.ts
+
+import { createFileRoute } from "@tanstack/react-router";
+
+import { createTanStackMcpHandler } from "@lovable.dev/mcp-js/stacks/tanstack";
+
+import mcp from "../lib/mcp/index";
+
+export const Route = createFileRoute("/mcp")({
+  server: {
+    handlers: {
+      ANY: createTanStackMcpHandler(mcp, { resourcePath: "/mcp", metadataPath: "/.well-known/oauth-protected-resource", trustForwardedHost: true }),
+    },
+  },
+} as never);
