@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, queryOptions, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Bell, RefreshCw, X } from "lucide-react";
+import { Bell, BellRing, BellOff, RefreshCw, X } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { EmptyState } from "@/components/common/EmptyState";
 import { LoadingState } from "@/components/common/LoadingState";
 import { dismissAlert, listAlerts, recomputeAlerts } from "@/lib/alerts.functions";
 import { formatDate } from "@/lib/format";
+import { usePushNotifications } from "@/hooks/use-push";
 
 export const Route = createFileRoute("/_authenticated/alerts/")({
   head: () => ({ meta: [{ title: "Alerts — TransCore AI" }, { name: "robots", content: "noindex" }] }),
@@ -22,6 +23,7 @@ function AlertsPage() {
   const recFn = useServerFn(recomputeAlerts);
   const disFn = useServerFn(dismissAlert);
   const qc = useQueryClient();
+  const push = usePushNotifications();
 
   const q = useQuery(queryOptions({ queryKey: ["alerts"], queryFn: () => listFn() }));
   const rec = useMutation({
@@ -36,7 +38,16 @@ function AlertsPage() {
 
   return (
     <AppShell title="Smart Alerts" description="Automatic reminders computed from your real expiry dates."
-      action={<Button variant="outline" onClick={() => rec.mutate()} disabled={rec.isPending}><RefreshCw className={`mr-2 h-4 w-4 ${rec.isPending ? "animate-spin" : ""}`} /> Recompute</Button>}>
+      action={
+        <div className="flex gap-2">
+          {push.supported && (
+            <Button variant="outline" onClick={() => push.subscribed ? push.disable() : push.enable()} disabled={push.busy}>
+              {push.subscribed ? <><BellOff className="mr-2 h-4 w-4" /> Disable push</> : <><BellRing className="mr-2 h-4 w-4" /> Enable push</>}
+            </Button>
+          )}
+          <Button variant="outline" onClick={() => rec.mutate()} disabled={rec.isPending}><RefreshCw className={`mr-2 h-4 w-4 ${rec.isPending ? "animate-spin" : ""}`} /> Recompute</Button>
+        </div>
+      }>
       {q.isLoading ? <LoadingState /> : !q.data || q.data.length === 0 ? (
         <EmptyState icon={<Bell className="h-6 w-6" />} title="Nothing to worry about"
           description="We'll alert you 30, 15, 7, 3 and 0 days before any expiry, EMI or maintenance date."
