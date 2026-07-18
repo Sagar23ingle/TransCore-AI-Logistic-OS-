@@ -19,22 +19,30 @@ export function MobileBottomBar() {
   return (
     <nav
       aria-label="Primary"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/90 backdrop-blur-lg pb-[env(safe-area-inset-bottom)] lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-border/70 bg-background/85 backdrop-blur-xl pb-[env(safe-area-inset-bottom)] lg:hidden"
     >
-      <ul className="grid grid-cols-5">
+      <ul className="grid grid-cols-5 px-1">
         {ITEMS.map(({ to, label, icon: Icon }) => {
           const active = pathname === to || pathname.startsWith(to + "/");
           return (
             <li key={to}>
               <Link
                 to={to}
+                aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-medium transition-colors",
-                  active ? "text-primary" : "text-muted-foreground/60 hover:text-foreground",
+                  "relative mx-auto flex min-h-11 w-full max-w-20 flex-col items-center justify-center gap-1 py-2 text-[10px] font-medium transition-colors",
+                  active ? "text-foreground" : "text-muted-foreground/70 hover:text-foreground",
                 )}
               >
-                <Icon className="h-5 w-5" />
-                <span>{label}</span>
+                <span
+                  className={cn(
+                    "grid h-8 w-12 place-items-center rounded-full transition-colors",
+                    active && "bg-primary/12 text-primary",
+                  )}
+                >
+                  <Icon className="h-[18px] w-[18px]" />
+                </span>
+                <span className="tracking-wide">{label}</span>
               </Link>
             </li>
           );
@@ -44,11 +52,13 @@ export function MobileBottomBar() {
             <SheetTrigger asChild>
               <button
                 type="button"
-                className="flex w-full flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-medium text-muted-foreground transition-colors hover:text-foreground"
+                className="relative mx-auto flex min-h-11 w-full max-w-20 flex-col items-center justify-center gap-1 py-2 text-[10px] font-medium text-muted-foreground/70 transition-colors hover:text-foreground"
                 aria-label="More navigation"
               >
-                <MoreHorizontal className="h-5 w-5" />
-                <span>More</span>
+                <span className="grid h-8 w-12 place-items-center rounded-full">
+                  <MoreHorizontal className="h-[18px] w-[18px]" />
+                </span>
+                <span className="tracking-wide">More</span>
               </button>
             </SheetTrigger>
             <SheetContent side="right" className="w-72 border-sidebar-border bg-sidebar p-0">

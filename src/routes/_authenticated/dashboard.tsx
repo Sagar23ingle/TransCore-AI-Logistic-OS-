@@ -314,16 +314,16 @@ function MobileCharts({ revenue, breakdown }: { revenue: any[]; breakdown: any[]
 
 function Kpi({ icon, label, value, sub, tone }: { icon: React.ReactNode; label: string; value: string; sub?: string; tone?: "positive" | "negative" }) {
   return (
-    <Card>
+    <Card className="surface-hover">
       <CardContent className="p-4">
         <div className="flex items-center justify-between text-muted-foreground">
-          <span className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground">{label}</span>
-          <span className="opacity-70">{icon}</span>
+          <span className="text-[10px] uppercase tracking-[0.14em]">{label}</span>
+          <span className="opacity-60">{icon}</span>
         </div>
-        <div className={`num font-mono mt-2 text-2xl font-semibold ${tone === "negative" ? "text-destructive" : tone === "positive" ? "text-accent" : ""}`}>
+        <div className={`num mt-3 text-[26px] font-semibold leading-none tracking-tight ${tone === "negative" ? "text-destructive" : tone === "positive" ? "text-accent" : "text-foreground"}`}>
           {value}
         </div>
-        {sub && <div className="mt-1 text-xs text-muted-foreground">{sub}</div>}
+        {sub && <div className="mt-2 text-xs text-muted-foreground">{sub}</div>}
       </CardContent>
     </Card>
   );
