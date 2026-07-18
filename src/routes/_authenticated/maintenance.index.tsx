@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { SelectChips, SearchableDropdown } from "@/components/ui/smart-select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/common/EmptyState";
@@ -28,6 +28,10 @@ type Values = {
   vehicle_id: string; serviced_on: string; service_type: string; odometer_km: string;
   cost: string; vendor: string; next_service_due_on: string; next_service_due_km: string; notes: string;
 };
+const SERVICE_TYPES = [
+  "Oil change", "Brake pads", "Tyre rotation", "Air filter", "Battery",
+  "Clutch", "Suspension", "Full service", "Engine repair", "Electrical",
+].map((v) => ({ value: v, label: v }));
 
 function MaintenancePage() {
   const listFn = useServerFn(listMaintenance);
@@ -154,13 +158,26 @@ function MaintenancePage() {
           <DialogHeader><DialogTitle>Log service</DialogTitle></DialogHeader>
           <form onSubmit={handleSubmit((v) => mut.mutate(v))} className="grid gap-3 sm:grid-cols-2">
             <F label="Vehicle *" full>
-              <Select value={watch("vehicle_id")} onValueChange={(v) => setValue("vehicle_id", v)}>
-                <SelectTrigger><SelectValue placeholder="Select vehicle" /></SelectTrigger>
-                <SelectContent>{(vehiclesQ.data ?? []).map((v) => (<SelectItem key={v.id} value={v.id}>{v.registration_number}</SelectItem>))}</SelectContent>
-              </Select>
+              <SearchableDropdown
+                placeholder="Select vehicle" ariaLabel="Vehicle"
+                value={watch("vehicle_id")}
+                onChange={(v) => setValue("vehicle_id", v as string)}
+                options={(vehiclesQ.data ?? []).map((v) => ({ value: v.id, label: v.registration_number }))}
+              />
             </F>
             <F label="Date *"><Input type="date" required {...register("serviced_on")} /></F>
-            <F label="Service type *"><Input required placeholder="Oil change / Brake pads / ..." {...register("service_type")} /></F>
+            <F label="Service type *">
+              <>
+                <SelectChips
+                  ariaLabel="Service type"
+                  value={watch("service_type")}
+                  onChange={(v) => setValue("service_type", v as string)}
+                  options={SERVICE_TYPES}
+                  allowClear
+                />
+                <Input className="mt-2" placeholder="Or type a custom service…" {...register("service_type")} />
+              </>
+            </F>
             <F label="Odometer (km)"><Input type="number" step="1" {...register("odometer_km")} /></F>
             <F label="Cost (₹)"><Input type="number" step="0.01" {...register("cost")} /></F>
             <F label="Vendor" full><Input {...register("vendor")} /></F>
