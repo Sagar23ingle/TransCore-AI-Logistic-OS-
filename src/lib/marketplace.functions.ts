@@ -42,12 +42,20 @@ const TruckPostInput = z.object({
   is_active: z.boolean().default(true),
 });
 
+// Column list for loads readable by any authenticated user (contact_name/contact_phone are revoked at the DB level).
+const LOAD_PUBLIC_COLS =
+  "id, broker_id, assigned_owner_id, assigned_vehicle_id, title, origin, origin_lat, origin_lng, destination, destination_lat, destination_lng, distance_km, goods_type, weight_tons, vehicle_type, pickup_at, delivery_by, budget_amount, notes, status, created_at, updated_at";
+
+// Same for truck_posts (contact_phone is revoked).
+const TRUCK_POST_PUBLIC_COLS =
+  "id, owner_id, vehicle_id, from_location, from_lat, from_lng, to_location, to_lat, to_lng, vehicle_type, capacity_tons, available_from, expected_rate, notes, is_active, created_at, updated_at";
+
 export const listOpenLoads = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("loads")
-      .select("*")
+      .select(LOAD_PUBLIC_COLS)
       .in("status", ["open", "assigned"])
       .order("pickup_at", { ascending: true })
       .limit(200);
@@ -60,7 +68,7 @@ export const listMyLoads = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("loads")
-      .select("*")
+      .select(LOAD_PUBLIC_COLS)
       .eq("broker_id", context.userId)
       .order("created_at", { ascending: false });
     if (error) { console.error(error); throw new Error("Request failed. Please try again."); }
@@ -74,7 +82,7 @@ export const upsertLoad = createServerFn({ method: "POST" })
     const { data: row, error } = await context.supabase
       .from("loads")
       .upsert({ ...data, broker_id: context.userId } as never, { onConflict: "id" })
-      .select("*")
+      .select("id")
       .single();
     if (error) { console.error(error); throw new Error("Request failed. Please try again."); }
     return row;
@@ -98,7 +106,7 @@ export const listAvailableTrucks = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("truck_posts")
-      .select("*")
+      .select(TRUCK_POST_PUBLIC_COLS)
       .eq("is_active", true)
       .order("available_from", { ascending: true })
       .limit(200);
@@ -111,7 +119,7 @@ export const listMyTruckPosts = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("truck_posts")
-      .select("*, vehicle:vehicles(id, registration_number)")
+      .select(`${TRUCK_POST_PUBLIC_COLS}, vehicle:vehicles(id, registration_number)`)
       .eq("owner_id", context.userId)
       .order("created_at", { ascending: false });
     if (error) { console.error(error); throw new Error("Request failed. Please try again."); }
@@ -125,7 +133,7 @@ export const upsertTruckPost = createServerFn({ method: "POST" })
     const { data: row, error } = await context.supabase
       .from("truck_posts")
       .upsert({ ...data, owner_id: context.userId } as never, { onConflict: "id" })
-      .select("*")
+      .select("id")
       .single();
     if (error) { console.error(error); throw new Error("Request failed. Please try again."); }
     return row;
@@ -200,12 +208,12 @@ export const suggestMatchesForLoad = createServerFn({ method: "GET" })
   .inputValidator((raw: unknown) => z.object({ load_id: z.string().uuid() }).parse(raw))
   .handler(async ({ context, data }) => {
     const { supabase } = context;
-    const { data: load, error: le } = await supabase.from("loads").select("*").eq("id", data.load_id).single();
+    const { data: load, error: le } = await supabase.from("loads").select(LOAD_PUBLIC_COLS).eq("id", data.load_id).single();
     if (le || !load) { if (le) console.error(le); throw new Error("Load not found"); }
 
     const { data: trucks, error: te } = await supabase
       .from("truck_posts")
-      .select("*")
+      .select(TRUCK_POST_PUBLIC_COLS)
       .eq("is_active", true)
       .gte("capacity_tons", load.weight_tons);
     if (te) { console.error(te); throw new Error("Request failed. Please try again."); }
