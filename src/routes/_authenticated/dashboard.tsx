@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Link } from "@tanstack/react-router";
 import { useQuery, queryOptions, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import {
   Truck, Users, Map as MapIcon, IndianRupee, TrendingDown, Fuel, Percent, Activity,
   AlertTriangle, ArrowDownRight, ArrowUpRight, CheckCircle2, ChevronRight, Circle,
@@ -18,10 +18,12 @@ import { Button } from "@/components/ui/button";
 import { getDashboardStats, getRevenueByMonth, getExpenseBreakdown } from "@/lib/dashboard.functions";
 import { getDailyOps } from "@/lib/daily-ops.functions";
 import { recomputeAlerts } from "@/lib/alerts.functions";
-import { FleetInsightsCards } from "@/components/dashboard/FleetInsightsCards";
+const FleetInsightsCards = lazy(() =>
+  import("@/components/dashboard/FleetInsightsCards").then((m) => ({ default: m.FleetInsightsCards })),
+);
 import { formatINR, formatNumber } from "@/lib/format";
 import { EmptyState } from "@/components/common/EmptyState";
-import { LoadingState } from "@/components/common/LoadingState";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Area,
   AreaChart,
@@ -53,9 +55,11 @@ function Dashboard() {
   const qc = useQueryClient();
   const isMobile = useIsMobile();
 
-  const stats = useQuery(queryOptions({ queryKey: ["dashboard-stats"], queryFn: () => statsFn() }));
-  const revenue = useQuery(queryOptions({ queryKey: ["dashboard-revenue"], queryFn: () => revenueFn() }));
-  const breakdown = useQuery(queryOptions({ queryKey: ["dashboard-expense-breakdown"], queryFn: () => expenseFn() }));
+  // Parallel, non-blocking queries. Each section renders its own skeleton
+  // so the shell paints immediately after login.
+  const stats = useQuery(queryOptions({ queryKey: ["dashboard-stats"], queryFn: () => statsFn(), staleTime: 60_000 }));
+  const revenue = useQuery(queryOptions({ queryKey: ["dashboard-revenue"], queryFn: () => revenueFn(), staleTime: 5 * 60_000 }));
+  const breakdown = useQuery(queryOptions({ queryKey: ["dashboard-expense-breakdown"], queryFn: () => expenseFn(), staleTime: 5 * 60_000 }));
   const daily = useQuery(queryOptions({ queryKey: ["dashboard-daily-ops"], queryFn: () => dailyFn(), staleTime: 60_000 }));
 
   useEffect(() => {
@@ -63,17 +67,16 @@ function Dashboard() {
     recompute().then(() => qc.invalidateQueries({ queryKey: ["alerts"] })).catch(() => {});
   }, [recompute, qc]);
 
-  if (stats.isLoading || revenue.isLoading || breakdown.isLoading || daily.isLoading) {
-    return <AppShell title="Dashboard"><LoadingState /></AppShell>;
-  }
-
   const s = stats.data;
   const d = daily.data;
-  const isEmpty = !s || (s.totalVehicles === 0 && s.totalTrips === 0);
+  const bootstrapping = stats.isLoading && daily.isLoading;
+  const isEmpty = !bootstrapping && (!s || (s.totalVehicles === 0 && s.totalTrips === 0)) && (!d || !d.onboarding.hasVehicles);
 
   return (
     <AppShell>
-      {isEmpty ? (
+      {bootstrapping ? (
+        <DashboardSkeleton />
+      ) : isEmpty ? (
         <OnboardingHero daily={d} />
       ) : (
         <div className="space-y-4 md:space-y-6">
@@ -86,7 +89,9 @@ function Dashboard() {
               <MobileKpiGrid daily={d} />
               <PrioritiesCard daily={d} />
               <TopInsights daily={d} />
-              <FleetInsightsCards />
+              <Suspense fallback={<Skeleton className="h-32 w-full rounded-xl" />}>
+                <FleetInsightsCards />
+              </Suspense>
             </div>
           )}
 
@@ -103,24 +108,32 @@ function Dashboard() {
               </div>
             )}
             {d && d.insights.length > 0 && <InsightsGrid daily={d} />}
-            <FleetInsightsCards />
+            <Suspense fallback={<Skeleton className="h-40 w-full rounded-xl" />}>
+              <FleetInsightsCards />
+            </Suspense>
             {d && <GoalsCard daily={d} />}
             {d && <TrendCard daily={d} />}
 
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <Kpi icon={<IndianRupee className="h-4 w-4" />} label="Revenue (MTD)" value={formatINR(s!.revenueMTD)} />
-              <Kpi icon={<TrendingDown className="h-4 w-4" />} label="Expenses (MTD)" value={formatINR(s!.expensesMTD)} />
-              <Kpi icon={<Fuel className="h-4 w-4" />} label="Fuel cost (MTD)" value={formatINR(s!.fuelMTD)} />
-              <Kpi
-                icon={<Activity className="h-4 w-4" />}
-                label="Profit (MTD)"
-                value={formatINR(s!.profitMTD)}
-                tone={s!.profitMTD >= 0 ? "positive" : "negative"}
-              />
-              <Kpi icon={<Truck className="h-4 w-4" />} label="Vehicles" value={`${s!.activeVehicles} / ${s!.totalVehicles}`} sub="active / total" />
-              <Kpi icon={<Users className="h-4 w-4" />} label="Drivers" value={formatNumber(s!.totalDrivers)} />
-              <Kpi icon={<MapIcon className="h-4 w-4" />} label="Active trips" value={formatNumber(s!.activeTrips)} sub={`${s!.completedTrips} completed`} />
-              <Kpi icon={<Percent className="h-4 w-4" />} label="Fleet utilization" value={`${s!.fleetUtilization}%`} />
+              {s ? (
+                <>
+                  <Kpi icon={<IndianRupee className="h-4 w-4" />} label="Revenue (MTD)" value={formatINR(s.revenueMTD)} />
+                  <Kpi icon={<TrendingDown className="h-4 w-4" />} label="Expenses (MTD)" value={formatINR(s.expensesMTD)} />
+                  <Kpi icon={<Fuel className="h-4 w-4" />} label="Fuel cost (MTD)" value={formatINR(s.fuelMTD)} />
+                  <Kpi
+                    icon={<Activity className="h-4 w-4" />}
+                    label="Profit (MTD)"
+                    value={formatINR(s.profitMTD)}
+                    tone={s.profitMTD >= 0 ? "positive" : "negative"}
+                  />
+                  <Kpi icon={<Truck className="h-4 w-4" />} label="Vehicles" value={`${s.activeVehicles} / ${s.totalVehicles}`} sub="active / total" />
+                  <Kpi icon={<Users className="h-4 w-4" />} label="Drivers" value={formatNumber(s.totalDrivers)} />
+                  <Kpi icon={<MapIcon className="h-4 w-4" />} label="Active trips" value={formatNumber(s.activeTrips)} sub={`${s.completedTrips} completed`} />
+                  <Kpi icon={<Percent className="h-4 w-4" />} label="Fleet utilization" value={`${s.fleetUtilization}%`} />
+                </>
+              ) : (
+                Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />)
+              )}
             </div>
           </div>
           )}
@@ -190,6 +203,24 @@ function Dashboard() {
         </div>
       )}
     </AppShell>
+  );
+}
+
+function DashboardSkeleton() {
+  return (
+    <div className="space-y-4 md:space-y-6">
+      <Skeleton className="h-24 w-full rounded-xl" />
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />)}
+      </div>
+      <div className="grid gap-4 lg:grid-cols-3">
+        <Skeleton className="h-72 rounded-xl lg:col-span-1" />
+        <Skeleton className="h-72 rounded-xl lg:col-span-2" />
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />)}
+      </div>
+    </div>
   );
 }
 
