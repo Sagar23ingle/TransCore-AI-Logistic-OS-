@@ -38,8 +38,7 @@ export function TopBar() {
 
   return (
     <header
-      className="sticky top-0 z-30 flex h-12 items-center justify-between gap-3 bg-background/80 px-4 backdrop-blur-md sm:px-6 lg:px-8"
-      style={{ boxShadow: "0 1px 0 0 var(--color-border)" }}
+      className="sticky top-0 z-30 flex h-14 items-center justify-between gap-3 border-b border-border/60 bg-background/75 px-3 backdrop-blur-xl sm:px-6 lg:px-8"
     >
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
         <SheetTrigger asChild>
