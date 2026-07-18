@@ -996,6 +996,13 @@ export type Database = {
             referencedRelation: "loads"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "load_bids_load_id_fkey"
+            columns: ["load_id"]
+            isOneToOne: false
+            referencedRelation: "loads_marketplace"
+            referencedColumns: ["id"]
+          },
         ]
       }
       loads: {
@@ -1627,7 +1634,157 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      loads_marketplace: {
+        Row: {
+          assigned_owner_id: string | null
+          assigned_vehicle_id: string | null
+          broker_id: string | null
+          budget_amount: number | null
+          created_at: string | null
+          delivery_by: string | null
+          destination: string | null
+          destination_lat: number | null
+          destination_lng: number | null
+          distance_km: number | null
+          goods_type: string | null
+          id: string | null
+          notes: string | null
+          origin: string | null
+          origin_lat: number | null
+          origin_lng: number | null
+          pickup_at: string | null
+          status: Database["public"]["Enums"]["load_status"] | null
+          title: string | null
+          updated_at: string | null
+          vehicle_type: string | null
+          weight_tons: number | null
+        }
+        Insert: {
+          assigned_owner_id?: string | null
+          assigned_vehicle_id?: string | null
+          broker_id?: string | null
+          budget_amount?: number | null
+          created_at?: string | null
+          delivery_by?: string | null
+          destination?: string | null
+          destination_lat?: number | null
+          destination_lng?: number | null
+          distance_km?: number | null
+          goods_type?: string | null
+          id?: string | null
+          notes?: string | null
+          origin?: string | null
+          origin_lat?: number | null
+          origin_lng?: number | null
+          pickup_at?: string | null
+          status?: Database["public"]["Enums"]["load_status"] | null
+          title?: string | null
+          updated_at?: string | null
+          vehicle_type?: string | null
+          weight_tons?: number | null
+        }
+        Update: {
+          assigned_owner_id?: string | null
+          assigned_vehicle_id?: string | null
+          broker_id?: string | null
+          budget_amount?: number | null
+          created_at?: string | null
+          delivery_by?: string | null
+          destination?: string | null
+          destination_lat?: number | null
+          destination_lng?: number | null
+          distance_km?: number | null
+          goods_type?: string | null
+          id?: string | null
+          notes?: string | null
+          origin?: string | null
+          origin_lat?: number | null
+          origin_lng?: number | null
+          pickup_at?: string | null
+          status?: Database["public"]["Enums"]["load_status"] | null
+          title?: string | null
+          updated_at?: string | null
+          vehicle_type?: string | null
+          weight_tons?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loads_assigned_vehicle_id_fkey"
+            columns: ["assigned_vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      truck_posts_marketplace: {
+        Row: {
+          available_from: string | null
+          capacity_tons: number | null
+          created_at: string | null
+          expected_rate: number | null
+          from_lat: number | null
+          from_lng: number | null
+          from_location: string | null
+          id: string | null
+          is_active: boolean | null
+          notes: string | null
+          owner_id: string | null
+          to_lat: number | null
+          to_lng: number | null
+          to_location: string | null
+          updated_at: string | null
+          vehicle_id: string | null
+          vehicle_type: string | null
+        }
+        Insert: {
+          available_from?: string | null
+          capacity_tons?: number | null
+          created_at?: string | null
+          expected_rate?: number | null
+          from_lat?: number | null
+          from_lng?: number | null
+          from_location?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          notes?: string | null
+          owner_id?: string | null
+          to_lat?: number | null
+          to_lng?: number | null
+          to_location?: string | null
+          updated_at?: string | null
+          vehicle_id?: string | null
+          vehicle_type?: string | null
+        }
+        Update: {
+          available_from?: string | null
+          capacity_tons?: number | null
+          created_at?: string | null
+          expected_rate?: number | null
+          from_lat?: number | null
+          from_lng?: number | null
+          from_location?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          notes?: string | null
+          owner_id?: string | null
+          to_lat?: number | null
+          to_lng?: number | null
+          to_location?: string | null
+          updated_at?: string | null
+          vehicle_id?: string | null
+          vehicle_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "truck_posts_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       can_write_company: { Args: { _company: string }; Returns: boolean }
