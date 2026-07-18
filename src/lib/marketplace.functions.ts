@@ -208,12 +208,12 @@ export const suggestMatchesForLoad = createServerFn({ method: "GET" })
   .inputValidator((raw: unknown) => z.object({ load_id: z.string().uuid() }).parse(raw))
   .handler(async ({ context, data }) => {
     const { supabase } = context;
-    const { data: load, error: le } = await supabase.from("loads").select("*").eq("id", data.load_id).single();
+    const { data: load, error: le } = await supabase.from("loads").select(LOAD_PUBLIC_COLS).eq("id", data.load_id).single();
     if (le || !load) { if (le) console.error(le); throw new Error("Load not found"); }
 
     const { data: trucks, error: te } = await supabase
       .from("truck_posts")
-      .select("*")
+      .select(TRUCK_POST_PUBLIC_COLS)
       .eq("is_active", true)
       .gte("capacity_tons", load.weight_tons);
     if (te) { console.error(te); throw new Error("Request failed. Please try again."); }
