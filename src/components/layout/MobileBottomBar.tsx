@@ -19,7 +19,7 @@ export function MobileBottomBar() {
   return (
     <nav
       aria-label="Primary"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 backdrop-blur pb-[env(safe-area-inset-bottom)] lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/90 backdrop-blur-lg pb-[env(safe-area-inset-bottom)] lg:hidden"
     >
       <ul className="grid grid-cols-5">
         {ITEMS.map(({ to, label, icon: Icon }) => {
@@ -30,10 +30,10 @@ export function MobileBottomBar() {
                 to={to}
                 className={cn(
                   "flex flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-medium transition-colors",
-                  active ? "text-primary" : "text-muted-foreground hover:text-foreground",
+                  active ? "text-primary" : "text-muted-foreground/60 hover:text-foreground",
                 )}
               >
-                <Icon className={cn("h-5 w-5", active && "drop-shadow-[0_0_6px_var(--primary)]")} />
+                <Icon className="h-5 w-5" />
                 <span>{label}</span>
               </Link>
             </li>
