@@ -70,8 +70,8 @@ function Consent() {
     window.location.href = target;
   }
 
-  const scopes = Array.isArray(details?.scopes)
-    ? details!.scopes
+  const scopes: string[] = Array.isArray(details?.scopes)
+    ? (details!.scopes as string[])
     : typeof details?.scopes === "string"
       ? details.scopes.split(/[\s,]+/).filter(Boolean)
       : [];
