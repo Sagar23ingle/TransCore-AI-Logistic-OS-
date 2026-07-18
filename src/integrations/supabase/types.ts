@@ -623,6 +623,24 @@ export type Database = {
           },
         ]
       }
+      fleet_insights_cache: {
+        Row: {
+          generated_at: string
+          insights: Json
+          owner_id: string
+        }
+        Insert: {
+          generated_at?: string
+          insights: Json
+          owner_id: string
+        }
+        Update: {
+          generated_at?: string
+          insights?: Json
+          owner_id?: string
+        }
+        Relationships: []
+      }
       fuel_logs: {
         Row: {
           company_id: string | null
