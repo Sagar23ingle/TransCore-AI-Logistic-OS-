@@ -1,5 +1,5 @@
 import { useNavigate } from "@tanstack/react-router";
-import { LogOut, Menu, Moon, Sun, User } from "lucide-react";
+import { LogOut, Menu, Moon, Sun } from "lucide-react";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -60,14 +60,12 @@ export function TopBar() {
         aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
         title={theme === "dark" ? "Light mode" : "Dark mode"}
       >
-        {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+        {theme === "dark" ? <Sun className="h-4 w-4 text-muted-foreground" /> : <Moon className="h-4 w-4 text-muted-foreground" />}
       </Button>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground hover:text-foreground">
-            <span className="text-xs font-medium">
-              {initials || <User className="h-4 w-4" />}
-            </span>
+            <span className="font-mono text-sm font-medium text-muted-foreground">{initials}</span>
             <span className="hidden max-w-[140px] truncate text-sm sm:inline">{email}</span>
           </Button>
         </DropdownMenuTrigger>
