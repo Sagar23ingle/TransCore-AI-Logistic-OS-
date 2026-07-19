@@ -340,9 +340,22 @@ function ProfilePage() {
                 ref={inputRef}
                 type="file"
                 accept="image/jpeg,image/png,image/webp"
-                className="hidden"
-                capture="user"
                 onChange={onFileChange}
+                // Position off-screen (not display:none) so Android WebView
+                // reliably opens the system chooser (Camera + Files/Photos).
+                className="sr-only"
+                tabIndex={-1}
+                aria-hidden="true"
+              />
+              <input
+                ref={cameraInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={onFileChange}
+                className="sr-only"
+                tabIndex={-1}
+                aria-hidden="true"
               />
             </div>
             <div className="min-w-0 flex-1">
@@ -367,10 +380,31 @@ function ProfilePage() {
               <div className="mt-3 hidden text-xs text-muted-foreground sm:block">
                 Drop an image here to change your photo — JPG, PNG or WEBP up to 5 MB
               </div>
+              {uploading && (
+                <div className="mt-3 space-y-1">
+                  <Progress value={progress} className="h-1.5" />
+                  <p className="text-[11px] text-muted-foreground">
+                    Uploading photo… {Math.round(progress)}%
+                  </p>
+                </div>
+              )}
             </div>
-            <div className="flex gap-2 self-stretch sm:self-center">
-              <Button variant="outline" size="sm" onClick={() => inputRef.current?.click()} disabled={uploading}>
-                <Upload className="mr-1.5 h-3.5 w-3.5" /> Upload
+            <div className="flex flex-wrap gap-2 self-stretch sm:self-center">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => inputRef.current?.click()}
+                disabled={uploading}
+              >
+                <Upload className="mr-1.5 h-3.5 w-3.5" /> Gallery
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => cameraInputRef.current?.click()}
+                disabled={uploading}
+              >
+                <Camera className="mr-1.5 h-3.5 w-3.5" /> Camera
               </Button>
               {profile?.avatar_url && (
                 <Button variant="ghost" size="sm" onClick={removePhoto} disabled={uploading}>
