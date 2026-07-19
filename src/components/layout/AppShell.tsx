@@ -18,10 +18,10 @@ export function AppShell({ children, title, description, action }: AppShellProps
         <TopBar />
         <main className="mx-auto w-full max-w-[1400px] px-4 pt-3 pb-[calc(72px+env(safe-area-inset-bottom))] sm:px-6 sm:pt-5 lg:px-8 lg:pt-6 lg:pb-10">
           {(title || action) && (
-            <div className="mb-3 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 sm:mb-6 sm:items-end sm:gap-3">
+            <div className="mb-3 flex flex-col gap-2 sm:mb-6 sm:flex-row sm:items-end sm:justify-between sm:gap-3">
               <div className="min-w-0">
                 {title && (
-                  <h1 className="truncate text-[22px] font-semibold leading-tight tracking-tight sm:text-2xl">
+                  <h1 className="text-[20px] font-semibold leading-tight tracking-tight break-words sm:text-2xl">
                     {title}
                   </h1>
                 )}
@@ -29,7 +29,11 @@ export function AppShell({ children, title, description, action }: AppShellProps
                   <p className="mt-0.5 hidden text-sm text-muted-foreground sm:block">{description}</p>
                 )}
               </div>
-              {action && <div className="shrink-0">{action}</div>}
+              {action && (
+                <div className="flex w-full flex-wrap gap-2 sm:w-auto sm:shrink-0 [&>*]:min-w-0">
+                  {action}
+                </div>
+              )}
             </div>
           )}
           {children}
