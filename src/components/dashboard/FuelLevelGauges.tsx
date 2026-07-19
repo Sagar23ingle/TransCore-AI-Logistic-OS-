@@ -2,10 +2,12 @@ import { useMemo } from "react";
 import { useQuery, queryOptions } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { motion } from "motion/react";
-import { Fuel, AlertTriangle } from "lucide-react";
+import { Fuel, AlertTriangle, Plus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Link } from "@tanstack/react-router";
 import { getVehicleFuelLevels, type VehicleFuelLevel } from "@/lib/fuel-level.functions";
 
 function stopsFor(pct: number) {
@@ -100,16 +102,16 @@ function Gauge({ v }: { v: VehicleFuelLevel }) {
 
         <div className="w-full text-center">
           {insufficient ? (
-            <div className="text-[10px] text-muted-foreground">
-              Log a full-tank fill to activate
-            </div>
+            <Button asChild size="sm" variant="outline" className="h-7 w-full text-[10px]">
+              <Link to="/fuel"><Plus className="mr-1 h-3 w-3" /> Log Fuel</Link>
+            </Button>
           ) : (
             <>
               <div className="num text-[12px] font-semibold text-foreground/90">
-                {v.range_km.toLocaleString("en-IN")} km remaining
+                {v.litres_remaining.toFixed(0)} L · {v.range_km.toLocaleString("en-IN")} km
               </div>
               <div className="text-[10px] text-muted-foreground">
-                {v.litres_remaining.toFixed(1)}L · {v.kmpl > 0 ? `${v.kmpl} km/L` : "—"}
+                Tank {v.tank_litres}L · {v.kmpl > 0 ? `${v.kmpl} km/L` : "—"}
               </div>
             </>
           )}
@@ -162,6 +164,18 @@ export function FuelLevelGauges() {
         ) : items.length === 0 ? (
           <div className="rounded-xl border border-dashed border-border/60 p-6 text-center text-xs text-muted-foreground">
             Add a vehicle to start tracking fuel level.
+          </div>
+        ) : items.every((v) => v.reason === "insufficient_data") ? (
+          <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-border/60 p-6 text-center">
+            <div className="grid h-10 w-10 place-items-center rounded-full bg-primary/10 text-primary">
+              <Fuel className="h-5 w-5" />
+            </div>
+            <div className="max-w-sm text-xs text-muted-foreground">
+              Record one <span className="font-medium text-foreground">Full Tank</span> fuel entry and complete at least one trip to calculate fuel level.
+            </div>
+            <Button asChild size="sm" className="h-8">
+              <Link to="/fuel"><Plus className="mr-1 h-3.5 w-3.5" /> Log Fuel</Link>
+            </Button>
           </div>
         ) : (
           <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-px-4 px-4 py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-3 sm:overflow-visible sm:px-0 sm:py-0 lg:grid-cols-4">
