@@ -63,6 +63,7 @@ function Dashboard() {
   const homeFn = useServerFn(getHomeExtras);
   const recompute = useServerFn(recomputeAlerts);
   const qc = useQueryClient();
+  const { user } = useAuth();
 
   const stats = useQuery(queryOptions({ queryKey: ["dashboard-stats"], queryFn: () => statsFn(), staleTime: 60_000 }));
   const daily = useQuery(queryOptions({ queryKey: ["dashboard-daily-ops"], queryFn: () => dailyFn(), staleTime: 60_000 }));
