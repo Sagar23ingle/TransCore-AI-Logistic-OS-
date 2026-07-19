@@ -20,6 +20,9 @@ import { getDashboardStats } from "@/lib/dashboard.functions";
 import { getDailyOps, type DailyOps } from "@/lib/daily-ops.functions";
 import { getHomeExtras, type HomeExtras } from "@/lib/home.functions";
 import { recomputeAlerts } from "@/lib/alerts.functions";
+import { getFleetLive } from "@/lib/gps.functions";
+import { GoogleMapView } from "@/components/tracking/GoogleMap";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { formatINR, formatNumber } from "@/lib/format";
 import {
   Area, AreaChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
@@ -302,6 +305,27 @@ function FleetOverview({ daily, loading }: { daily?: DailyOps; loading: boolean 
     (daily?.trend ?? []).map((r) => ({ ...r, label: r.date.slice(5) })),
   [daily]);
   const hasData = data.some((d) => d.revenue > 0 || d.fuel > 0 || d.trips > 0);
+  const fleetLiveFn = useServerFn(getFleetLive);
+  const live = useQuery(queryOptions({
+    queryKey: ["fleet-live-dashboard"],
+    queryFn: () => fleetLiveFn(),
+    staleTime: 30_000,
+    refetchInterval: 60_000,
+  }));
+  const markers = useMemo(
+    () => (live.data ?? [])
+      .filter((v) => v.last)
+      .map((v) => ({
+        id: v.id,
+        lat: v.last!.lat,
+        lng: v.last!.lng,
+        label: v.registration_number as string,
+        status: v.liveStatus,
+      })),
+    [live.data],
+  );
+  const reporting = markers.length;
+  const totalV = live.data?.length ?? 0;
 
   return (
     <Card className="border-border/60">
@@ -310,40 +334,79 @@ function FleetOverview({ daily, loading }: { daily?: DailyOps; loading: boolean 
           <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
             <TrendingUp className="h-4 w-4 text-primary" /> Fleet Overview
           </CardTitle>
-          <p className="mt-0.5 text-[11px] text-muted-foreground sm:text-xs">Revenue & fuel — last 30 days</p>
+          <p className="mt-0.5 text-[11px] text-muted-foreground sm:text-xs">Revenue &amp; fuel trend · live vehicle map</p>
         </div>
         <Badge variant="outline" className="text-[10px]">30D</Badge>
       </CardHeader>
-      <CardContent className="h-44 p-3 pt-0 sm:h-72 sm:p-6 sm:pt-0">
-        {loading ? (
-          <Skeleton className="h-full w-full rounded-lg" />
-        ) : !hasData ? (
-          <EmptyChart message="No Data Available" hint="Log trips and fuel to see trends here." />
-        ) : (
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={data} margin={{ top: 6, right: 12, left: 0, bottom: 0 }}>
-              <defs>
-                <linearGradient id="ov-rev" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.5} />
-                  <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
-                </linearGradient>
-                <linearGradient id="ov-fuel" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="hsl(var(--chart-3))" stopOpacity={0.5} />
-                  <stop offset="100%" stopColor="hsl(var(--chart-3))" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} vertical={false} />
-              <XAxis dataKey="label" stroke="hsl(var(--muted-foreground))" fontSize={10} interval={6} tickLine={false} axisLine={false} />
-              <YAxis stroke="hsl(var(--muted-foreground))" fontSize={10} tickLine={false} axisLine={false} width={28} />
-              <Tooltip
-                contentStyle={{ background: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: 12, fontSize: 12 }}
-                formatter={(v: number, name: string) => [name === "trips" ? v : formatINR(v), name]}
-              />
-              <Area type="monotone" dataKey="revenue" stroke="hsl(var(--primary))" fill="url(#ov-rev)" strokeWidth={2} />
-              <Area type="monotone" dataKey="fuel" stroke="hsl(var(--chart-3))" fill="url(#ov-fuel)" strokeWidth={2} />
-            </AreaChart>
-          </ResponsiveContainer>
-        )}
+      <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
+        <Tabs defaultValue="trend" className="w-full">
+          <TabsList className="h-8 w-full grid-cols-2 sm:w-auto sm:inline-grid">
+            <TabsTrigger value="trend" className="text-xs">Trend</TabsTrigger>
+            <TabsTrigger value="map" className="text-xs">
+              Live Map
+              {totalV > 0 && (
+                <span className="ml-1.5 rounded-full bg-primary/15 px-1.5 py-0.5 text-[9px] font-semibold text-primary">
+                  {reporting}/{totalV}
+                </span>
+              )}
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="trend" className="mt-3 h-44 sm:h-72">
+            {loading ? (
+              <Skeleton className="h-full w-full rounded-lg" />
+            ) : !hasData ? (
+              <EmptyChart message="No Data Available" hint="Log trips and fuel to see trends here." />
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={data} margin={{ top: 6, right: 12, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="ov-rev" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.5} />
+                      <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                    </linearGradient>
+                    <linearGradient id="ov-fuel" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="hsl(var(--chart-3))" stopOpacity={0.5} />
+                      <stop offset="100%" stopColor="hsl(var(--chart-3))" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} vertical={false} />
+                  <XAxis dataKey="label" stroke="hsl(var(--muted-foreground))" fontSize={10} interval={6} tickLine={false} axisLine={false} />
+                  <YAxis stroke="hsl(var(--muted-foreground))" fontSize={10} tickLine={false} axisLine={false} width={28} />
+                  <Tooltip
+                    contentStyle={{ background: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: 12, fontSize: 12 }}
+                    formatter={(v: number, name: string) => [name === "trips" ? v : formatINR(v), name]}
+                  />
+                  <Area type="monotone" dataKey="revenue" stroke="hsl(var(--primary))" fill="url(#ov-rev)" strokeWidth={2} />
+                  <Area type="monotone" dataKey="fuel" stroke="hsl(var(--chart-3))" fill="url(#ov-fuel)" strokeWidth={2} />
+                </AreaChart>
+              </ResponsiveContainer>
+            )}
+          </TabsContent>
+
+          <TabsContent value="map" className="mt-3">
+            {live.isLoading ? (
+              <Skeleton className="h-44 w-full rounded-lg sm:h-72" />
+            ) : markers.length === 0 ? (
+              <div className="h-44 sm:h-72">
+                <EmptyChart
+                  message="No live vehicle positions"
+                  hint="Start the driver GPS broadcast from Live Tracking to see vehicles here."
+                />
+              </div>
+            ) : (
+              <div className="overflow-hidden rounded-lg border border-border/60">
+                <GoogleMapView markers={markers} className="h-44 w-full sm:h-72" zoom={5} />
+              </div>
+            )}
+            <div className="mt-2 flex items-center justify-between text-[10px] text-muted-foreground">
+              <span>{reporting} of {totalV} vehicle{totalV === 1 ? "" : "s"} reporting</span>
+              <Link to="/tracking" className="font-medium text-primary hover:underline">
+                Open live tracking <ChevronRight className="ml-0.5 inline h-3 w-3" />
+              </Link>
+            </div>
+          </TabsContent>
+        </Tabs>
       </CardContent>
     </Card>
   );
