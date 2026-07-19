@@ -70,8 +70,8 @@ function DocumentsPage() {
     }
     setUploading(true);
     try {
-      const { data: userRes } = await supabase.auth.getUser();
-      const userId = userRes.user?.id;
+      const { data: sessionRes } = await supabase.auth.getSession();
+      const userId = sessionRes.session?.user?.id;
       if (!userId) throw new Error("Not signed in");
       const ext = file.name.split(".").pop() || "bin";
       const path = `${userId}/${crypto.randomUUID()}.${ext}`;

@@ -22,6 +22,7 @@ function useAuthInternal(): AuthState {
 
   useEffect(() => {
     let mounted = true;
+    let lastRoleUserId: string | null = null;
 
     async function loadRoles(userId: string): Promise<AppRole[]> {
       const { data, error } = await supabase.from("user_roles").select("role").eq("user_id", userId);
@@ -32,11 +33,16 @@ function useAuthInternal(): AuthState {
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!mounted) return;
       setState((s) => ({ ...s, session, user: session?.user ?? null }));
-      if (session?.user) {
-        loadRoles(session.user.id).then((roles) => {
+      const uid = session?.user?.id ?? null;
+      // Only refetch roles when the user identity actually changes.
+      // Otherwise TOKEN_REFRESHED / USER_UPDATED events spam the roles endpoint.
+      if (uid && uid !== lastRoleUserId) {
+        lastRoleUserId = uid;
+        loadRoles(uid).then((roles) => {
           if (mounted) setState((s) => ({ ...s, roles }));
         });
-      } else {
+      } else if (!uid) {
+        lastRoleUserId = null;
         setState((s) => ({ ...s, roles: [] }));
       }
     });
@@ -44,7 +50,9 @@ function useAuthInternal(): AuthState {
     supabase.auth.getSession().then(async ({ data }) => {
       if (!mounted) return;
       const session = data.session;
-      const roles = session?.user ? await loadRoles(session.user.id) : [];
+      const uid = session?.user?.id ?? null;
+      const roles = uid ? await loadRoles(uid) : [];
+      lastRoleUserId = uid;
       if (mounted) {
         setState({ ready: true, session, user: session?.user ?? null, roles });
       }
