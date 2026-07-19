@@ -65,25 +65,30 @@ function Dashboard() {
 
   return (
     <AppShell>
-      <div className="space-y-6">
+      <div className="space-y-3 sm:space-y-6">
         <WelcomeHeader daily={daily.data} loading={daily.isLoading} />
 
         <KpiRow stats={stats.data} daily={daily.data} extras={extras.data} loading={stats.isLoading} />
 
-        <div className="grid gap-4 lg:grid-cols-3">
+        {/* Mobile: Quick Actions first for one-tap access */}
+        <div className="lg:hidden">
+          <QuickActions />
+        </div>
+
+        <div className="grid gap-3 sm:gap-4 lg:grid-cols-3">
           <div className="lg:col-span-2">
             <FleetOverview daily={daily.data} loading={daily.isLoading} />
           </div>
           <FuelSummary extras={extras.data} loading={extras.isLoading} />
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-3">
-          <div className="lg:col-span-2 space-y-4">
+        <div className="grid gap-3 sm:gap-4 lg:grid-cols-3">
+          <div className="lg:col-span-2 space-y-3 sm:space-y-4">
+            <AlertsPanel daily={daily.data} loading={daily.isLoading} />
             <AIInsightsSection daily={daily.data} loading={daily.isLoading} />
             <RecentTrips extras={extras.data} loading={extras.isLoading} />
           </div>
-          <div className="space-y-4">
-            <AlertsPanel daily={daily.data} loading={daily.isLoading} />
+          <div className="hidden lg:block space-y-4">
             <QuickActions />
           </div>
         </div>
@@ -101,27 +106,27 @@ function WelcomeHeader({ daily, loading }: { daily?: DailyOps; loading: boolean 
   const name = daily?.user.fullName?.split(" ")[0];
   const hour = daily?.user.hour ?? now.getHours();
 
-  if (loading) return <Skeleton className="h-24 w-full rounded-2xl" />;
+  if (loading) return <Skeleton className="h-20 w-full rounded-2xl sm:h-24" />;
 
   return (
     <motion.div
       initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: "easeOut" }}
-      className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-card via-card to-primary/5 p-5 sm:p-6"
+      className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-card via-card to-primary/5 p-4 sm:p-6"
     >
-      <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-primary/10 blur-3xl" />
+      <div className="pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full bg-primary/10 blur-3xl sm:-right-16 sm:-top-16 sm:h-48 sm:w-48" />
       <div className="relative flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Sparkles className="h-3.5 w-3.5 text-primary" />
+          <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+            <Sparkles className="h-3 w-3 text-primary" />
             <span className="uppercase tracking-wider">TransCore AI</span>
           </div>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
+          <h1 className="mt-0.5 text-[22px] font-semibold leading-tight tracking-tight sm:text-3xl">
             {greeting(hour)}{name ? `, ${name}` : ""}.
           </h1>
-          <p className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground">
-            <Calendar className="h-3.5 w-3.5" /> {dateLabel}
+          <p className="mt-0.5 flex items-center gap-1 text-[11px] text-muted-foreground sm:text-sm">
+            <Calendar className="h-3 w-3" /> {dateLabel}
           </p>
         </div>
         <div className="hidden sm:flex items-center gap-2">
