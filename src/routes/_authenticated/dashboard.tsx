@@ -63,14 +63,26 @@ function Dashboard() {
   const homeFn = useServerFn(getHomeExtras);
   const recompute = useServerFn(recomputeAlerts);
   const qc = useQueryClient();
+  const { user } = useAuth();
 
   const stats = useQuery(queryOptions({ queryKey: ["dashboard-stats"], queryFn: () => statsFn(), staleTime: 60_000 }));
   const daily = useQuery(queryOptions({ queryKey: ["dashboard-daily-ops"], queryFn: () => dailyFn(), staleTime: 60_000 }));
   const extras = useQuery(queryOptions({ queryKey: ["dashboard-home-extras"], queryFn: () => homeFn(), staleTime: 60_000 }));
 
   useEffect(() => {
-    recompute().then(() => qc.invalidateQueries({ queryKey: ["alerts"] })).catch(() => {});
-  }, [recompute, qc]);
+    // Throttle server-side alert recomputation: at most once per 5 minutes
+    // per user. Prior behaviour fired on every dashboard mount, which was the
+    // #1 slow-query hotspot (168 calls · ~900ms total, ~168 alert upserts).
+    if (typeof window === "undefined") return;
+    const uid = (user?.id ?? "anon") as string;
+    const key = `tc.alerts.recompute.at:${uid}`;
+    const last = Number(window.localStorage.getItem(key) ?? "0");
+    if (Date.now() - last < 5 * 60_000) return;
+    window.localStorage.setItem(key, String(Date.now()));
+    recompute()
+      .then(() => qc.invalidateQueries({ queryKey: ["alerts"] }))
+      .catch(() => { window.localStorage.removeItem(key); });
+  }, [recompute, qc, user?.id]);
 
   return (
     <AppShell>
