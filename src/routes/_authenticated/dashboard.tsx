@@ -540,27 +540,21 @@ function QuickActions() {
   ] as const;
   return (
     <Card className="border-border/60">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base">Quick Actions</CardTitle>
+      <CardHeader className="p-3 pb-2 sm:p-6 sm:pb-3">
+        <CardTitle className="text-sm sm:text-base">Quick Actions</CardTitle>
       </CardHeader>
-      <CardContent className="grid grid-cols-2 gap-2">
-        {actions.map((a, i) => (
-          <motion.div
+      <CardContent className="grid grid-cols-4 gap-2 p-3 pt-0 sm:grid-cols-2 sm:p-6 sm:pt-0">
+        {actions.map((a) => (
+          <Link
             key={a.label}
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.25, delay: i * 0.03 }}
+            to={a.href}
+            className="group flex flex-col items-center gap-1.5 rounded-2xl border border-border/60 bg-card p-2.5 text-center transition-all active:scale-95 hover:border-primary/40 hover:bg-primary/5 sm:flex-row sm:items-start sm:gap-2 sm:text-left"
           >
-            <Link
-              to={a.href}
-              className="group flex flex-col items-start gap-2 rounded-xl border border-border/60 bg-card p-3 transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:bg-primary/5 hover:shadow-md"
-            >
-              <div className="grid h-8 w-8 place-items-center rounded-lg bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-primary-foreground">
-                <a.icon className="h-4 w-4" />
-              </div>
-              <span className="text-xs font-medium">{a.label}</span>
-            </Link>
-          </motion.div>
+            <div className="grid h-9 w-9 place-items-center rounded-xl bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-primary-foreground sm:h-8 sm:w-8 sm:rounded-lg">
+              <a.icon className="h-4 w-4" />
+            </div>
+            <span className="text-[11px] font-medium leading-tight sm:text-xs">{a.label}</span>
+          </Link>
         ))}
       </CardContent>
     </Card>
