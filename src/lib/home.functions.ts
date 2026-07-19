@@ -12,7 +12,7 @@ export const getHomeExtras = createServerFn({ method: "GET" })
     monthStart.setHours(0, 0, 0, 0);
     const startISO = monthStart.toISOString().slice(0, 10);
 
-    const [recentR, vehR, fuelR, kmplR] = await Promise.all([
+    const [recentR, vehR, fuelR, kmplR, expR] = await Promise.all([
       supabase
         .from("trips")
         .select("id, origin, destination, status, freight_amount, actual_end, scheduled_start, created_at, vehicle:vehicles(registration_number), driver:drivers(full_name)")
@@ -31,6 +31,12 @@ export const getHomeExtras = createServerFn({ method: "GET" })
         .eq("owner_id", userId)
         .order("filled_on", { ascending: true })
         .limit(2000),
+      supabase
+        .from("expenses")
+        .select("vehicle_id, amount, incurred_on")
+        .eq("owner_id", userId)
+        .eq("category", "fuel")
+        .gte("incurred_on", startISO),
     ]);
 
     const recentTrips = (recentR.data ?? []).map((t) => ({
@@ -55,6 +61,15 @@ export const getHomeExtras = createServerFn({ method: "GET" })
       const t = fuelTypeByVehicle.get(f.vehicle_id as string) ?? "other";
       const key = ["diesel", "petrol", "cng", "electric"].includes(t) ? t : "other";
       const amt = Number(f.total_amount ?? 0);
+      fuelByType[key] += amt;
+      totalFuelCost += amt;
+    }
+    // Also include fuel entries logged as expenses (category = 'fuel'),
+    // so users who only track fuel via Expenses still see real numbers.
+    for (const e of expR.data ?? []) {
+      const t = fuelTypeByVehicle.get(e.vehicle_id as string) ?? "other";
+      const key = ["diesel", "petrol", "cng", "electric"].includes(t) ? t : "other";
+      const amt = Number(e.amount ?? 0);
       fuelByType[key] += amt;
       totalFuelCost += amt;
     }
