@@ -591,12 +591,16 @@ function StatusBadge({ status }: { status: string }) {
 
 /* ---------- Fuel Summary ---------- */
 function FuelSummary({ extras, loading }: { extras?: HomeExtras; loading: boolean }) {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   const total = extras?.fuel.totalCost ?? 0;
-  const rows = ["diesel", "petrol", "cng", "electric"].map((k) => ({
+  const rows = (["diesel", "petrol", "cng", "electric"] as const).map((k) => ({
     type: k,
     amount: extras?.fuel.byType.find((b) => b.type === k)?.amount ?? 0,
   }));
-  const chartData = (extras?.fuel.byType ?? []).length > 0 ? extras!.fuel.byType : [];
+  const activeRows = rows.filter((r) => r.amount > 0);
+  const chartData = activeRows.length > 0 ? activeRows : [];
+  const trackColor = isDark ? "rgba(148,163,184,0.10)" : "rgba(148,163,184,0.18)";
 
   return (
     <Card className="border-border/60">
@@ -611,46 +615,77 @@ function FuelSummary({ extras, loading }: { extras?: HomeExtras; loading: boolea
           <Skeleton className="h-40 w-full rounded-lg" />
         ) : (
           <div className="flex items-center gap-4 sm:block">
-            <div className="relative h-28 w-28 shrink-0 sm:mx-auto sm:h-40 sm:w-40">
-              {chartData.length === 0 ? (
-                <div className="grid h-full w-full place-items-center rounded-full border-2 border-dashed border-border/60">
-                  <div className="text-center">
-                    <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Total</div>
-                    <div className="num text-sm font-semibold sm:text-lg">₹0</div>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie data={chartData} dataKey="amount" nameKey="type" innerRadius="60%" outerRadius="95%" paddingAngle={2}>
-                        {chartData.map((d, i) => (
-                          <Cell key={i} fill={FUEL_COLORS[d.type] ?? "hsl(var(--chart-5))"} />
-                        ))}
-                      </Pie>
-                      <Tooltip
-                        contentStyle={{ background: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: 12, fontSize: 12 }}
-                        formatter={(v: number) => formatINR(v)}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                  <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-                    <div className="text-[9px] uppercase tracking-wider text-muted-foreground sm:text-[10px]">Total</div>
-                    <div className="num text-[13px] font-semibold leading-tight sm:text-lg">{formatINR(total)}</div>
-                  </div>
-                </>
-              )}
+            <div className="relative h-32 w-32 shrink-0 sm:mx-auto sm:h-44 sm:w-44">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <defs>
+                    {(Object.keys(FUEL_COLORS) as Array<keyof typeof FUEL_COLORS>).map((k) => (
+                      <linearGradient key={k} id={`fuel-grad-${k}`} x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="0%" stopColor={FUEL_COLORS[k].from} stopOpacity={0.95} />
+                        <stop offset="100%" stopColor={FUEL_COLORS[k].to} stopOpacity={0.95} />
+                      </linearGradient>
+                    ))}
+                  </defs>
+                  {/* Background track ring — keeps the donut visible when only one fuel type has data */}
+                  <Pie
+                    data={[{ name: "track", value: 1 }]} dataKey="value"
+                    innerRadius="65%" outerRadius="95%"
+                    stroke="none" isAnimationActive={false}
+                    fill={trackColor}
+                  />
+                  {chartData.length > 0 && (
+                    <Pie
+                      data={chartData} dataKey="amount" nameKey="type"
+                      innerRadius="65%" outerRadius="95%"
+                      paddingAngle={chartData.length > 1 ? 3 : 0}
+                      cornerRadius={6}
+                      stroke={isDark ? "hsl(var(--card))" : "#fff"} strokeWidth={2}
+                      animationDuration={900} animationBegin={100}
+                    >
+                      {chartData.map((d) => (
+                        <Cell key={d.type} fill={`url(#fuel-grad-${d.type})`} />
+                      ))}
+                    </Pie>
+                  )}
+                  {chartData.length > 0 && (
+                    <Tooltip
+                      contentStyle={{
+                        background: isDark ? "rgba(15,15,20,0.92)" : "rgba(255,255,255,0.98)",
+                        backdropFilter: "blur(8px)",
+                        border: "1px solid hsl(var(--border))",
+                        borderRadius: 12,
+                        fontSize: 12,
+                        boxShadow: isDark ? "0 8px 24px rgba(0,0,0,0.5)" : "0 8px 24px rgba(0,0,0,0.08)",
+                      }}
+                      formatter={(v: number, _n, entry) => [formatINR(v), FUEL_COLORS[(entry?.payload?.type ?? "other") as keyof typeof FUEL_COLORS]?.label ?? "Fuel"]}
+                    />
+                  )}
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+                <div className="text-[9px] uppercase tracking-[0.14em] text-muted-foreground sm:text-[10px]">Total</div>
+                <div className="num text-base font-bold leading-tight tracking-tight sm:text-xl">{formatINR(total)}</div>
+                <div className="mt-0.5 text-[9px] text-muted-foreground sm:text-[10px]">This month</div>
+              </div>
             </div>
-            <div className="flex-1 space-y-1.5 sm:mt-4">
-              {rows.map((r) => (
-                <div key={r.type} className="flex items-center justify-between text-[11px] sm:text-xs">
-                  <span className="flex items-center gap-1.5 capitalize text-muted-foreground">
-                    <span className="h-2 w-2 rounded-full" style={{ background: FUEL_COLORS[r.type] }} />
-                    {r.type}
-                  </span>
-                  <span className="num font-medium">{formatINR(r.amount)}</span>
-                </div>
-              ))}
+            <div className="flex-1 space-y-1.5 sm:mt-5">
+              {rows.map((r) => {
+                const pct = total > 0 ? Math.round((r.amount / total) * 100) : 0;
+                const c = FUEL_COLORS[r.type];
+                return (
+                  <div key={r.type} className="group flex items-center justify-between rounded-lg px-2 py-1.5 text-[11px] transition hover:bg-muted/40 sm:text-xs">
+                    <span className="flex items-center gap-2 text-foreground/80">
+                      <span
+                        className="h-2.5 w-2.5 rounded-full ring-2 ring-background"
+                        style={{ background: `linear-gradient(135deg, ${c.from}, ${c.to})` }}
+                      />
+                      <span className="font-medium">{c.label}</span>
+                      {r.amount > 0 && <span className="text-[10px] text-muted-foreground">{pct}%</span>}
+                    </span>
+                    <span className="num font-semibold tabular-nums">{formatINR(r.amount)}</span>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
