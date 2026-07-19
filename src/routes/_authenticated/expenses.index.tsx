@@ -86,7 +86,7 @@ function ExpensesPage() {
             const opt = CATEGORY_OPTIONS.find((c) => c.value === e.category);
             const Icon = opt?.icon ?? Receipt;
             return (
-              <Card key={e.id} className="rounded-2xl">
+              <Card key={e.id} className="list-perf rounded-2xl">
                 <CardContent className="flex items-center gap-3 p-3">
                   <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
                     <Icon className="h-5 w-5" />

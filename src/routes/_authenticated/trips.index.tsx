@@ -43,7 +43,7 @@ function TripsPage() {
       ) : (
         <div className="grid gap-2.5">
           {q.data.map((t) => (
-            <Card key={t.id} className="rounded-2xl">
+            <Card key={t.id} className="list-perf rounded-2xl">
               <CardContent className="p-3.5">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">

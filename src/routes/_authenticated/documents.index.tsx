@@ -124,7 +124,7 @@ function DocumentsPage() {
             const opt = DOC_TYPE_OPTIONS.find((o) => o.value === d.doc_type);
             const Icon = opt?.icon ?? FileText;
             return (
-              <Card key={d.id} className="rounded-2xl">
+              <Card key={d.id} className="list-perf rounded-2xl">
                 <CardContent className="p-3.5">
                   <div className="flex items-start gap-3">
                     <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">

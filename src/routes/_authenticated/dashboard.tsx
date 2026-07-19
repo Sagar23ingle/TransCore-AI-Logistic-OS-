@@ -65,25 +65,30 @@ function Dashboard() {
 
   return (
     <AppShell>
-      <div className="space-y-6">
+      <div className="space-y-3 sm:space-y-6">
         <WelcomeHeader daily={daily.data} loading={daily.isLoading} />
 
         <KpiRow stats={stats.data} daily={daily.data} extras={extras.data} loading={stats.isLoading} />
 
-        <div className="grid gap-4 lg:grid-cols-3">
+        {/* Mobile: Quick Actions first for one-tap access */}
+        <div className="lg:hidden">
+          <QuickActions />
+        </div>
+
+        <div className="grid gap-3 sm:gap-4 lg:grid-cols-3">
           <div className="lg:col-span-2">
             <FleetOverview daily={daily.data} loading={daily.isLoading} />
           </div>
           <FuelSummary extras={extras.data} loading={extras.isLoading} />
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-3">
-          <div className="lg:col-span-2 space-y-4">
+        <div className="grid gap-3 sm:gap-4 lg:grid-cols-3">
+          <div className="lg:col-span-2 space-y-3 sm:space-y-4">
+            <AlertsPanel daily={daily.data} loading={daily.isLoading} />
             <AIInsightsSection daily={daily.data} loading={daily.isLoading} />
             <RecentTrips extras={extras.data} loading={extras.isLoading} />
           </div>
-          <div className="space-y-4">
-            <AlertsPanel daily={daily.data} loading={daily.isLoading} />
+          <div className="hidden lg:block space-y-4">
             <QuickActions />
           </div>
         </div>
@@ -101,27 +106,27 @@ function WelcomeHeader({ daily, loading }: { daily?: DailyOps; loading: boolean 
   const name = daily?.user.fullName?.split(" ")[0];
   const hour = daily?.user.hour ?? now.getHours();
 
-  if (loading) return <Skeleton className="h-24 w-full rounded-2xl" />;
+  if (loading) return <Skeleton className="h-20 w-full rounded-2xl sm:h-24" />;
 
   return (
     <motion.div
       initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: "easeOut" }}
-      className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-card via-card to-primary/5 p-5 sm:p-6"
+      className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-card via-card to-primary/5 p-4 sm:p-6"
     >
-      <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-primary/10 blur-3xl" />
+      <div className="pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full bg-primary/10 blur-3xl sm:-right-16 sm:-top-16 sm:h-48 sm:w-48" />
       <div className="relative flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Sparkles className="h-3.5 w-3.5 text-primary" />
+          <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+            <Sparkles className="h-3 w-3 text-primary" />
             <span className="uppercase tracking-wider">TransCore AI</span>
           </div>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
+          <h1 className="mt-0.5 text-[22px] font-semibold leading-tight tracking-tight sm:text-3xl">
             {greeting(hour)}{name ? `, ${name}` : ""}.
           </h1>
-          <p className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground">
-            <Calendar className="h-3.5 w-3.5" /> {dateLabel}
+          <p className="mt-0.5 flex items-center gap-1 text-[11px] text-muted-foreground sm:text-sm">
+            <Calendar className="h-3 w-3" /> {dateLabel}
           </p>
         </div>
         <div className="hidden sm:flex items-center gap-2">
@@ -151,20 +156,23 @@ function KpiRow({ stats, daily, extras, loading }: {
 
   if (loading) {
     return (
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-        {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-28 rounded-2xl" />)}
+      <div className="-mx-4 flex snap-x snap-mandatory gap-2.5 overflow-x-auto px-4 pb-1 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 lg:grid-cols-5">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <Skeleton key={i} className="h-24 w-40 shrink-0 snap-start rounded-2xl sm:h-28 sm:w-auto" />
+        ))}
       </div>
     );
   }
 
   return (
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+    <div className="-mx-4 flex snap-x snap-mandatory gap-2.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 lg:grid-cols-5">
       {items.map((k, i) => (
         <motion.div
           key={k.label}
-          initial={{ opacity: 0, y: 12 }}
+          initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35, delay: i * 0.05, ease: "easeOut" }}
+          transition={{ duration: 0.25, delay: i * 0.04, ease: "easeOut" }}
+          className="w-40 shrink-0 snap-start sm:w-auto sm:shrink"
         >
           <KpiCard {...k} />
         </motion.div>
@@ -193,16 +201,16 @@ function KpiCard({ label, value, sub, icon: Icon, tone }: {
     neutral: "bg-muted text-muted-foreground",
   }[tone];
   return (
-    <Card className="group relative overflow-hidden border-border/60 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/5 hover:border-primary/30">
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between">
-          <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{label}</span>
-          <div className={`grid h-8 w-8 place-items-center rounded-lg ${toneRing}`}>
-            <Icon className="h-4 w-4" />
+    <Card className="group relative h-full overflow-hidden rounded-2xl border-border/60 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5">
+      <CardContent className="p-3 sm:p-4">
+        <div className="flex items-center justify-between">
+          <span className="truncate text-[10px] font-medium uppercase tracking-wider text-muted-foreground sm:text-[11px]">{label}</span>
+          <div className={`grid h-7 w-7 shrink-0 place-items-center rounded-lg sm:h-8 sm:w-8 ${toneRing}`}>
+            <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           </div>
         </div>
-        <div className="num mt-3 text-2xl font-semibold tracking-tight">{value}</div>
-        <div className="mt-1 text-xs text-muted-foreground truncate">{sub}</div>
+        <div className="num mt-2 text-xl font-semibold leading-tight tracking-tight sm:mt-3 sm:text-2xl">{value}</div>
+        <div className="mt-0.5 truncate text-[11px] text-muted-foreground sm:text-xs">{sub}</div>
       </CardContent>
     </Card>
   );
@@ -217,16 +225,16 @@ function FleetOverview({ daily, loading }: { daily?: DailyOps; loading: boolean 
 
   return (
     <Card className="border-border/60">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 pb-2 sm:p-6 sm:pb-3">
         <div>
-          <CardTitle className="flex items-center gap-2 text-base">
+          <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
             <TrendingUp className="h-4 w-4 text-primary" /> Fleet Overview
           </CardTitle>
-          <p className="mt-0.5 text-xs text-muted-foreground">Revenue & fuel spend — last 30 days</p>
+          <p className="mt-0.5 text-[11px] text-muted-foreground sm:text-xs">Revenue & fuel — last 30 days</p>
         </div>
         <Badge variant="outline" className="text-[10px]">30D</Badge>
       </CardHeader>
-      <CardContent className="h-72">
+      <CardContent className="h-44 p-3 pt-0 sm:h-72 sm:p-6 sm:pt-0">
         {loading ? (
           <Skeleton className="h-full w-full rounded-lg" />
         ) : !hasData ? (
@@ -244,9 +252,9 @@ function FleetOverview({ daily, loading }: { daily?: DailyOps; loading: boolean 
                   <stop offset="100%" stopColor="hsl(var(--chart-3))" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.4} />
-              <XAxis dataKey="label" stroke="hsl(var(--muted-foreground))" fontSize={11} interval={4} />
-              <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} />
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} vertical={false} />
+              <XAxis dataKey="label" stroke="hsl(var(--muted-foreground))" fontSize={10} interval={6} tickLine={false} axisLine={false} />
+              <YAxis stroke="hsl(var(--muted-foreground))" fontSize={10} tickLine={false} axisLine={false} width={28} />
               <Tooltip
                 contentStyle={{ background: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: 12, fontSize: 12 }}
                 formatter={(v: number, name: string) => [name === "trips" ? v : formatINR(v), name]}
@@ -280,28 +288,28 @@ function AIInsightsSection({ daily, loading }: { daily?: DailyOps; loading: bool
     <div className="space-y-3">
       {hasAny ? (
         <Card className="border-border/60">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base">
+          <CardHeader className="p-3 pb-2 sm:p-6 sm:pb-3">
+            <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
               <Sparkles className="h-4 w-4 text-primary" /> AI Insights
             </CardTitle>
           </CardHeader>
-          <CardContent className="grid gap-2 sm:grid-cols-2">
-            {daily!.insights.slice(0, 4).map((ins, i) => (
+          <CardContent className="grid gap-2 p-3 pt-0 sm:grid-cols-2 sm:p-6 sm:pt-0">
+            {daily!.insights.slice(0, 3).map((ins, i) => (
               <motion.div
                 key={ins.id}
                 initial={{ opacity: 0, x: -8 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.3, delay: i * 0.05 }}
-                className="group rounded-xl border border-border/60 bg-muted/20 p-3 transition hover:border-primary/40 hover:bg-muted/40"
+                transition={{ duration: 0.25, delay: i * 0.04 }}
+                className="group rounded-xl border border-border/60 bg-muted/20 p-2.5 transition hover:border-primary/40 hover:bg-muted/40"
               >
                 <div className="mb-1 flex items-center gap-1.5">
                   <InsightIcon tone={ins.tone} />
                   <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{ins.tone}</span>
                 </div>
-                <div className="text-sm font-medium leading-snug">{ins.issue}</div>
-                <div className="mt-0.5 text-xs text-muted-foreground">{ins.impact}</div>
+                <div className="line-clamp-2 text-[13px] font-medium leading-snug">{ins.issue}</div>
+                <div className="mt-0.5 line-clamp-2 text-[11px] text-muted-foreground">{ins.impact}</div>
                 {ins.href && (
-                  <Link to={ins.href} className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline">
+                  <Link to={ins.href} className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-medium text-primary hover:underline">
                     {ins.action} <ChevronRight className="h-3 w-3" />
                   </Link>
                 )}
@@ -311,19 +319,17 @@ function AIInsightsSection({ daily, loading }: { daily?: DailyOps; loading: bool
         </Card>
       ) : (
         <Card className="border-dashed border-border/60">
-          <CardContent className="flex flex-col items-center gap-2 py-8 text-center">
-            <div className="grid h-10 w-10 place-items-center rounded-full bg-primary/10 text-primary">
-              <Sparkles className="h-5 w-5" />
+          <CardContent className="flex flex-col items-center gap-1.5 py-5 text-center sm:py-8">
+            <div className="grid h-9 w-9 place-items-center rounded-full bg-primary/10 text-primary">
+              <Sparkles className="h-4 w-4" />
             </div>
-            <div className="text-sm font-medium">No insights available yet.</div>
-            <div className="max-w-sm text-xs text-muted-foreground">
-              Start using TransCore to unlock AI recommendations.
-            </div>
+            <div className="text-[13px] font-medium">No insights yet</div>
+            <div className="max-w-sm text-[11px] text-muted-foreground">Start using TransCore to unlock AI recommendations.</div>
           </CardContent>
         </Card>
       )}
 
-      <Suspense fallback={<Skeleton className="h-32 w-full rounded-2xl" />}>
+      <Suspense fallback={<Skeleton className="h-28 w-full rounded-2xl" />}>
         <FleetInsightsCards />
       </Suspense>
     </div>
@@ -346,40 +352,40 @@ function InsightIcon({ tone }: { tone: DailyOps["insights"][number]["tone"] }) {
 function RecentTrips({ extras, loading }: { extras?: HomeExtras; loading: boolean }) {
   return (
     <Card className="border-border/60">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-        <CardTitle className="flex items-center gap-2 text-base">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 pb-2 sm:p-6 sm:pb-3">
+        <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
           <MapIcon className="h-4 w-4 text-primary" /> Recent Trips
         </CardTitle>
-        <Link to="/trips" className="text-xs text-muted-foreground hover:text-foreground">
-          View all <ChevronRight className="ml-0.5 inline h-3 w-3" />
+        <Link to="/trips" className="text-[11px] text-muted-foreground hover:text-foreground sm:text-xs">
+          All <ChevronRight className="ml-0.5 inline h-3 w-3" />
         </Link>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
         {loading ? (
           <div className="space-y-2">
-            {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-14 w-full rounded-lg" />)}
+            {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-11 w-full rounded-lg" />)}
           </div>
         ) : !extras || extras.recentTrips.length === 0 ? (
-          <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-border/60 py-8 text-center">
-            <MapIcon className="h-8 w-8 text-muted-foreground/50" />
-            <div className="text-sm text-muted-foreground">No trips recorded yet.</div>
-            <Button asChild size="sm"><Link to="/trips"><Plus className="mr-1 h-3.5 w-3.5" /> Add Trip</Link></Button>
+          <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-border/60 py-5 text-center sm:py-8">
+            <MapIcon className="h-7 w-7 text-muted-foreground/50" />
+            <div className="text-[13px] text-muted-foreground">No trips yet</div>
+            <Button asChild size="sm" className="h-8"><Link to="/trips"><Plus className="mr-1 h-3.5 w-3.5" /> Add Trip</Link></Button>
           </div>
         ) : (
           <ul className="divide-y divide-border/60">
-            {extras.recentTrips.map((t) => (
-              <li key={t.id} className="flex items-center justify-between gap-3 py-2.5">
+            {extras.recentTrips.slice(0, 4).map((t) => (
+              <li key={t.id} className="flex items-center justify-between gap-2 py-2">
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="truncate text-sm font-medium">{t.origin} → {t.destination}</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="truncate text-[13px] font-medium">{t.origin} → {t.destination}</span>
                     <StatusBadge status={t.status} />
                   </div>
-                  <div className="mt-0.5 truncate text-xs text-muted-foreground">
+                  <div className="mt-0.5 truncate text-[11px] text-muted-foreground">
                     {t.vehicle ?? "—"} · {t.driver ?? "Unassigned"}
                     {t.when && ` · ${new Date(t.when).toLocaleDateString("en-IN", { day: "2-digit", month: "short" })}`}
                   </div>
                 </div>
-                <div className="num shrink-0 text-sm font-semibold">{formatINR(t.freight_amount)}</div>
+                <div className="num shrink-0 text-[13px] font-semibold">{formatINR(t.freight_amount)}</div>
               </li>
             ))}
           </ul>
@@ -408,30 +414,30 @@ function FuelSummary({ extras, loading }: { extras?: HomeExtras; loading: boolea
 
   return (
     <Card className="border-border/60">
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-base">
+      <CardHeader className="p-3 pb-2 sm:p-6 sm:pb-3">
+        <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
           <Fuel className="h-4 w-4 text-primary" /> Fuel Summary
         </CardTitle>
-        <p className="text-xs text-muted-foreground">Month-to-date fuel spending</p>
+        <p className="text-[11px] text-muted-foreground sm:text-xs">Month-to-date fuel</p>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
         {loading ? (
-          <Skeleton className="h-48 w-full rounded-lg" />
+          <Skeleton className="h-40 w-full rounded-lg" />
         ) : (
-          <>
-            <div className="relative mx-auto h-40 w-40">
+          <div className="flex items-center gap-4 sm:block">
+            <div className="relative h-28 w-28 shrink-0 sm:mx-auto sm:h-40 sm:w-40">
               {chartData.length === 0 ? (
                 <div className="grid h-full w-full place-items-center rounded-full border-2 border-dashed border-border/60">
                   <div className="text-center">
                     <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Total</div>
-                    <div className="num text-lg font-semibold">₹0</div>
+                    <div className="num text-sm font-semibold sm:text-lg">₹0</div>
                   </div>
                 </div>
               ) : (
                 <>
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
-                      <Pie data={chartData} dataKey="amount" nameKey="type" innerRadius={50} outerRadius={72} paddingAngle={2}>
+                      <Pie data={chartData} dataKey="amount" nameKey="type" innerRadius="60%" outerRadius="95%" paddingAngle={2}>
                         {chartData.map((d, i) => (
                           <Cell key={i} fill={FUEL_COLORS[d.type] ?? "hsl(var(--chart-5))"} />
                         ))}
@@ -443,16 +449,16 @@ function FuelSummary({ extras, loading }: { extras?: HomeExtras; loading: boolea
                     </PieChart>
                   </ResponsiveContainer>
                   <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-                    <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Total</div>
-                    <div className="num text-lg font-semibold">{formatINR(total)}</div>
+                    <div className="text-[9px] uppercase tracking-wider text-muted-foreground sm:text-[10px]">Total</div>
+                    <div className="num text-[13px] font-semibold leading-tight sm:text-lg">{formatINR(total)}</div>
                   </div>
                 </>
               )}
             </div>
-            <div className="mt-4 space-y-1.5">
+            <div className="flex-1 space-y-1.5 sm:mt-4">
               {rows.map((r) => (
-                <div key={r.type} className="flex items-center justify-between text-xs">
-                  <span className="flex items-center gap-2 capitalize text-muted-foreground">
+                <div key={r.type} className="flex items-center justify-between text-[11px] sm:text-xs">
+                  <span className="flex items-center gap-1.5 capitalize text-muted-foreground">
                     <span className="h-2 w-2 rounded-full" style={{ background: FUEL_COLORS[r.type] }} />
                     {r.type}
                   </span>
@@ -460,7 +466,7 @@ function FuelSummary({ extras, loading }: { extras?: HomeExtras; loading: boolea
                 </div>
               ))}
             </div>
-          </>
+          </div>
         )}
       </CardContent>
     </Card>
@@ -471,46 +477,46 @@ function FuelSummary({ extras, loading }: { extras?: HomeExtras; loading: boolea
 function AlertsPanel({ daily, loading }: { daily?: DailyOps; loading: boolean }) {
   return (
     <Card className="border-border/60">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-        <CardTitle className="flex items-center gap-2 text-base">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 pb-2 sm:p-6 sm:pb-3">
+        <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
           <Bell className="h-4 w-4 text-primary" /> Alerts & Reminders
         </CardTitle>
-        <Link to="/alerts" className="text-xs text-muted-foreground hover:text-foreground">
+        <Link to="/alerts" className="text-[11px] text-muted-foreground hover:text-foreground sm:text-xs">
           All <ChevronRight className="ml-0.5 inline h-3 w-3" />
         </Link>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
         {loading ? (
           <div className="space-y-2">
-            {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-12 w-full rounded-lg" />)}
+            {Array.from({ length: 2 }).map((_, i) => <Skeleton key={i} className="h-11 w-full rounded-lg" />)}
           </div>
         ) : !daily || daily.priorities.length === 0 ? (
-          <div className="flex flex-col items-center gap-2 py-6 text-center">
-            <CheckCircle2 className="h-8 w-8 text-emerald-500" />
-            <div className="text-sm text-muted-foreground">No pending alerts.</div>
+          <div className="flex items-center gap-2 py-3 text-center sm:flex-col sm:py-6">
+            <CheckCircle2 className="h-6 w-6 text-emerald-500 sm:h-8 sm:w-8" />
+            <div className="text-[13px] text-muted-foreground">All clear — no pending alerts.</div>
           </div>
         ) : (
-          <ul className="space-y-2">
-            {daily.priorities.slice(0, 5).map((p) => (
+          <ul className="space-y-1.5">
+            {daily.priorities.slice(0, 3).map((p) => (
               <li key={p.id}>
                 <Link
                   to={p.href}
-                  className={`group flex items-start gap-2.5 rounded-xl border px-3 py-2.5 text-sm transition hover:border-primary/40 hover:shadow-sm ${
+                  className={`group flex items-center gap-2 rounded-xl border px-2.5 py-2 text-sm transition hover:border-primary/40 hover:shadow-sm ${
                     p.severity === "critical" ? "border-destructive/40 bg-destructive/5"
                     : p.severity === "warning" ? "border-amber-500/40 bg-amber-500/5"
                     : "border-border/60 bg-muted/20"
                   }`}
                 >
-                  <AlertTriangle className={`mt-0.5 h-4 w-4 shrink-0 ${
+                  <AlertTriangle className={`h-4 w-4 shrink-0 ${
                     p.severity === "critical" ? "text-destructive"
                     : p.severity === "warning" ? "text-amber-500"
                     : "text-muted-foreground"
                   }`} />
                   <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-medium">{p.title}</div>
-                    <div className="truncate text-xs text-muted-foreground">{p.message}</div>
+                    <div className="truncate text-[13px] font-medium leading-tight">{p.title}</div>
+                    <div className="truncate text-[11px] text-muted-foreground">{p.message}</div>
                   </div>
-                  <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 opacity-40 transition group-hover:translate-x-0.5 group-hover:opacity-100" />
+                  <ChevronRight className="h-4 w-4 shrink-0 opacity-40" />
                 </Link>
               </li>
             ))}
@@ -534,27 +540,21 @@ function QuickActions() {
   ] as const;
   return (
     <Card className="border-border/60">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base">Quick Actions</CardTitle>
+      <CardHeader className="p-3 pb-2 sm:p-6 sm:pb-3">
+        <CardTitle className="text-sm sm:text-base">Quick Actions</CardTitle>
       </CardHeader>
-      <CardContent className="grid grid-cols-2 gap-2">
-        {actions.map((a, i) => (
-          <motion.div
+      <CardContent className="grid grid-cols-4 gap-2 p-3 pt-0 sm:grid-cols-2 sm:p-6 sm:pt-0">
+        {actions.map((a) => (
+          <Link
             key={a.label}
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.25, delay: i * 0.03 }}
+            to={a.href}
+            className="group flex flex-col items-center gap-1.5 rounded-2xl border border-border/60 bg-card p-2.5 text-center transition-all active:scale-95 hover:border-primary/40 hover:bg-primary/5 sm:flex-row sm:items-start sm:gap-2 sm:text-left"
           >
-            <Link
-              to={a.href}
-              className="group flex flex-col items-start gap-2 rounded-xl border border-border/60 bg-card p-3 transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:bg-primary/5 hover:shadow-md"
-            >
-              <div className="grid h-8 w-8 place-items-center rounded-lg bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-primary-foreground">
-                <a.icon className="h-4 w-4" />
-              </div>
-              <span className="text-xs font-medium">{a.label}</span>
-            </Link>
-          </motion.div>
+            <div className="grid h-9 w-9 place-items-center rounded-xl bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-primary-foreground sm:h-8 sm:w-8 sm:rounded-lg">
+              <a.icon className="h-4 w-4" />
+            </div>
+            <span className="text-[11px] font-medium leading-tight sm:text-xs">{a.label}</span>
+          </Link>
         ))}
       </CardContent>
     </Card>
