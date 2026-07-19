@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, queryOptions, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useProfile } from "@/hooks/use-profile";
 import { useAuth } from "@/hooks/use-auth";
 import { motion } from "motion/react";
@@ -179,6 +179,27 @@ function KpiRow({ stats, daily, extras, loading }: {
     { label: "Alerts", value: daily ? formatNumber(daily.today.newAlerts) : "0", sub: daily && daily.today.overdueDocs > 0 ? `${daily.today.overdueDocs} overdue` : "All clear", icon: Bell, tone: (daily && daily.today.overdueDocs > 0 ? "negative" : "neutral") as "negative" | "neutral" },
   ];
 
+  const scrollerRef = useRef<HTMLDivElement | null>(null);
+  const [progress, setProgress] = useState(0); // 0..(items.length - 1)
+
+  useEffect(() => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    const update = () => {
+      const max = el.scrollWidth - el.clientWidth;
+      if (max <= 0) { setProgress(0); return; }
+      const ratio = Math.min(1, Math.max(0, el.scrollLeft / max));
+      setProgress(ratio * (items.length - 1));
+    };
+    update();
+    el.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update);
+    return () => {
+      el.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+    };
+  }, [items.length]);
+
   if (loading) {
     return (
       <div className="-mx-4 flex snap-x snap-mandatory gap-2.5 overflow-x-auto px-4 pb-1 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 lg:grid-cols-5">
@@ -189,19 +210,50 @@ function KpiRow({ stats, daily, extras, loading }: {
     );
   }
 
+  const activeDot = Math.round(progress);
+
   return (
-    <div className="-mx-4 flex snap-x snap-mandatory gap-2.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 lg:grid-cols-5">
-      {items.map((k, i) => (
-        <motion.div
-          key={k.label}
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.25, delay: i * 0.04, ease: "easeOut" }}
-          className="w-40 shrink-0 snap-start sm:w-auto sm:shrink"
-        >
-          <KpiCard {...k} />
-        </motion.div>
-      ))}
+    <div>
+      <div
+        ref={scrollerRef}
+        className="-mx-4 flex snap-x snap-mandatory gap-2.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 lg:grid-cols-5"
+      >
+        {items.map((k, i) => (
+          <motion.div
+            key={k.label}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25, delay: i * 0.04, ease: "easeOut" }}
+            className="w-40 shrink-0 snap-start sm:w-auto sm:shrink"
+          >
+            <KpiCard {...k} />
+          </motion.div>
+        ))}
+      </div>
+      {/* Mobile-only swipe indicator */}
+      <div
+        className="mt-1.5 flex h-2 items-center justify-center gap-1.5 sm:hidden"
+        role="tablist"
+        aria-label="KPI cards pagination"
+      >
+        {items.map((k, i) => {
+          const distance = Math.min(1, Math.abs(progress - i));
+          const isActive = i === activeDot;
+          return (
+            <span
+              key={k.label}
+              role="tab"
+              aria-selected={isActive}
+              aria-label={k.label}
+              className="block h-1 rounded-full bg-primary transition-all duration-200 ease-out"
+              style={{
+                width: isActive ? 16 : 4,
+                opacity: 0.25 + (1 - distance) * 0.75,
+              }}
+            />
+          );
+        })}
+      </div>
     </div>
   );
 }
