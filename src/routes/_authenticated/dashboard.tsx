@@ -156,20 +156,23 @@ function KpiRow({ stats, daily, extras, loading }: {
 
   if (loading) {
     return (
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-        {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-28 rounded-2xl" />)}
+      <div className="-mx-4 flex snap-x snap-mandatory gap-2.5 overflow-x-auto px-4 pb-1 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 lg:grid-cols-5">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <Skeleton key={i} className="h-24 w-40 shrink-0 snap-start rounded-2xl sm:h-28 sm:w-auto" />
+        ))}
       </div>
     );
   }
 
   return (
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+    <div className="-mx-4 flex snap-x snap-mandatory gap-2.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 lg:grid-cols-5">
       {items.map((k, i) => (
         <motion.div
           key={k.label}
-          initial={{ opacity: 0, y: 12 }}
+          initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35, delay: i * 0.05, ease: "easeOut" }}
+          transition={{ duration: 0.25, delay: i * 0.04, ease: "easeOut" }}
+          className="w-40 shrink-0 snap-start sm:w-auto sm:shrink"
         >
           <KpiCard {...k} />
         </motion.div>
@@ -198,16 +201,16 @@ function KpiCard({ label, value, sub, icon: Icon, tone }: {
     neutral: "bg-muted text-muted-foreground",
   }[tone];
   return (
-    <Card className="group relative overflow-hidden border-border/60 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/5 hover:border-primary/30">
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between">
-          <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{label}</span>
-          <div className={`grid h-8 w-8 place-items-center rounded-lg ${toneRing}`}>
-            <Icon className="h-4 w-4" />
+    <Card className="group relative h-full overflow-hidden rounded-2xl border-border/60 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5">
+      <CardContent className="p-3 sm:p-4">
+        <div className="flex items-center justify-between">
+          <span className="truncate text-[10px] font-medium uppercase tracking-wider text-muted-foreground sm:text-[11px]">{label}</span>
+          <div className={`grid h-7 w-7 shrink-0 place-items-center rounded-lg sm:h-8 sm:w-8 ${toneRing}`}>
+            <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           </div>
         </div>
-        <div className="num mt-3 text-2xl font-semibold tracking-tight">{value}</div>
-        <div className="mt-1 text-xs text-muted-foreground truncate">{sub}</div>
+        <div className="num mt-2 text-xl font-semibold leading-tight tracking-tight sm:mt-3 sm:text-2xl">{value}</div>
+        <div className="mt-0.5 truncate text-[11px] text-muted-foreground sm:text-xs">{sub}</div>
       </CardContent>
     </Card>
   );
