@@ -104,15 +104,22 @@ export function useBroadcastLocation() {
   const watchIdRef = useRef<number | null>(null);
   const intervalRef = useRef<number | null>(null);
   const lastFixRef = useRef<GeolocationPosition | null>(null);
+  const userIdRef = useRef<string | null>(null);
 
   async function pushFix(pos: GeolocationPosition) {
-    const { data: userData, error: authErr } = await supabase.auth.getUser();
-    if (authErr || !userData.user) {
-      setState((s) => ({ ...s, error: "You must be signed in to broadcast location." }));
-      return;
+    // Cache user id — session is in localStorage, no need to hit /auth/v1/user every 30s.
+    let uid = userIdRef.current;
+    if (!uid) {
+      const { data } = await supabase.auth.getSession();
+      uid = data.session?.user?.id ?? null;
+      if (!uid) {
+        setState((s) => ({ ...s, error: "You must be signed in to broadcast location." }));
+        return;
+      }
+      userIdRef.current = uid;
     }
     const payload = {
-      user_id: userData.user.id,
+      user_id: uid,
       latitude: pos.coords.latitude,
       longitude: pos.coords.longitude,
       speed_kmh: pos.coords.speed != null ? Math.max(0, pos.coords.speed * 3.6) : null,
