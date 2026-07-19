@@ -416,30 +416,30 @@ function FuelSummary({ extras, loading }: { extras?: HomeExtras; loading: boolea
 
   return (
     <Card className="border-border/60">
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-base">
+      <CardHeader className="p-3 pb-2 sm:p-6 sm:pb-3">
+        <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
           <Fuel className="h-4 w-4 text-primary" /> Fuel Summary
         </CardTitle>
-        <p className="text-xs text-muted-foreground">Month-to-date fuel spending</p>
+        <p className="text-[11px] text-muted-foreground sm:text-xs">Month-to-date fuel</p>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
         {loading ? (
-          <Skeleton className="h-48 w-full rounded-lg" />
+          <Skeleton className="h-40 w-full rounded-lg" />
         ) : (
-          <>
-            <div className="relative mx-auto h-40 w-40">
+          <div className="flex items-center gap-4 sm:block">
+            <div className="relative h-28 w-28 shrink-0 sm:mx-auto sm:h-40 sm:w-40">
               {chartData.length === 0 ? (
                 <div className="grid h-full w-full place-items-center rounded-full border-2 border-dashed border-border/60">
                   <div className="text-center">
                     <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Total</div>
-                    <div className="num text-lg font-semibold">₹0</div>
+                    <div className="num text-sm font-semibold sm:text-lg">₹0</div>
                   </div>
                 </div>
               ) : (
                 <>
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
-                      <Pie data={chartData} dataKey="amount" nameKey="type" innerRadius={50} outerRadius={72} paddingAngle={2}>
+                      <Pie data={chartData} dataKey="amount" nameKey="type" innerRadius="60%" outerRadius="95%" paddingAngle={2}>
                         {chartData.map((d, i) => (
                           <Cell key={i} fill={FUEL_COLORS[d.type] ?? "hsl(var(--chart-5))"} />
                         ))}
@@ -451,16 +451,16 @@ function FuelSummary({ extras, loading }: { extras?: HomeExtras; loading: boolea
                     </PieChart>
                   </ResponsiveContainer>
                   <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-                    <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Total</div>
-                    <div className="num text-lg font-semibold">{formatINR(total)}</div>
+                    <div className="text-[9px] uppercase tracking-wider text-muted-foreground sm:text-[10px]">Total</div>
+                    <div className="num text-[13px] font-semibold leading-tight sm:text-lg">{formatINR(total)}</div>
                   </div>
                 </>
               )}
             </div>
-            <div className="mt-4 space-y-1.5">
+            <div className="flex-1 space-y-1.5 sm:mt-4">
               {rows.map((r) => (
-                <div key={r.type} className="flex items-center justify-between text-xs">
-                  <span className="flex items-center gap-2 capitalize text-muted-foreground">
+                <div key={r.type} className="flex items-center justify-between text-[11px] sm:text-xs">
+                  <span className="flex items-center gap-1.5 capitalize text-muted-foreground">
                     <span className="h-2 w-2 rounded-full" style={{ background: FUEL_COLORS[r.type] }} />
                     {r.type}
                   </span>
@@ -468,7 +468,7 @@ function FuelSummary({ extras, loading }: { extras?: HomeExtras; loading: boolea
                 </div>
               ))}
             </div>
-          </>
+          </div>
         )}
       </CardContent>
     </Card>
