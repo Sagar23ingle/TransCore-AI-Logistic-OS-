@@ -89,10 +89,10 @@ function FuelPage() {
   const anomalies = (ana.data?.stats ?? []).flatMap((s) => s.anomalies.map((a) => ({ ...a, vehicle_id: s.vehicle_id })));
 
   return (
-    <AppShell title="Fuel Management" description="Track fills, mileage, and detect anomalies that may indicate leaks or theft."
-      action={<Button onClick={() => setOpen(true)}><Plus className="mr-2 h-4 w-4" /> Log fill</Button>}>
+    <AppShell title="Fuel" description="Track fills, mileage, and detect anomalies."
+      action={<Button size="sm" className="h-10 rounded-full px-4" onClick={() => setOpen(true)}><Plus className="mr-1.5 h-4 w-4" /> Log</Button>}>
       {logs.isLoading || ana.isLoading ? <LoadingState /> : (
-        <div className="space-y-6">
+        <div className="space-y-4">
           {anomalies.length > 0 && (
             <Card className="border-destructive/40 bg-destructive/5">
               <CardHeader className="flex-row items-center gap-2 space-y-0"><AlertTriangle className="h-4 w-4 text-destructive" /><CardTitle className="text-sm">Fuel anomalies detected</CardTitle></CardHeader>
@@ -108,10 +108,10 @@ function FuelPage() {
             </Card>
           )}
 
-          <div className="grid gap-4 lg:grid-cols-2">
+          <div className="grid gap-3 lg:grid-cols-2">
             <Card>
-              <CardHeader><CardTitle className="text-base">Monthly fuel spend</CardTitle></CardHeader>
-              <CardContent className="h-64">
+              <CardHeader className="pb-2"><CardTitle className="text-sm">Monthly fuel spend</CardTitle></CardHeader>
+              <CardContent className="h-44 sm:h-56">
                 {(!ana.data || ana.data.trend.every((t) => t.cost === 0)) ? (
                   <div className="flex h-full items-center justify-center text-sm text-muted-foreground">Log fills to see the trend.</div>
                 ) : (
@@ -128,8 +128,8 @@ function FuelPage() {
               </CardContent>
             </Card>
             <Card>
-              <CardHeader><CardTitle className="text-base">Monthly litres</CardTitle></CardHeader>
-              <CardContent className="h-64">
+              <CardHeader className="pb-2"><CardTitle className="text-sm">Monthly litres</CardTitle></CardHeader>
+              <CardContent className="h-44 sm:h-56">
                 {(!ana.data || ana.data.trend.every((t) => t.litres === 0)) ? (
                   <div className="flex h-full items-center justify-center text-sm text-muted-foreground">—</div>
                 ) : (
@@ -148,29 +148,31 @@ function FuelPage() {
           </div>
 
           <Card>
-            <CardHeader><CardTitle className="text-base">Fuel logs</CardTitle></CardHeader>
-            <CardContent>
+            <CardHeader className="pb-2"><CardTitle className="text-sm">Fuel logs</CardTitle></CardHeader>
+            <CardContent className="p-3">
               {!logs.data || logs.data.length === 0 ? (
                 <EmptyState icon={<Fuel className="h-6 w-6" />} title="No fills yet"
                   description="Log every fuel fill to compute real mileage and catch anomalies."
                   action={<Button onClick={() => setOpen(true)}><Plus className="mr-2 h-4 w-4" /> Log fill</Button>} />
               ) : (
-                <div className="grid gap-2">
+                <div className="grid gap-1.5">
                   {logs.data.map((l) => (
-                    <div key={l.id} className="flex items-center justify-between gap-3 rounded-md border border-border p-3">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          {l.vehicle && <Badge variant="secondary">{l.vehicle.registration_number}</Badge>}
-                          <span className="num text-sm font-semibold">{formatNumber(Number(l.litres), 1)} L</span>
-                          <span className="text-xs text-muted-foreground">@ ₹{Number(l.price_per_litre).toFixed(2)}/L</span>
-                          <span className="num text-sm font-semibold">{formatINR(Number(l.total_amount))}</span>
+                    <div key={l.id} className="flex items-center gap-3 rounded-xl border border-border/70 p-2.5">
+                      <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
+                        <Fuel className="h-4 w-4" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="truncate text-sm font-semibold">
+                            {l.vehicle?.registration_number ?? "Vehicle"} · {formatNumber(Number(l.litres), 1)} L
+                          </div>
+                          <div className="num shrink-0 text-sm font-semibold">{formatINR(Number(l.total_amount))}</div>
                         </div>
-                        <div className="mt-1 text-xs text-muted-foreground">
-                          {formatDate(l.filled_on)} · odo {formatNumber(Number(l.odometer_km))} km
-                          {l.station ? ` · ${l.station}` : ""}
+                        <div className="truncate text-[11px] text-muted-foreground">
+                          {formatDate(l.filled_on)} · ₹{Number(l.price_per_litre).toFixed(2)}/L · odo {formatNumber(Number(l.odometer_km))} km{l.station ? ` · ${l.station}` : ""}
                         </div>
                       </div>
-                      <Button size="icon" variant="ghost" onClick={() => { if (confirm("Remove entry?")) del.mutate(l.id as string); }}>
+                      <Button size="icon" variant="ghost" className="h-8 w-8 shrink-0" onClick={() => { if (confirm("Remove entry?")) del.mutate(l.id as string); }}>
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
                     </div>

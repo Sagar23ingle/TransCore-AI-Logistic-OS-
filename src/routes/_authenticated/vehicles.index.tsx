@@ -45,8 +45,8 @@ function VehiclesPage() {
       title="Vehicles"
       description="Trucks, trailers and other assets registered to your fleet."
       action={
-        <Button onClick={() => { setEditing(null); setOpen(true); }}>
-          <Plus className="mr-2 h-4 w-4" /> Add vehicle
+        <Button size="sm" className="h-10 rounded-full px-4" onClick={() => { setEditing(null); setOpen(true); }}>
+          <Plus className="mr-1.5 h-4 w-4" /> Add
         </Button>
       }
     >
@@ -60,37 +60,46 @@ function VehiclesPage() {
           action={<Button onClick={() => { setEditing(null); setOpen(true); }}><Plus className="mr-2 h-4 w-4" /> Add vehicle</Button>}
         />
       ) : (
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-2.5 md:grid-cols-2 xl:grid-cols-3">
           {q.data.map((v) => (
-            <Card key={v.id}>
-              <CardContent className="pt-6">
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <div className="text-lg font-semibold tracking-tight">{v.registration_number}</div>
-                    <div className="text-sm text-muted-foreground">
-                      {[v.make, v.model, v.year].filter(Boolean).join(" · ") || "—"}
-                    </div>
-                    <div className="mt-2 flex flex-wrap gap-1.5">
-                      <Badge variant="secondary">{v.vehicle_type}</Badge>
-                      <Badge variant={v.status === "active" ? "default" : v.status === "maintenance" ? "outline" : "destructive"}>
+            <Card key={v.id} className="rounded-2xl">
+              <CardContent className="p-3.5">
+                <div className="flex items-start gap-3">
+                  <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+                    <Truck className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <div className="truncate text-[15px] font-semibold tracking-tight">{v.registration_number}</div>
+                      <Badge variant={v.status === "active" ? "default" : v.status === "maintenance" ? "outline" : "destructive"} className="h-5 px-1.5 text-[10px]">
                         {v.status}
                       </Badge>
                     </div>
+                    <div className="truncate text-xs text-muted-foreground">
+                      {[v.vehicle_type, v.make, v.model, v.year].filter(Boolean).join(" · ") || "—"}
+                    </div>
                   </div>
-                  <div className="flex flex-col gap-1">
-                    <Button size="icon" variant="ghost" onClick={() => { setEditing(v); setOpen(true); }}>
+                  <div className="flex shrink-0 -mr-1">
+                    <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => { setEditing(v); setOpen(true); }}>
                       <Pencil className="h-4 w-4" />
                     </Button>
-                    <Button size="icon" variant="ghost" onClick={() => { if (confirm("Remove this vehicle?")) del.mutate(v.id); }}>
+                    <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => { if (confirm("Remove this vehicle?")) del.mutate(v.id); }}>
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
                   </div>
                 </div>
-                <dl className="mt-4 grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                  <dt>Insurance</dt><dd className="text-right text-foreground">{formatDate(v.insurance_expiry)}</dd>
-                  <dt>Permit</dt><dd className="text-right text-foreground">{formatDate(v.permit_expiry)}</dd>
-                  <dt>Fitness</dt><dd className="text-right text-foreground">{formatDate(v.fitness_expiry)}</dd>
-                  <dt>PUC</dt><dd className="text-right text-foreground">{formatDate(v.puc_expiry)}</dd>
+                <dl className="mt-3 grid grid-cols-4 gap-2 text-[11px]">
+                  {[
+                    ["Insurance", v.insurance_expiry],
+                    ["Permit", v.permit_expiry],
+                    ["Fitness", v.fitness_expiry],
+                    ["PUC", v.puc_expiry],
+                  ].map(([k, val]) => (
+                    <div key={k as string} className="rounded-lg bg-muted/40 px-2 py-1.5">
+                      <dt className="text-muted-foreground">{k}</dt>
+                      <dd className="mt-0.5 truncate font-medium text-foreground">{formatDate(val as string | null) ?? "—"}</dd>
+                    </div>
+                  ))}
                 </dl>
               </CardContent>
             </Card>
