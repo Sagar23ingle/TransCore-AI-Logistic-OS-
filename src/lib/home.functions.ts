@@ -11,8 +11,12 @@ export const getHomeExtras = createServerFn({ method: "GET" })
     monthStart.setDate(1);
     monthStart.setHours(0, 0, 0, 0);
     const startISO = monthStart.toISOString().slice(0, 10);
+    const prevMonthStart = new Date(monthStart);
+    prevMonthStart.setMonth(prevMonthStart.getMonth() - 1);
+    const prevStartISO = prevMonthStart.toISOString().slice(0, 10);
+    const prevEndISO = startISO; // exclusive
 
-    const [recentR, vehR, fuelR, kmplR, expR] = await Promise.all([
+    const [recentR, vehR, fuelR, kmplR, expR, prevFuelR, prevExpR] = await Promise.all([
       supabase
         .from("trips")
         .select("id, origin, destination, status, freight_amount, actual_end, scheduled_start, created_at, vehicle:vehicles(registration_number), driver:drivers(full_name)")
@@ -37,6 +41,19 @@ export const getHomeExtras = createServerFn({ method: "GET" })
         .eq("owner_id", userId)
         .eq("category", "fuel")
         .gte("incurred_on", startISO),
+      supabase
+        .from("fuel_logs")
+        .select("total_amount, filled_on")
+        .eq("owner_id", userId)
+        .gte("filled_on", prevStartISO)
+        .lt("filled_on", prevEndISO),
+      supabase
+        .from("expenses")
+        .select("amount, incurred_on")
+        .eq("owner_id", userId)
+        .eq("category", "fuel")
+        .gte("incurred_on", prevStartISO)
+        .lt("incurred_on", prevEndISO),
     ]);
 
     const recentTrips = (recentR.data ?? []).map((t) => ({
@@ -97,10 +114,17 @@ export const getHomeExtras = createServerFn({ method: "GET" })
     }
     const kmpl = totalL > 0 ? Number((totalKm / totalL).toFixed(2)) : 0;
 
+    // Previous-month fuel spend acts as a real, self-calibrating budget for
+    // the live gauge. No hard-coded targets.
+    let prevMonthTotal = 0;
+    for (const f of prevFuelR.data ?? []) prevMonthTotal += Number(f.total_amount ?? 0);
+    for (const e of prevExpR.data ?? []) prevMonthTotal += Number(e.amount ?? 0);
+
     return {
       recentTrips,
       fuel: {
         totalCost: Math.round(totalFuelCost),
+        prevMonthTotal: Math.round(prevMonthTotal),
         byType: Object.entries(fuelByType)
           .filter(([, v]) => v > 0)
           .map(([type, amount]) => ({ type, amount: Math.round(amount) })),
