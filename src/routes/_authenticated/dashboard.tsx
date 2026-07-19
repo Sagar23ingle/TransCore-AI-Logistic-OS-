@@ -352,40 +352,40 @@ function InsightIcon({ tone }: { tone: DailyOps["insights"][number]["tone"] }) {
 function RecentTrips({ extras, loading }: { extras?: HomeExtras; loading: boolean }) {
   return (
     <Card className="border-border/60">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-        <CardTitle className="flex items-center gap-2 text-base">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 pb-2 sm:p-6 sm:pb-3">
+        <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
           <MapIcon className="h-4 w-4 text-primary" /> Recent Trips
         </CardTitle>
-        <Link to="/trips" className="text-xs text-muted-foreground hover:text-foreground">
-          View all <ChevronRight className="ml-0.5 inline h-3 w-3" />
+        <Link to="/trips" className="text-[11px] text-muted-foreground hover:text-foreground sm:text-xs">
+          All <ChevronRight className="ml-0.5 inline h-3 w-3" />
         </Link>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
         {loading ? (
           <div className="space-y-2">
-            {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-14 w-full rounded-lg" />)}
+            {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-11 w-full rounded-lg" />)}
           </div>
         ) : !extras || extras.recentTrips.length === 0 ? (
-          <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-border/60 py-8 text-center">
-            <MapIcon className="h-8 w-8 text-muted-foreground/50" />
-            <div className="text-sm text-muted-foreground">No trips recorded yet.</div>
-            <Button asChild size="sm"><Link to="/trips"><Plus className="mr-1 h-3.5 w-3.5" /> Add Trip</Link></Button>
+          <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-border/60 py-5 text-center sm:py-8">
+            <MapIcon className="h-7 w-7 text-muted-foreground/50" />
+            <div className="text-[13px] text-muted-foreground">No trips yet</div>
+            <Button asChild size="sm" className="h-8"><Link to="/trips"><Plus className="mr-1 h-3.5 w-3.5" /> Add Trip</Link></Button>
           </div>
         ) : (
           <ul className="divide-y divide-border/60">
-            {extras.recentTrips.map((t) => (
-              <li key={t.id} className="flex items-center justify-between gap-3 py-2.5">
+            {extras.recentTrips.slice(0, 4).map((t) => (
+              <li key={t.id} className="flex items-center justify-between gap-2 py-2">
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="truncate text-sm font-medium">{t.origin} → {t.destination}</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="truncate text-[13px] font-medium">{t.origin} → {t.destination}</span>
                     <StatusBadge status={t.status} />
                   </div>
-                  <div className="mt-0.5 truncate text-xs text-muted-foreground">
+                  <div className="mt-0.5 truncate text-[11px] text-muted-foreground">
                     {t.vehicle ?? "—"} · {t.driver ?? "Unassigned"}
                     {t.when && ` · ${new Date(t.when).toLocaleDateString("en-IN", { day: "2-digit", month: "short" })}`}
                   </div>
                 </div>
-                <div className="num shrink-0 text-sm font-semibold">{formatINR(t.freight_amount)}</div>
+                <div className="num shrink-0 text-[13px] font-semibold">{formatINR(t.freight_amount)}</div>
               </li>
             ))}
           </ul>
