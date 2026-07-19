@@ -112,15 +112,28 @@ export const getDailyOps = createServerFn({ method: "GET" })
     }
     const byDate = new Map(trend.map((r) => [r.date, r]));
     for (const t of trips) {
-      if (t.status !== "completed" || !t.actual_end) continue;
-      const key = new Date(t.actual_end).toISOString().slice(0, 10);
-      const row = byDate.get(key);
-      if (row) { row.revenue += Number(t.freight_amount || 0); row.trips += 1; }
+      // Revenue counts on completion date. Trip activity counts on start/created date
+      // so the trend line still shows activity for trips that aren't marked completed yet.
+      const activityWhen = t.actual_end ?? t.actual_start ?? t.created_at ?? null;
+      if (activityWhen) {
+        const row = byDate.get(new Date(activityWhen).toISOString().slice(0, 10));
+        if (row) row.trips += 1;
+      }
+      if (t.status === "completed" && t.actual_end) {
+        const row = byDate.get(new Date(t.actual_end).toISOString().slice(0, 10));
+        if (row) row.revenue += Number(t.freight_amount || 0);
+      }
     }
     for (const e of expenses) {
       if (e.category !== "fuel") continue;
       const row = byDate.get(e.incurred_on as string);
       if (row) row.fuel += Number(e.amount || 0);
+    }
+    // Include fuel_logs (users often log fuel there instead of expenses).
+    for (const f of fuel) {
+      if (!f.filled_on) continue;
+      const row = byDate.get(String(f.filled_on).slice(0, 10));
+      if (row) row.fuel += Number(f.total_amount || 0);
     }
 
     // ------- Fleet Health Score -------

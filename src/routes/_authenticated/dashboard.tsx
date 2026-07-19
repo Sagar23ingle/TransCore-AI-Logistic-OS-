@@ -352,36 +352,43 @@ function FleetOverview({ daily, loading }: { daily?: DailyOps; loading: boolean 
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="trend" className="mt-3 h-44 sm:h-72">
+          <TabsContent value="trend" className="mt-3 h-48 sm:h-72">
             {loading ? (
               <Skeleton className="h-full w-full rounded-lg" />
             ) : !hasData ? (
               <EmptyChart message="No Data Available" hint="Log trips and fuel to see trends here." />
             ) : (
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={data} margin={{ top: 6, right: 12, left: 0, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="ov-rev" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.5} />
-                      <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
-                    </linearGradient>
-                    <linearGradient id="ov-fuel" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="hsl(var(--chart-3))" stopOpacity={0.5} />
-                      <stop offset="100%" stopColor="hsl(var(--chart-3))" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} vertical={false} />
-                  <XAxis dataKey="label" stroke="hsl(var(--muted-foreground))" fontSize={10} interval={6} tickLine={false} axisLine={false} />
-                  <YAxis stroke="hsl(var(--muted-foreground))" fontSize={10} tickLine={false} axisLine={false} width={28} />
-                  <Tooltip
-                    contentStyle={{ background: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: 12, fontSize: 12 }}
-                    formatter={(v: number, name: string) => [name === "trips" ? v : formatINR(v), name]}
-                  />
-                  <Area type="monotone" dataKey="revenue" stroke="hsl(var(--primary))" fill="url(#ov-rev)" strokeWidth={2} />
-                  <Area type="monotone" dataKey="fuel" stroke="hsl(var(--chart-3))" fill="url(#ov-fuel)" strokeWidth={2} />
-                </AreaChart>
-              </ResponsiveContainer>
+              <div className="h-full w-full overflow-hidden rounded-xl border border-border/50 bg-gradient-to-b from-muted/20 to-transparent p-1">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={data} margin={{ top: 10, right: 12, left: 0, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="ov-rev" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.75} />
+                        <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.05} />
+                      </linearGradient>
+                      <linearGradient id="ov-fuel" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="hsl(var(--chart-3))" stopOpacity={0.65} />
+                        <stop offset="100%" stopColor="hsl(var(--chart-3))" stopOpacity={0.05} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} vertical={false} />
+                    <XAxis dataKey="label" stroke="hsl(var(--muted-foreground))" fontSize={10} interval={6} tickLine={false} axisLine={false} />
+                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={10} tickLine={false} axisLine={false} width={32} tickFormatter={(v: number) => v >= 1000 ? `${Math.round(v/1000)}k` : String(v)} />
+                    <Tooltip
+                      cursor={{ stroke: "hsl(var(--primary))", strokeOpacity: 0.3, strokeWidth: 1 }}
+                      contentStyle={{ background: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: 12, fontSize: 12 }}
+                      formatter={(v: number, name: string) => [name === "trips" ? v : formatINR(v), name]}
+                    />
+                    <Area type="monotone" dataKey="revenue" stroke="hsl(var(--primary))" fill="url(#ov-rev)" strokeWidth={2.5} activeDot={{ r: 4 }} />
+                    <Area type="monotone" dataKey="fuel" stroke="hsl(var(--chart-3))" fill="url(#ov-fuel)" strokeWidth={2.5} activeDot={{ r: 4 }} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
             )}
+            <div className="mt-2 flex items-center justify-center gap-4 text-[10px] text-muted-foreground">
+              <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full" style={{ background: "hsl(var(--primary))" }} /> Revenue</span>
+              <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full" style={{ background: "hsl(var(--chart-3))" }} /> Fuel</span>
+            </div>
           </TabsContent>
 
           <TabsContent value="map" className="mt-3">
