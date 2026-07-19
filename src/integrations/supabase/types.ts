@@ -1652,6 +1652,7 @@ export type Database = {
           puc_expiry: string | null
           registration_number: string
           status: Database["public"]["Enums"]["vehicle_status"]
+          tank_capacity_litres: number | null
           updated_at: string
           vehicle_type: Database["public"]["Enums"]["vehicle_type"]
           year: number | null
@@ -1675,6 +1676,7 @@ export type Database = {
           puc_expiry?: string | null
           registration_number: string
           status?: Database["public"]["Enums"]["vehicle_status"]
+          tank_capacity_litres?: number | null
           updated_at?: string
           vehicle_type?: Database["public"]["Enums"]["vehicle_type"]
           year?: number | null
@@ -1698,6 +1700,7 @@ export type Database = {
           puc_expiry?: string | null
           registration_number?: string
           status?: Database["public"]["Enums"]["vehicle_status"]
+          tank_capacity_litres?: number | null
           updated_at?: string
           vehicle_type?: Database["public"]["Enums"]["vehicle_type"]
           year?: number | null
