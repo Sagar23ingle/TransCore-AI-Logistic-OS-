@@ -303,6 +303,12 @@ function KpiCard({ label, value, sub, icon: Icon, tone }: {
 
 /* ---------- Fleet Overview (30-day trend) ---------- */
 function FleetOverview({ daily, loading }: { daily?: DailyOps; loading: boolean }) {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
+  const axis = isDark ? "hsl(215 20% 65%)" : "hsl(220 9% 46%)";
+  const grid = isDark ? "hsl(215 27% 32% / 0.35)" : "hsl(220 13% 91%)";
+  const revColor = isDark ? "#60a5fa" : "#2563eb";
+  const fuelColor = isDark ? "#f59e0b" : "#d97706";
   const data = useMemo(() =>
     (daily?.trend ?? []).map((r) => ({ ...r, label: r.date.slice(5) })),
   [daily]);
@@ -354,42 +360,70 @@ function FleetOverview({ daily, loading }: { daily?: DailyOps; loading: boolean 
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="trend" className="mt-3 h-48 sm:h-72">
+          <TabsContent value="trend" className="mt-3 h-52 sm:h-72">
             {loading ? (
               <Skeleton className="h-full w-full rounded-lg" />
             ) : !hasData ? (
               <EmptyChart message="No Data Available" hint="Log trips and fuel to see trends here." />
             ) : (
-              <div className="h-full w-full overflow-hidden rounded-xl border border-border/50 bg-gradient-to-b from-muted/20 to-transparent p-1">
+              <div className="h-full w-full overflow-hidden rounded-xl border border-border/60 bg-gradient-to-br from-muted/30 via-background to-background p-1 shadow-inner">
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={data} margin={{ top: 10, right: 12, left: 0, bottom: 0 }}>
+                  <AreaChart data={data} margin={{ top: 14, right: 14, left: 4, bottom: 4 }}>
                     <defs>
                       <linearGradient id="ov-rev" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.75} />
-                        <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.05} />
+                        <stop offset="0%" stopColor={revColor} stopOpacity={0.55} />
+                        <stop offset="100%" stopColor={revColor} stopOpacity={0.02} />
                       </linearGradient>
                       <linearGradient id="ov-fuel" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="hsl(var(--chart-3))" stopOpacity={0.65} />
-                        <stop offset="100%" stopColor="hsl(var(--chart-3))" stopOpacity={0.05} />
+                        <stop offset="0%" stopColor={fuelColor} stopOpacity={0.45} />
+                        <stop offset="100%" stopColor={fuelColor} stopOpacity={0.02} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} vertical={false} />
-                    <XAxis dataKey="label" stroke="hsl(var(--muted-foreground))" fontSize={10} interval={6} tickLine={false} axisLine={false} />
-                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={10} tickLine={false} axisLine={false} width={32} tickFormatter={(v: number) => v >= 1000 ? `${Math.round(v/1000)}k` : String(v)} />
-                    <Tooltip
-                      cursor={{ stroke: "hsl(var(--primary))", strokeOpacity: 0.3, strokeWidth: 1 }}
-                      contentStyle={{ background: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: 12, fontSize: 12 }}
-                      formatter={(v: number, name: string) => [name === "trips" ? v : formatINR(v), name]}
+                    <CartesianGrid strokeDasharray="4 4" stroke={grid} vertical={false} />
+                    <XAxis
+                      dataKey="label" stroke={axis} fontSize={11}
+                      interval={Math.max(0, Math.floor(data.length / 6) - 1)}
+                      tickLine={false} axisLine={false} tickMargin={8}
                     />
-                    <Area type="monotone" dataKey="revenue" stroke="hsl(var(--primary))" fill="url(#ov-rev)" strokeWidth={2.5} activeDot={{ r: 4 }} />
-                    <Area type="monotone" dataKey="fuel" stroke="hsl(var(--chart-3))" fill="url(#ov-fuel)" strokeWidth={2.5} activeDot={{ r: 4 }} />
+                    <YAxis
+                      stroke={axis} fontSize={11} tickLine={false} axisLine={false} width={40}
+                      tickFormatter={(v: number) => v >= 100000 ? `${(v/100000).toFixed(1)}L` : v >= 1000 ? `${Math.round(v/1000)}k` : String(v)}
+                    />
+                    <Tooltip
+                      cursor={{ stroke: revColor, strokeOpacity: 0.35, strokeWidth: 1, strokeDasharray: "3 3" }}
+                      contentStyle={{
+                        background: isDark ? "rgba(15,15,20,0.92)" : "rgba(255,255,255,0.98)",
+                        backdropFilter: "blur(8px)",
+                        border: "1px solid hsl(var(--border))",
+                        borderRadius: 12,
+                        fontSize: 12,
+                        padding: "8px 10px",
+                        boxShadow: isDark ? "0 8px 24px rgba(0,0,0,0.5)" : "0 8px 24px rgba(0,0,0,0.08)",
+                      }}
+                      labelStyle={{ color: axis, fontSize: 11, marginBottom: 4, fontWeight: 500 }}
+                      formatter={(v: number, name: string) => [name === "trips" ? v : formatINR(v), name === "revenue" ? "Revenue" : name === "fuel" ? "Fuel" : name]}
+                    />
+                    <Area
+                      type="monotone" dataKey="revenue" stroke={revColor} strokeWidth={2.5}
+                      fill="url(#ov-rev)" fillOpacity={1}
+                      dot={{ r: 2.5, fill: revColor, stroke: isDark ? "#0b0b0f" : "#fff", strokeWidth: 1.5 }}
+                      activeDot={{ r: 5, fill: revColor, stroke: isDark ? "#0b0b0f" : "#fff", strokeWidth: 2 }}
+                      animationDuration={800}
+                    />
+                    <Area
+                      type="monotone" dataKey="fuel" stroke={fuelColor} strokeWidth={2.5}
+                      fill="url(#ov-fuel)" fillOpacity={1}
+                      dot={{ r: 2.5, fill: fuelColor, stroke: isDark ? "#0b0b0f" : "#fff", strokeWidth: 1.5 }}
+                      activeDot={{ r: 5, fill: fuelColor, stroke: isDark ? "#0b0b0f" : "#fff", strokeWidth: 2 }}
+                      animationDuration={800}
+                    />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
             )}
-            <div className="mt-2 flex items-center justify-center gap-4 text-[10px] text-muted-foreground">
-              <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full" style={{ background: "hsl(var(--primary))" }} /> Revenue</span>
-              <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full" style={{ background: "hsl(var(--chart-3))" }} /> Fuel</span>
+            <div className="mt-3 flex items-center justify-center gap-5 text-[11px] font-medium text-muted-foreground">
+              <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full ring-2 ring-background" style={{ background: revColor }} /> Revenue</span>
+              <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full ring-2 ring-background" style={{ background: fuelColor }} /> Fuel</span>
             </div>
           </TabsContent>
 
