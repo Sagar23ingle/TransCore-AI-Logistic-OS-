@@ -32,6 +32,9 @@ import {
 const FleetInsightsCards = lazy(() =>
   import("@/components/dashboard/FleetInsightsCards").then((m) => ({ default: m.FleetInsightsCards })),
 );
+const FuelLevelGauges = lazy(() =>
+  import("@/components/dashboard/FuelLevelGauges").then((m) => ({ default: m.FuelLevelGauges })),
+);
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — TransCore AI" }, { name: "robots", content: "noindex" }] }),
@@ -87,6 +90,10 @@ function Dashboard() {
           </div>
           <FuelSummary extras={extras.data} loading={extras.isLoading} />
         </div>
+
+        <Suspense fallback={<Skeleton className="h-64 w-full rounded-2xl" />}>
+          <FuelLevelGauges />
+        </Suspense>
 
         <div className="grid gap-3 sm:gap-4 lg:grid-cols-3">
           <div className="lg:col-span-2 space-y-3 sm:space-y-4">
