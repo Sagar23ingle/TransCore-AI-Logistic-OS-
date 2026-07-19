@@ -477,46 +477,46 @@ function FuelSummary({ extras, loading }: { extras?: HomeExtras; loading: boolea
 function AlertsPanel({ daily, loading }: { daily?: DailyOps; loading: boolean }) {
   return (
     <Card className="border-border/60">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-        <CardTitle className="flex items-center gap-2 text-base">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 pb-2 sm:p-6 sm:pb-3">
+        <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
           <Bell className="h-4 w-4 text-primary" /> Alerts & Reminders
         </CardTitle>
-        <Link to="/alerts" className="text-xs text-muted-foreground hover:text-foreground">
+        <Link to="/alerts" className="text-[11px] text-muted-foreground hover:text-foreground sm:text-xs">
           All <ChevronRight className="ml-0.5 inline h-3 w-3" />
         </Link>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
         {loading ? (
           <div className="space-y-2">
-            {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-12 w-full rounded-lg" />)}
+            {Array.from({ length: 2 }).map((_, i) => <Skeleton key={i} className="h-11 w-full rounded-lg" />)}
           </div>
         ) : !daily || daily.priorities.length === 0 ? (
-          <div className="flex flex-col items-center gap-2 py-6 text-center">
-            <CheckCircle2 className="h-8 w-8 text-emerald-500" />
-            <div className="text-sm text-muted-foreground">No pending alerts.</div>
+          <div className="flex items-center gap-2 py-3 text-center sm:flex-col sm:py-6">
+            <CheckCircle2 className="h-6 w-6 text-emerald-500 sm:h-8 sm:w-8" />
+            <div className="text-[13px] text-muted-foreground">All clear — no pending alerts.</div>
           </div>
         ) : (
-          <ul className="space-y-2">
-            {daily.priorities.slice(0, 5).map((p) => (
+          <ul className="space-y-1.5">
+            {daily.priorities.slice(0, 3).map((p) => (
               <li key={p.id}>
                 <Link
                   to={p.href}
-                  className={`group flex items-start gap-2.5 rounded-xl border px-3 py-2.5 text-sm transition hover:border-primary/40 hover:shadow-sm ${
+                  className={`group flex items-center gap-2 rounded-xl border px-2.5 py-2 text-sm transition hover:border-primary/40 hover:shadow-sm ${
                     p.severity === "critical" ? "border-destructive/40 bg-destructive/5"
                     : p.severity === "warning" ? "border-amber-500/40 bg-amber-500/5"
                     : "border-border/60 bg-muted/20"
                   }`}
                 >
-                  <AlertTriangle className={`mt-0.5 h-4 w-4 shrink-0 ${
+                  <AlertTriangle className={`h-4 w-4 shrink-0 ${
                     p.severity === "critical" ? "text-destructive"
                     : p.severity === "warning" ? "text-amber-500"
                     : "text-muted-foreground"
                   }`} />
                   <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-medium">{p.title}</div>
-                    <div className="truncate text-xs text-muted-foreground">{p.message}</div>
+                    <div className="truncate text-[13px] font-medium leading-tight">{p.title}</div>
+                    <div className="truncate text-[11px] text-muted-foreground">{p.message}</div>
                   </div>
-                  <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 opacity-40 transition group-hover:translate-x-0.5 group-hover:opacity-100" />
+                  <ChevronRight className="h-4 w-4 shrink-0 opacity-40" />
                 </Link>
               </li>
             ))}
