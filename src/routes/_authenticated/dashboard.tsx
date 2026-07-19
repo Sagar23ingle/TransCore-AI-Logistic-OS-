@@ -492,8 +492,8 @@ function AIInsightsSection({ daily, loading }: { daily?: DailyOps; loading: bool
                   <InsightIcon tone={ins.tone} />
                   <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{ins.tone}</span>
                 </div>
-                <div className="line-clamp-2 text-[13px] font-medium leading-snug">{ins.issue}</div>
-                <div className="mt-0.5 line-clamp-2 text-[11px] text-muted-foreground">{ins.impact}</div>
+                <div className="line-clamp-2 break-words text-[13px] font-medium leading-snug">{ins.issue}</div>
+                <div className="mt-0.5 line-clamp-2 break-words text-[11px] text-muted-foreground">{ins.impact}</div>
                 {ins.href && (
                   <Link to={ins.href} className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-medium text-primary hover:underline">
                     {ins.action} <ChevronRight className="h-3 w-3" />
@@ -719,10 +719,10 @@ function AlertsPanel({ daily, loading }: { daily?: DailyOps; loading: boolean })
         ) : (
           <ul className="space-y-1.5">
             {daily.priorities.slice(0, 3).map((p) => (
-              <li key={p.id}>
+              <li key={p.id} className="min-w-0">
                 <Link
                   to={p.href}
-                  className={`group flex items-center gap-2 rounded-xl border px-2.5 py-2 text-sm transition hover:border-primary/40 hover:shadow-sm ${
+                  className={`group flex w-full min-w-0 items-center gap-2 rounded-xl border px-2.5 py-2 text-sm transition hover:border-primary/40 hover:shadow-sm ${
                     p.severity === "critical" ? "border-destructive/40 bg-destructive/5"
                     : p.severity === "warning" ? "border-amber-500/40 bg-amber-500/5"
                     : "border-border/60 bg-muted/20"
@@ -735,7 +735,7 @@ function AlertsPanel({ daily, loading }: { daily?: DailyOps; loading: boolean })
                   }`} />
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-[13px] font-medium leading-tight">{p.title}</div>
-                    <div className="truncate text-[11px] text-muted-foreground">{p.message}</div>
+                    <div className="line-clamp-2 break-words text-[11px] text-muted-foreground">{p.message}</div>
                   </div>
                   <ChevronRight className="h-4 w-4 shrink-0 opacity-40" />
                 </Link>
