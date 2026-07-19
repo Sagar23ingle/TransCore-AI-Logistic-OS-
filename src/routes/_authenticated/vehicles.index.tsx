@@ -62,7 +62,7 @@ function VehiclesPage() {
       ) : (
         <div className="grid gap-2.5 md:grid-cols-2 xl:grid-cols-3">
           {q.data.map((v) => (
-            <Card key={v.id} className="rounded-2xl">
+            <Card key={v.id} className="list-perf rounded-2xl">
               <CardContent className="p-3.5">
                 <div className="flex items-start gap-3">
                   <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">

@@ -157,7 +157,7 @@ function FuelPage() {
               ) : (
                 <div className="grid gap-1.5">
                   {logs.data.map((l) => (
-                    <div key={l.id} className="flex items-center gap-3 rounded-xl border border-border/70 p-2.5">
+                    <div key={l.id} className="list-perf flex items-center gap-3 rounded-xl border border-border/70 p-2.5">
                       <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
                         <Fuel className="h-4 w-4" />
                       </div>
