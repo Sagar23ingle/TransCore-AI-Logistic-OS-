@@ -1,7 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, queryOptions, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { lazy, Suspense, useEffect, useMemo } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { useProfile } from "@/hooks/use-profile";
+import { useAuth } from "@/hooks/use-auth";
 import { motion } from "motion/react";
 import {
   Truck, Users, Map as MapIcon, IndianRupee, Fuel, AlertTriangle, Bell,
@@ -40,12 +42,11 @@ const FUEL_COLORS: Record<string, string> = {
   other: "hsl(var(--chart-5))",
 };
 
-function greeting(hour: number) {
-  if (hour < 5) return "Working late";
-  if (hour < 12) return "Good morning";
-  if (hour < 17) return "Good afternoon";
-  if (hour < 21) return "Good evening";
-  return "Good night";
+function greetingFor(hour: number) {
+  if (hour >= 5 && hour < 12) return "Good Morning";
+  if (hour >= 12 && hour < 17) return "Good Afternoon";
+  if (hour >= 17 && hour < 21) return "Good Evening";
+  return "Good Night";
 }
 
 function Dashboard() {
@@ -100,13 +101,36 @@ function Dashboard() {
 }
 
 /* ---------- Welcome Header ---------- */
-function WelcomeHeader({ daily, loading }: { daily?: DailyOps; loading: boolean }) {
-  const now = new Date();
-  const dateLabel = now.toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
-  const name = daily?.user.fullName?.split(" ")[0];
-  const hour = daily?.user.hour ?? now.getHours();
+function WelcomeHeader({ daily: _daily, loading: _loading }: { daily?: DailyOps; loading: boolean }) {
+  const { profile } = useProfile();
+  const { user } = useAuth();
+  const [now, setNow] = useState<Date>(() => new Date());
 
-  if (loading) return <Skeleton className="h-20 w-full rounded-2xl sm:h-24" />;
+  useEffect(() => {
+    // Align to the next full second, then tick every second.
+    const align = 1000 - (Date.now() % 1000);
+    let interval: ReturnType<typeof setInterval> | undefined;
+    const timeout = setTimeout(() => {
+      setNow(new Date());
+      interval = setInterval(() => setNow(new Date()), 1000);
+    }, align);
+    return () => {
+      clearTimeout(timeout);
+      if (interval) clearInterval(interval);
+    };
+  }, []);
+
+  const locale = typeof navigator !== "undefined" ? navigator.language : undefined;
+  const dateLabel = now.toLocaleDateString(locale, { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+  const timeLabel = now.toLocaleTimeString(locale, { hour: "numeric", minute: "2-digit" });
+
+  const rawName =
+    (profile?.full_name && profile.full_name.trim()) ||
+    ((user?.user_metadata as { full_name?: string; name?: string } | undefined)?.full_name) ||
+    ((user?.user_metadata as { full_name?: string; name?: string } | undefined)?.name) ||
+    "";
+  const firstName = rawName ? rawName.trim().split(/\s+/)[0] : "";
+  const heading = firstName ? `${greetingFor(now.getHours())}, ${firstName}! 👋` : "Welcome! 👋";
 
   return (
     <motion.div
@@ -117,22 +141,23 @@ function WelcomeHeader({ daily, loading }: { daily?: DailyOps; loading: boolean 
     >
       <div className="pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full bg-primary/10 blur-3xl sm:-right-16 sm:-top-16 sm:h-48 sm:w-48" />
       <div className="relative flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div>
+        <div className="min-w-0">
           <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
             <Sparkles className="h-3 w-3 text-primary" />
             <span className="uppercase tracking-wider">TransCore AI</span>
           </div>
-          <h1 className="mt-0.5 text-[22px] font-semibold leading-tight tracking-tight sm:text-3xl">
-            {greeting(hour)}{name ? `, ${name}` : ""}.
+          <h1 className="mt-0.5 text-[20px] font-semibold leading-tight tracking-tight break-words sm:text-3xl">
+            {heading}
           </h1>
-          <p className="mt-0.5 flex items-center gap-1 text-[11px] text-muted-foreground sm:text-sm">
-            <Calendar className="h-3 w-3" /> {dateLabel}
+          <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-muted-foreground sm:text-sm">
+            <span className="inline-flex items-center gap-1"><Calendar className="h-3 w-3" /> {dateLabel}</span>
+            <span className="inline-flex items-center gap-1 sm:hidden"><Clock className="h-3 w-3" /> <span className="num" suppressHydrationWarning>{timeLabel}</span></span>
           </p>
         </div>
         <div className="hidden sm:flex items-center gap-2">
           <Badge variant="outline" className="gap-1.5 rounded-full px-3 py-1">
             <Clock className="h-3 w-3" />
-            <span className="num">{now.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}</span>
+            <span className="num tabular-nums" suppressHydrationWarning>{timeLabel}</span>
           </Badge>
         </div>
       </div>
