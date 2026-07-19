@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Progress } from "@/components/ui/progress";
 
 export const Route = createFileRoute("/_authenticated/profile/")({
   head: () => ({
@@ -30,6 +31,63 @@ export const Route = createFileRoute("/_authenticated/profile/")({
 
 const MAX_BYTES = 5 * 1024 * 1024;
 const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const MAX_DIMENSION = 1024; // px — resize longest edge for avatars
+const COMPRESS_QUALITY = 0.85;
+
+/**
+ * Downscale + re-encode an image in the browser before upload.
+ * Works in Android WebView, iOS Safari, PWA and Capacitor.
+ * Falls back to the original file on any failure.
+ */
+async function compressImage(file: File): Promise<File> {
+  if (typeof window === "undefined") return file;
+  if (!file.type.startsWith("image/")) return file;
+  try {
+    const bitmap = await (window.createImageBitmap
+      ? window.createImageBitmap(file).catch(() => null)
+      : Promise.resolve(null));
+    let width: number;
+    let height: number;
+    let source: CanvasImageSource;
+    if (bitmap) {
+      width = bitmap.width;
+      height = bitmap.height;
+      source = bitmap;
+    } else {
+      const url = URL.createObjectURL(file);
+      const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+        const el = new Image();
+        el.onload = () => resolve(el);
+        el.onerror = reject;
+        el.src = url;
+      });
+      width = img.naturalWidth;
+      height = img.naturalHeight;
+      source = img;
+      URL.revokeObjectURL(url);
+    }
+    const scale = Math.min(1, MAX_DIMENSION / Math.max(width, height));
+    const w = Math.round(width * scale);
+    const h = Math.round(height * scale);
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return file;
+    ctx.drawImage(source, 0, 0, w, h);
+    const outType = file.type === "image/png" ? "image/png" : "image/jpeg";
+    const blob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob(resolve, outType, COMPRESS_QUALITY),
+    );
+    if (!blob) return file;
+    // If compression made it larger (tiny images), keep original.
+    if (blob.size >= file.size) return file;
+    const ext = outType === "image/png" ? "png" : "jpg";
+    return new File([blob], `avatar.${ext}`, { type: outType });
+  } catch {
+    return file;
+  }
+}
 
 const profileSchema = z.object({
   full_name: z.string().trim().min(3, "Name must be at least 3 characters").max(50, "Name too long"),
@@ -108,21 +166,32 @@ function ProfilePage() {
 
   // Avatar upload
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const cameraInputRef = useRef<HTMLInputElement | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState(0);
   const [dragOver, setDragOver] = useState(false);
 
   async function uploadFile(file: File) {
     if (!user) return;
     if (!IMAGE_TYPES.includes(file.type)) return toast.error("Use JPG, PNG, or WEBP");
-    if (file.size > MAX_BYTES) return toast.error("Image must be under 5 MB");
+    // Enforce 5 MB on the ORIGINAL selection. Camera photos on modern phones
+    // are often >5 MB — compression below will shrink them before upload.
+    if (file.size > MAX_BYTES * 4) return toast.error("Image too large — please pick one under 20 MB");
     setUploading(true);
+    setProgress(5);
     try {
-      const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+      const compressed = await compressImage(file);
+      setProgress(35);
+      const ext =
+        compressed.type === "image/png" ? "png"
+        : compressed.type === "image/webp" ? "webp"
+        : "jpg";
       const path = `${user.id}/avatar-${Date.now()}.${ext}`;
       const { error: upErr } = await supabase.storage
         .from("avatars")
-        .upload(path, file, { upsert: true, cacheControl: "3600", contentType: file.type });
+        .upload(path, compressed, { upsert: true, cacheControl: "3600", contentType: compressed.type });
       if (upErr) throw upErr;
+      setProgress(75);
 
       // Remove any previous avatar objects for this user (best-effort).
       const { data: existing } = await supabase.storage.from("avatars").list(user.id, { limit: 100 });
@@ -133,12 +202,19 @@ function ProfilePage() {
         .from("profiles")
         .upsert({ id: user.id, avatar_url: path, updated_at: new Date().toISOString() });
       if (dbErr) throw dbErr;
+      setProgress(100);
       invalidateProfile();
       toast.success("Profile photo updated");
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Upload failed");
+      const msg = e instanceof Error ? e.message : "Upload failed";
+      if (/permission|denied|not allowed/i.test(msg)) {
+        toast.error("Permission needed — allow Camera or Photos access in your device settings.");
+      } else {
+        toast.error(msg);
+      }
     } finally {
       setUploading(false);
+      setTimeout(() => setProgress(0), 400);
     }
   }
 
