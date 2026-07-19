@@ -1,7 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, queryOptions, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Bell, BellRing, BellOff, RefreshCw, X } from "lucide-react";
+import {
+  Bell, BellRing, BellOff, RefreshCw, X,
+  Wrench, ShieldCheck, FileText, ScrollText, Wallet, Fuel, IdCard, AlertTriangle,
+} from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/button";
@@ -17,6 +20,29 @@ export const Route = createFileRoute("/_authenticated/alerts/")({
   head: () => ({ meta: [{ title: "Alerts — TransCore AI" }, { name: "robots", content: "noindex" }] }),
   component: AlertsPage,
 });
+
+const KIND_ICON: Record<string, { icon: React.ComponentType<{ className?: string }>; color: string }> = {
+  maintenance_due: { icon: Wrench, color: "text-amber-600 dark:text-amber-400" },
+  insurance_expiry: { icon: ShieldCheck, color: "text-blue-600 dark:text-blue-400" },
+  puc_expiry: { icon: FileText, color: "text-emerald-600 dark:text-emerald-400" },
+  permit_expiry: { icon: ScrollText, color: "text-violet-600 dark:text-violet-400" },
+  fitness_expiry: { icon: ShieldCheck, color: "text-cyan-600 dark:text-cyan-400" },
+  emi_due: { icon: Wallet, color: "text-rose-600 dark:text-rose-400" },
+  fuel: { icon: Fuel, color: "text-orange-600 dark:text-orange-400" },
+  license_expiry: { icon: IdCard, color: "text-indigo-600 dark:text-indigo-400" },
+};
+
+function KindIcon({ kind, severity }: { kind?: string; severity?: string }) {
+  const cfg = (kind && KIND_ICON[kind]) || null;
+  const Icon = cfg?.icon ?? AlertTriangle;
+  const color = cfg?.color ?? (
+    severity === "critical" ? "text-red-600 dark:text-red-400"
+    : severity === "warning" ? "text-amber-600 dark:text-amber-400"
+    : severity === "success" ? "text-emerald-600 dark:text-emerald-400"
+    : "text-blue-600 dark:text-blue-400"
+  );
+  return <Icon aria-hidden className={`h-[18px] w-[18px] shrink-0 ${color}`} />;
+}
 
 function AlertsPage() {
   const listFn = useServerFn(listAlerts);
@@ -57,11 +83,14 @@ function AlertsPage() {
           {q.data.map((a) => (
             <Card key={a.id}>
               <CardContent className="flex items-start justify-between gap-3 py-4">
-                <div className="flex items-start gap-3">
+                <div className="flex min-w-0 flex-1 items-start gap-3">
                   <SeverityBadge severity={a.severity} />
-                  <div>
-                    <div className="text-sm font-medium">{a.title}</div>
-                    <div className="text-xs text-muted-foreground">{a.message}</div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5 text-sm font-medium">
+                      <KindIcon kind={(a as { kind?: string }).kind} severity={a.severity} />
+                      <span className="min-w-0 break-words">{a.title}</span>
+                    </div>
+                    <div className="line-clamp-2 break-words text-xs text-muted-foreground">{a.message}</div>
                     <div className="mt-1 text-[11px] text-muted-foreground">
                       Due {formatDate(a.due_date)}
                       {a.vehicle && <> · {a.vehicle.registration_number}</>}
