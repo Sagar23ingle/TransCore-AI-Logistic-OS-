@@ -1,12 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, queryOptions, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Bell, BellRing, BellOff, RefreshCw, X } from "lucide-react";
+import { AlertTriangle, Bell, BellRing, BellOff, CheckCircle2, Info, RefreshCw, X } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { SeverityBadge } from "@/components/common/SeverityBadge";
 import { EmptyState } from "@/components/common/EmptyState";
 import { LoadingState } from "@/components/common/LoadingState";
 import { dismissAlert, listAlerts, recomputeAlerts } from "@/lib/alerts.functions";
@@ -58,9 +58,7 @@ function AlertsPage() {
             <Card key={a.id}>
               <CardContent className="flex items-start justify-between gap-3 py-4">
                 <div className="flex items-start gap-3">
-                  <Badge variant={a.severity === "critical" ? "destructive" : a.severity === "warning" ? "outline" : "secondary"}>
-                    {a.severity}
-                  </Badge>
+                  <SeverityBadge severity={a.severity} />
                   <div>
                     <div className="text-sm font-medium">{a.title}</div>
                     <div className="text-xs text-muted-foreground">{a.message}</div>
