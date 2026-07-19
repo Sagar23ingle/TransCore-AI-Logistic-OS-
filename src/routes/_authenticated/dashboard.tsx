@@ -288,28 +288,28 @@ function AIInsightsSection({ daily, loading }: { daily?: DailyOps; loading: bool
     <div className="space-y-3">
       {hasAny ? (
         <Card className="border-border/60">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base">
+          <CardHeader className="p-3 pb-2 sm:p-6 sm:pb-3">
+            <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
               <Sparkles className="h-4 w-4 text-primary" /> AI Insights
             </CardTitle>
           </CardHeader>
-          <CardContent className="grid gap-2 sm:grid-cols-2">
-            {daily!.insights.slice(0, 4).map((ins, i) => (
+          <CardContent className="grid gap-2 p-3 pt-0 sm:grid-cols-2 sm:p-6 sm:pt-0">
+            {daily!.insights.slice(0, 3).map((ins, i) => (
               <motion.div
                 key={ins.id}
                 initial={{ opacity: 0, x: -8 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.3, delay: i * 0.05 }}
-                className="group rounded-xl border border-border/60 bg-muted/20 p-3 transition hover:border-primary/40 hover:bg-muted/40"
+                transition={{ duration: 0.25, delay: i * 0.04 }}
+                className="group rounded-xl border border-border/60 bg-muted/20 p-2.5 transition hover:border-primary/40 hover:bg-muted/40"
               >
                 <div className="mb-1 flex items-center gap-1.5">
                   <InsightIcon tone={ins.tone} />
                   <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{ins.tone}</span>
                 </div>
-                <div className="text-sm font-medium leading-snug">{ins.issue}</div>
-                <div className="mt-0.5 text-xs text-muted-foreground">{ins.impact}</div>
+                <div className="line-clamp-2 text-[13px] font-medium leading-snug">{ins.issue}</div>
+                <div className="mt-0.5 line-clamp-2 text-[11px] text-muted-foreground">{ins.impact}</div>
                 {ins.href && (
-                  <Link to={ins.href} className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline">
+                  <Link to={ins.href} className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-medium text-primary hover:underline">
                     {ins.action} <ChevronRight className="h-3 w-3" />
                   </Link>
                 )}
@@ -319,19 +319,17 @@ function AIInsightsSection({ daily, loading }: { daily?: DailyOps; loading: bool
         </Card>
       ) : (
         <Card className="border-dashed border-border/60">
-          <CardContent className="flex flex-col items-center gap-2 py-8 text-center">
-            <div className="grid h-10 w-10 place-items-center rounded-full bg-primary/10 text-primary">
-              <Sparkles className="h-5 w-5" />
+          <CardContent className="flex flex-col items-center gap-1.5 py-5 text-center sm:py-8">
+            <div className="grid h-9 w-9 place-items-center rounded-full bg-primary/10 text-primary">
+              <Sparkles className="h-4 w-4" />
             </div>
-            <div className="text-sm font-medium">No insights available yet.</div>
-            <div className="max-w-sm text-xs text-muted-foreground">
-              Start using TransCore to unlock AI recommendations.
-            </div>
+            <div className="text-[13px] font-medium">No insights yet</div>
+            <div className="max-w-sm text-[11px] text-muted-foreground">Start using TransCore to unlock AI recommendations.</div>
           </CardContent>
         </Card>
       )}
 
-      <Suspense fallback={<Skeleton className="h-32 w-full rounded-2xl" />}>
+      <Suspense fallback={<Skeleton className="h-28 w-full rounded-2xl" />}>
         <FleetInsightsCards />
       </Suspense>
     </div>
