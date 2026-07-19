@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useProfile } from "@/hooks/use-profile";
 import { useAuth } from "@/hooks/use-auth";
+import { useTheme } from "@/hooks/use-theme";
 import { motion } from "motion/react";
 import {
   Truck, Users, Map as MapIcon, IndianRupee, Fuel, AlertTriangle, Bell,
@@ -37,12 +38,13 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
   component: Dashboard,
 });
 
-const FUEL_COLORS: Record<string, string> = {
-  diesel: "hsl(var(--chart-1))",
-  petrol: "hsl(var(--chart-2))",
-  cng: "hsl(var(--chart-3))",
-  electric: "hsl(var(--chart-4))",
-  other: "hsl(var(--chart-5))",
+// Fixed premium palette — consistent across light/dark, evokes each fuel type.
+const FUEL_COLORS: Record<string, { from: string; to: string; solid: string; label: string }> = {
+  diesel:   { from: "#22c55e", to: "#15803d", solid: "#16a34a", label: "Diesel" },
+  petrol:   { from: "#fbbf24", to: "#ea580c", solid: "#f59e0b", label: "Petrol" },
+  cng:      { from: "#38bdf8", to: "#1d4ed8", solid: "#3b82f6", label: "CNG" },
+  electric: { from: "#a78bfa", to: "#7c3aed", solid: "#8b5cf6", label: "Electric" },
+  other:    { from: "#94a3b8", to: "#475569", solid: "#64748b", label: "Other" },
 };
 
 function greetingFor(hour: number) {
@@ -301,6 +303,12 @@ function KpiCard({ label, value, sub, icon: Icon, tone }: {
 
 /* ---------- Fleet Overview (30-day trend) ---------- */
 function FleetOverview({ daily, loading }: { daily?: DailyOps; loading: boolean }) {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
+  const axis = isDark ? "hsl(215 20% 65%)" : "hsl(220 9% 46%)";
+  const grid = isDark ? "hsl(215 27% 32% / 0.35)" : "hsl(220 13% 91%)";
+  const revColor = isDark ? "#60a5fa" : "#2563eb";
+  const fuelColor = isDark ? "#f59e0b" : "#d97706";
   const data = useMemo(() =>
     (daily?.trend ?? []).map((r) => ({ ...r, label: r.date.slice(5) })),
   [daily]);
@@ -352,42 +360,70 @@ function FleetOverview({ daily, loading }: { daily?: DailyOps; loading: boolean 
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="trend" className="mt-3 h-48 sm:h-72">
+          <TabsContent value="trend" className="mt-3 h-52 sm:h-72">
             {loading ? (
               <Skeleton className="h-full w-full rounded-lg" />
             ) : !hasData ? (
               <EmptyChart message="No Data Available" hint="Log trips and fuel to see trends here." />
             ) : (
-              <div className="h-full w-full overflow-hidden rounded-xl border border-border/50 bg-gradient-to-b from-muted/20 to-transparent p-1">
+              <div className="h-full w-full overflow-hidden rounded-xl border border-border/60 bg-gradient-to-br from-muted/30 via-background to-background p-1 shadow-inner">
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={data} margin={{ top: 10, right: 12, left: 0, bottom: 0 }}>
+                  <AreaChart data={data} margin={{ top: 14, right: 14, left: 4, bottom: 4 }}>
                     <defs>
                       <linearGradient id="ov-rev" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.75} />
-                        <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.05} />
+                        <stop offset="0%" stopColor={revColor} stopOpacity={0.55} />
+                        <stop offset="100%" stopColor={revColor} stopOpacity={0.02} />
                       </linearGradient>
                       <linearGradient id="ov-fuel" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="hsl(var(--chart-3))" stopOpacity={0.65} />
-                        <stop offset="100%" stopColor="hsl(var(--chart-3))" stopOpacity={0.05} />
+                        <stop offset="0%" stopColor={fuelColor} stopOpacity={0.45} />
+                        <stop offset="100%" stopColor={fuelColor} stopOpacity={0.02} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} vertical={false} />
-                    <XAxis dataKey="label" stroke="hsl(var(--muted-foreground))" fontSize={10} interval={6} tickLine={false} axisLine={false} />
-                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={10} tickLine={false} axisLine={false} width={32} tickFormatter={(v: number) => v >= 1000 ? `${Math.round(v/1000)}k` : String(v)} />
-                    <Tooltip
-                      cursor={{ stroke: "hsl(var(--primary))", strokeOpacity: 0.3, strokeWidth: 1 }}
-                      contentStyle={{ background: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: 12, fontSize: 12 }}
-                      formatter={(v: number, name: string) => [name === "trips" ? v : formatINR(v), name]}
+                    <CartesianGrid strokeDasharray="4 4" stroke={grid} vertical={false} />
+                    <XAxis
+                      dataKey="label" stroke={axis} fontSize={11}
+                      interval={Math.max(0, Math.floor(data.length / 6) - 1)}
+                      tickLine={false} axisLine={false} tickMargin={8}
                     />
-                    <Area type="monotone" dataKey="revenue" stroke="hsl(var(--primary))" fill="url(#ov-rev)" strokeWidth={2.5} activeDot={{ r: 4 }} />
-                    <Area type="monotone" dataKey="fuel" stroke="hsl(var(--chart-3))" fill="url(#ov-fuel)" strokeWidth={2.5} activeDot={{ r: 4 }} />
+                    <YAxis
+                      stroke={axis} fontSize={11} tickLine={false} axisLine={false} width={40}
+                      tickFormatter={(v: number) => v >= 100000 ? `${(v/100000).toFixed(1)}L` : v >= 1000 ? `${Math.round(v/1000)}k` : String(v)}
+                    />
+                    <Tooltip
+                      cursor={{ stroke: revColor, strokeOpacity: 0.35, strokeWidth: 1, strokeDasharray: "3 3" }}
+                      contentStyle={{
+                        background: isDark ? "rgba(15,15,20,0.92)" : "rgba(255,255,255,0.98)",
+                        backdropFilter: "blur(8px)",
+                        border: "1px solid hsl(var(--border))",
+                        borderRadius: 12,
+                        fontSize: 12,
+                        padding: "8px 10px",
+                        boxShadow: isDark ? "0 8px 24px rgba(0,0,0,0.5)" : "0 8px 24px rgba(0,0,0,0.08)",
+                      }}
+                      labelStyle={{ color: axis, fontSize: 11, marginBottom: 4, fontWeight: 500 }}
+                      formatter={(v: number, name: string) => [name === "trips" ? v : formatINR(v), name === "revenue" ? "Revenue" : name === "fuel" ? "Fuel" : name]}
+                    />
+                    <Area
+                      type="monotone" dataKey="revenue" stroke={revColor} strokeWidth={2.5}
+                      fill="url(#ov-rev)" fillOpacity={1}
+                      dot={{ r: 2.5, fill: revColor, stroke: isDark ? "#0b0b0f" : "#fff", strokeWidth: 1.5 }}
+                      activeDot={{ r: 5, fill: revColor, stroke: isDark ? "#0b0b0f" : "#fff", strokeWidth: 2 }}
+                      animationDuration={800}
+                    />
+                    <Area
+                      type="monotone" dataKey="fuel" stroke={fuelColor} strokeWidth={2.5}
+                      fill="url(#ov-fuel)" fillOpacity={1}
+                      dot={{ r: 2.5, fill: fuelColor, stroke: isDark ? "#0b0b0f" : "#fff", strokeWidth: 1.5 }}
+                      activeDot={{ r: 5, fill: fuelColor, stroke: isDark ? "#0b0b0f" : "#fff", strokeWidth: 2 }}
+                      animationDuration={800}
+                    />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
             )}
-            <div className="mt-2 flex items-center justify-center gap-4 text-[10px] text-muted-foreground">
-              <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full" style={{ background: "hsl(var(--primary))" }} /> Revenue</span>
-              <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full" style={{ background: "hsl(var(--chart-3))" }} /> Fuel</span>
+            <div className="mt-3 flex items-center justify-center gap-5 text-[11px] font-medium text-muted-foreground">
+              <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full ring-2 ring-background" style={{ background: revColor }} /> Revenue</span>
+              <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full ring-2 ring-background" style={{ background: fuelColor }} /> Fuel</span>
             </div>
           </TabsContent>
 
@@ -555,12 +591,16 @@ function StatusBadge({ status }: { status: string }) {
 
 /* ---------- Fuel Summary ---------- */
 function FuelSummary({ extras, loading }: { extras?: HomeExtras; loading: boolean }) {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   const total = extras?.fuel.totalCost ?? 0;
-  const rows = ["diesel", "petrol", "cng", "electric"].map((k) => ({
+  const rows = (["diesel", "petrol", "cng", "electric"] as const).map((k) => ({
     type: k,
     amount: extras?.fuel.byType.find((b) => b.type === k)?.amount ?? 0,
   }));
-  const chartData = (extras?.fuel.byType ?? []).length > 0 ? extras!.fuel.byType : [];
+  const activeRows = rows.filter((r) => r.amount > 0);
+  const chartData = activeRows.length > 0 ? activeRows : [];
+  const trackColor = isDark ? "rgba(148,163,184,0.10)" : "rgba(148,163,184,0.18)";
 
   return (
     <Card className="border-border/60">
@@ -575,46 +615,77 @@ function FuelSummary({ extras, loading }: { extras?: HomeExtras; loading: boolea
           <Skeleton className="h-40 w-full rounded-lg" />
         ) : (
           <div className="flex items-center gap-4 sm:block">
-            <div className="relative h-28 w-28 shrink-0 sm:mx-auto sm:h-40 sm:w-40">
-              {chartData.length === 0 ? (
-                <div className="grid h-full w-full place-items-center rounded-full border-2 border-dashed border-border/60">
-                  <div className="text-center">
-                    <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Total</div>
-                    <div className="num text-sm font-semibold sm:text-lg">₹0</div>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie data={chartData} dataKey="amount" nameKey="type" innerRadius="60%" outerRadius="95%" paddingAngle={2}>
-                        {chartData.map((d, i) => (
-                          <Cell key={i} fill={FUEL_COLORS[d.type] ?? "hsl(var(--chart-5))"} />
-                        ))}
-                      </Pie>
-                      <Tooltip
-                        contentStyle={{ background: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: 12, fontSize: 12 }}
-                        formatter={(v: number) => formatINR(v)}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                  <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-                    <div className="text-[9px] uppercase tracking-wider text-muted-foreground sm:text-[10px]">Total</div>
-                    <div className="num text-[13px] font-semibold leading-tight sm:text-lg">{formatINR(total)}</div>
-                  </div>
-                </>
-              )}
+            <div className="relative h-32 w-32 shrink-0 sm:mx-auto sm:h-44 sm:w-44">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <defs>
+                    {(Object.keys(FUEL_COLORS) as Array<keyof typeof FUEL_COLORS>).map((k) => (
+                      <linearGradient key={k} id={`fuel-grad-${k}`} x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="0%" stopColor={FUEL_COLORS[k].from} stopOpacity={0.95} />
+                        <stop offset="100%" stopColor={FUEL_COLORS[k].to} stopOpacity={0.95} />
+                      </linearGradient>
+                    ))}
+                  </defs>
+                  {/* Background track ring — keeps the donut visible when only one fuel type has data */}
+                  <Pie
+                    data={[{ name: "track", value: 1 }]} dataKey="value"
+                    innerRadius="65%" outerRadius="95%"
+                    stroke="none" isAnimationActive={false}
+                    fill={trackColor}
+                  />
+                  {chartData.length > 0 && (
+                    <Pie
+                      data={chartData} dataKey="amount" nameKey="type"
+                      innerRadius="65%" outerRadius="95%"
+                      paddingAngle={chartData.length > 1 ? 3 : 0}
+                      cornerRadius={6}
+                      stroke={isDark ? "hsl(var(--card))" : "#fff"} strokeWidth={2}
+                      animationDuration={900} animationBegin={100}
+                    >
+                      {chartData.map((d) => (
+                        <Cell key={d.type} fill={`url(#fuel-grad-${d.type})`} />
+                      ))}
+                    </Pie>
+                  )}
+                  {chartData.length > 0 && (
+                    <Tooltip
+                      contentStyle={{
+                        background: isDark ? "rgba(15,15,20,0.92)" : "rgba(255,255,255,0.98)",
+                        backdropFilter: "blur(8px)",
+                        border: "1px solid hsl(var(--border))",
+                        borderRadius: 12,
+                        fontSize: 12,
+                        boxShadow: isDark ? "0 8px 24px rgba(0,0,0,0.5)" : "0 8px 24px rgba(0,0,0,0.08)",
+                      }}
+                      formatter={(v: number, _n, entry) => [formatINR(v), FUEL_COLORS[(entry?.payload?.type ?? "other") as keyof typeof FUEL_COLORS]?.label ?? "Fuel"]}
+                    />
+                  )}
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+                <div className="text-[9px] uppercase tracking-[0.14em] text-muted-foreground sm:text-[10px]">Total</div>
+                <div className="num text-base font-bold leading-tight tracking-tight sm:text-xl">{formatINR(total)}</div>
+                <div className="mt-0.5 text-[9px] text-muted-foreground sm:text-[10px]">This month</div>
+              </div>
             </div>
-            <div className="flex-1 space-y-1.5 sm:mt-4">
-              {rows.map((r) => (
-                <div key={r.type} className="flex items-center justify-between text-[11px] sm:text-xs">
-                  <span className="flex items-center gap-1.5 capitalize text-muted-foreground">
-                    <span className="h-2 w-2 rounded-full" style={{ background: FUEL_COLORS[r.type] }} />
-                    {r.type}
-                  </span>
-                  <span className="num font-medium">{formatINR(r.amount)}</span>
-                </div>
-              ))}
+            <div className="flex-1 space-y-1.5 sm:mt-5">
+              {rows.map((r) => {
+                const pct = total > 0 ? Math.round((r.amount / total) * 100) : 0;
+                const c = FUEL_COLORS[r.type];
+                return (
+                  <div key={r.type} className="group flex items-center justify-between rounded-lg px-2 py-1.5 text-[11px] transition hover:bg-muted/40 sm:text-xs">
+                    <span className="flex items-center gap-2 text-foreground/80">
+                      <span
+                        className="h-2.5 w-2.5 rounded-full ring-2 ring-background"
+                        style={{ background: `linear-gradient(135deg, ${c.from}, ${c.to})` }}
+                      />
+                      <span className="font-medium">{c.label}</span>
+                      {r.amount > 0 && <span className="text-[10px] text-muted-foreground">{pct}%</span>}
+                    </span>
+                    <span className="num font-semibold tabular-nums">{formatINR(r.amount)}</span>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
