@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useProfile } from "@/hooks/use-profile";
 import { useAuth } from "@/hooks/use-auth";
+import { useTheme } from "@/hooks/use-theme";
 import { motion } from "motion/react";
 import {
   Truck, Users, Map as MapIcon, IndianRupee, Fuel, AlertTriangle, Bell,
@@ -37,12 +38,13 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
   component: Dashboard,
 });
 
-const FUEL_COLORS: Record<string, string> = {
-  diesel: "hsl(var(--chart-1))",
-  petrol: "hsl(var(--chart-2))",
-  cng: "hsl(var(--chart-3))",
-  electric: "hsl(var(--chart-4))",
-  other: "hsl(var(--chart-5))",
+// Fixed premium palette — consistent across light/dark, evokes each fuel type.
+const FUEL_COLORS: Record<string, { from: string; to: string; solid: string; label: string }> = {
+  diesel:   { from: "#22c55e", to: "#15803d", solid: "#16a34a", label: "Diesel" },
+  petrol:   { from: "#fbbf24", to: "#ea580c", solid: "#f59e0b", label: "Petrol" },
+  cng:      { from: "#38bdf8", to: "#1d4ed8", solid: "#3b82f6", label: "CNG" },
+  electric: { from: "#a78bfa", to: "#7c3aed", solid: "#8b5cf6", label: "Electric" },
+  other:    { from: "#94a3b8", to: "#475569", solid: "#64748b", label: "Other" },
 };
 
 function greetingFor(hour: number) {
