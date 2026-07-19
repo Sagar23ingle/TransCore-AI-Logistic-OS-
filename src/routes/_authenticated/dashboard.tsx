@@ -71,7 +71,7 @@ function Dashboard() {
 
   return (
     <AppShell>
-      <div className="space-y-3 sm:space-y-6">
+      <div className="space-y-2.5 sm:space-y-6">
         <WelcomeHeader daily={daily.data} loading={daily.isLoading} />
 
         <KpiRow stats={stats.data} daily={daily.data} extras={extras.data} loading={stats.isLoading} />
@@ -142,16 +142,16 @@ function WelcomeHeader({ daily: _daily, loading: _loading }: { daily?: DailyOps;
       initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: "easeOut" }}
-      className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-card via-card to-primary/5 p-4 sm:p-6"
+      className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-card via-card to-primary/5 p-3 sm:p-6"
     >
-      <div className="pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full bg-primary/10 blur-3xl sm:-right-16 sm:-top-16 sm:h-48 sm:w-48" />
+      <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-primary/10 blur-3xl sm:-right-16 sm:-top-16 sm:h-48 sm:w-48" />
       <div className="relative flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
           <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
             <Sparkles className="h-3 w-3 text-primary" />
             <span className="uppercase tracking-wider">TransCore AI</span>
           </div>
-          <h1 className="mt-0.5 text-[20px] font-semibold leading-tight tracking-tight break-words sm:text-3xl">
+          <h1 className="mt-0.5 text-[18px] font-semibold leading-tight tracking-tight break-words sm:text-3xl">
             {heading}
           </h1>
           <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-muted-foreground sm:text-sm">
@@ -212,7 +212,7 @@ function KpiRow({ stats, daily, extras, loading }: {
     return (
       <div className="-mx-4 flex snap-x snap-mandatory gap-2.5 overflow-x-auto px-4 pb-1 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 lg:grid-cols-5">
         {Array.from({ length: 5 }).map((_, i) => (
-          <Skeleton key={i} className="h-24 w-40 shrink-0 snap-start rounded-2xl sm:h-28 sm:w-auto" />
+          <Skeleton key={i} className="h-24 w-36 shrink-0 snap-start rounded-2xl sm:h-28 sm:w-auto" />
         ))}
       </div>
     );
@@ -232,7 +232,7 @@ function KpiRow({ stats, daily, extras, loading }: {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.25, delay: i * 0.04, ease: "easeOut" }}
-            className="w-40 shrink-0 snap-start sm:w-auto sm:shrink"
+            className="w-36 shrink-0 snap-start sm:w-auto sm:shrink"
           >
             <KpiCard {...k} />
           </motion.div>
@@ -360,7 +360,7 @@ function FleetOverview({ daily, loading }: { daily?: DailyOps; loading: boolean 
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="trend" className="mt-3 h-52 sm:h-72">
+          <TabsContent value="trend" className="mt-3 h-44 sm:h-72">
             {loading ? (
               <Skeleton className="h-full w-full rounded-lg" />
             ) : !hasData ? (
@@ -429,9 +429,9 @@ function FleetOverview({ daily, loading }: { daily?: DailyOps; loading: boolean 
 
           <TabsContent value="map" className="mt-3">
             {live.isLoading ? (
-              <Skeleton className="h-44 w-full rounded-lg sm:h-72" />
+              <Skeleton className="h-40 w-full rounded-lg sm:h-72" />
             ) : markers.length === 0 ? (
-              <div className="h-44 sm:h-72">
+              <div className="h-40 sm:h-72">
                 <EmptyChart
                   message="No live vehicle positions"
                   hint="Start the driver GPS broadcast from Live Tracking to see vehicles here."
@@ -439,7 +439,7 @@ function FleetOverview({ daily, loading }: { daily?: DailyOps; loading: boolean 
               </div>
             ) : (
               <div className="overflow-hidden rounded-lg border border-border/60">
-                <GoogleMapView markers={markers} className="h-44 w-full sm:h-72" zoom={5} />
+                <GoogleMapView markers={markers} className="h-40 w-full sm:h-72" zoom={5} />
               </div>
             )}
             <div className="mt-2 flex items-center justify-between text-[10px] text-muted-foreground">
@@ -614,8 +614,8 @@ function FuelSummary({ extras, loading }: { extras?: HomeExtras; loading: boolea
         {loading ? (
           <Skeleton className="h-40 w-full rounded-lg" />
         ) : (
-          <div className="flex items-center gap-4 sm:block">
-            <div className="relative h-32 w-32 shrink-0 sm:mx-auto sm:h-44 sm:w-44">
+          <div className="flex items-center gap-3 sm:block">
+            <div className="relative h-28 w-28 shrink-0 sm:mx-auto sm:h-44 sm:w-44">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <defs>
@@ -662,10 +662,10 @@ function FuelSummary({ extras, loading }: { extras?: HomeExtras; loading: boolea
                   )}
                 </PieChart>
               </ResponsiveContainer>
-              <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-                <div className="text-[9px] uppercase tracking-[0.14em] text-muted-foreground sm:text-[10px]">Total</div>
-                <div className="num text-base font-bold leading-tight tracking-tight sm:text-xl">{formatINR(total)}</div>
-                <div className="mt-0.5 text-[9px] text-muted-foreground sm:text-[10px]">This month</div>
+              <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center px-1 text-center">
+                <div className="text-[8px] uppercase tracking-[0.14em] text-muted-foreground sm:text-[10px]">Total</div>
+                <div className="num text-[13px] font-bold leading-tight tracking-tight sm:text-xl">{formatINR(total)}</div>
+                <div className="mt-0.5 text-[8px] text-muted-foreground sm:text-[10px]">This month</div>
               </div>
             </div>
             <div className="flex-1 space-y-1.5 sm:mt-5">
@@ -764,17 +764,17 @@ function QuickActions() {
       <CardHeader className="p-3 pb-2 sm:p-6 sm:pb-3">
         <CardTitle className="text-sm sm:text-base">Quick Actions</CardTitle>
       </CardHeader>
-      <CardContent className="grid grid-cols-4 gap-2 p-3 pt-0 sm:grid-cols-2 sm:p-6 sm:pt-0">
+      <CardContent className="grid grid-cols-4 gap-1.5 p-3 pt-0 sm:grid-cols-2 sm:gap-2 sm:p-6 sm:pt-0">
         {actions.map((a) => (
           <Link
             key={a.label}
             to={a.href}
-            className="group flex flex-col items-center gap-1.5 rounded-2xl border border-border/60 bg-card p-2.5 text-center transition-all active:scale-95 hover:border-primary/40 hover:bg-primary/5 sm:flex-row sm:items-start sm:gap-2 sm:text-left"
+            className="group flex flex-col items-center gap-1 rounded-2xl border border-border/60 bg-card p-2 text-center transition-all active:scale-95 hover:border-primary/40 hover:bg-primary/5 sm:flex-row sm:items-start sm:gap-2 sm:p-2.5 sm:text-left"
           >
-            <div className="grid h-9 w-9 place-items-center rounded-xl bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-primary-foreground sm:h-8 sm:w-8 sm:rounded-lg">
+            <div className="grid h-8 w-8 place-items-center rounded-xl bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-primary-foreground sm:h-8 sm:w-8 sm:rounded-lg">
               <a.icon className="h-4 w-4" />
             </div>
-            <span className="text-[11px] font-medium leading-tight sm:text-xs">{a.label}</span>
+            <span className="text-[10px] font-medium leading-tight sm:text-xs">{a.label}</span>
           </Link>
         ))}
       </CardContent>
