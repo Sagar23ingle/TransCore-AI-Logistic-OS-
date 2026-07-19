@@ -21,6 +21,7 @@ import { Route as AuthenticatedVehiclesIndexRouteImport } from './routes/_authen
 import { Route as AuthenticatedTripsIndexRouteImport } from './routes/_authenticated/trips.index'
 import { Route as AuthenticatedTrackingIndexRouteImport } from './routes/_authenticated/tracking.index'
 import { Route as AuthenticatedSettingsIndexRouteImport } from './routes/_authenticated/settings.index'
+import { Route as AuthenticatedProfileIndexRouteImport } from './routes/_authenticated/profile.index'
 import { Route as AuthenticatedMarketplaceIndexRouteImport } from './routes/_authenticated/marketplace.index'
 import { Route as AuthenticatedMaintenanceIndexRouteImport } from './routes/_authenticated/maintenance.index'
 import { Route as AuthenticatedFuelIndexRouteImport } from './routes/_authenticated/fuel.index'
@@ -103,6 +104,12 @@ const AuthenticatedSettingsIndexRoute =
   AuthenticatedSettingsIndexRouteImport.update({
     id: '/settings/',
     path: '/settings/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedProfileIndexRoute =
+  AuthenticatedProfileIndexRouteImport.update({
+    id: '/profile/',
+    path: '/profile/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedMarketplaceIndexRoute =
@@ -239,6 +246,7 @@ export interface FileRoutesByFullPath {
   '/fuel/': typeof AuthenticatedFuelIndexRoute
   '/maintenance/': typeof AuthenticatedMaintenanceIndexRoute
   '/marketplace/': typeof AuthenticatedMarketplaceIndexRoute
+  '/profile/': typeof AuthenticatedProfileIndexRoute
   '/settings/': typeof AuthenticatedSettingsIndexRoute
   '/tracking/': typeof AuthenticatedTrackingIndexRoute
   '/trips/': typeof AuthenticatedTripsIndexRoute
@@ -271,6 +279,7 @@ export interface FileRoutesByTo {
   '/fuel': typeof AuthenticatedFuelIndexRoute
   '/maintenance': typeof AuthenticatedMaintenanceIndexRoute
   '/marketplace': typeof AuthenticatedMarketplaceIndexRoute
+  '/profile': typeof AuthenticatedProfileIndexRoute
   '/settings': typeof AuthenticatedSettingsIndexRoute
   '/tracking': typeof AuthenticatedTrackingIndexRoute
   '/trips': typeof AuthenticatedTripsIndexRoute
@@ -305,6 +314,7 @@ export interface FileRoutesById {
   '/_authenticated/fuel/': typeof AuthenticatedFuelIndexRoute
   '/_authenticated/maintenance/': typeof AuthenticatedMaintenanceIndexRoute
   '/_authenticated/marketplace/': typeof AuthenticatedMarketplaceIndexRoute
+  '/_authenticated/profile/': typeof AuthenticatedProfileIndexRoute
   '/_authenticated/settings/': typeof AuthenticatedSettingsIndexRoute
   '/_authenticated/tracking/': typeof AuthenticatedTrackingIndexRoute
   '/_authenticated/trips/': typeof AuthenticatedTripsIndexRoute
@@ -339,6 +349,7 @@ export interface FileRouteTypes {
     | '/fuel/'
     | '/maintenance/'
     | '/marketplace/'
+    | '/profile/'
     | '/settings/'
     | '/tracking/'
     | '/trips/'
@@ -371,6 +382,7 @@ export interface FileRouteTypes {
     | '/fuel'
     | '/maintenance'
     | '/marketplace'
+    | '/profile'
     | '/settings'
     | '/tracking'
     | '/trips'
@@ -404,6 +416,7 @@ export interface FileRouteTypes {
     | '/_authenticated/fuel/'
     | '/_authenticated/maintenance/'
     | '/_authenticated/marketplace/'
+    | '/_authenticated/profile/'
     | '/_authenticated/settings/'
     | '/_authenticated/tracking/'
     | '/_authenticated/trips/'
@@ -510,6 +523,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings/'
       preLoaderRoute: typeof AuthenticatedSettingsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/profile/': {
+      id: '/_authenticated/profile/'
+      path: '/profile'
+      fullPath: '/profile/'
+      preLoaderRoute: typeof AuthenticatedProfileIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/marketplace/': {
@@ -665,6 +685,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedFuelIndexRoute: typeof AuthenticatedFuelIndexRoute
   AuthenticatedMaintenanceIndexRoute: typeof AuthenticatedMaintenanceIndexRoute
   AuthenticatedMarketplaceIndexRoute: typeof AuthenticatedMarketplaceIndexRoute
+  AuthenticatedProfileIndexRoute: typeof AuthenticatedProfileIndexRoute
   AuthenticatedSettingsIndexRoute: typeof AuthenticatedSettingsIndexRoute
   AuthenticatedTrackingIndexRoute: typeof AuthenticatedTrackingIndexRoute
   AuthenticatedTripsIndexRoute: typeof AuthenticatedTripsIndexRoute
@@ -689,6 +710,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedFuelIndexRoute: AuthenticatedFuelIndexRoute,
   AuthenticatedMaintenanceIndexRoute: AuthenticatedMaintenanceIndexRoute,
   AuthenticatedMarketplaceIndexRoute: AuthenticatedMarketplaceIndexRoute,
+  AuthenticatedProfileIndexRoute: AuthenticatedProfileIndexRoute,
   AuthenticatedSettingsIndexRoute: AuthenticatedSettingsIndexRoute,
   AuthenticatedTrackingIndexRoute: AuthenticatedTrackingIndexRoute,
   AuthenticatedTripsIndexRoute: AuthenticatedTripsIndexRoute,
