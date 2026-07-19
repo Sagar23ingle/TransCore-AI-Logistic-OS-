@@ -186,10 +186,13 @@ function KpiRow({ stats, daily, extras, loading }: {
     const el = scrollerRef.current;
     if (!el) return;
     const update = () => {
-      const max = el.scrollWidth - el.clientWidth;
-      if (max <= 0) { setProgress(0); return; }
-      const ratio = Math.min(1, Math.max(0, el.scrollLeft / max));
-      setProgress(ratio * (items.length - 1));
+      const children = Array.from(el.children) as HTMLElement[];
+      if (children.length < 2) { setProgress(0); return; }
+      // Distance between consecutive card starts = card width + gap.
+      const step = children[1].offsetLeft - children[0].offsetLeft;
+      if (step <= 0) { setProgress(0); return; }
+      const raw = el.scrollLeft / step;
+      setProgress(Math.min(items.length - 1, Math.max(0, raw)));
     };
     update();
     el.addEventListener("scroll", update, { passive: true });
