@@ -74,7 +74,7 @@ function Dashboard() {
 
   return (
     <AppShell>
-      <div className="space-y-2.5 sm:space-y-6">
+      <div className="space-y-2 sm:space-y-6">
         <WelcomeHeader daily={daily.data} loading={daily.isLoading} />
 
         <KpiRow stats={stats.data} daily={daily.data} extras={extras.data} loading={stats.isLoading} />
@@ -149,7 +149,7 @@ function WelcomeHeader({ daily: _daily, loading: _loading }: { daily?: DailyOps;
       initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: "easeOut" }}
-      className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-card via-card to-primary/5 p-3 sm:p-6"
+      className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-card via-card to-primary/5 p-2.5 sm:p-6"
     >
       <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-primary/10 blur-3xl sm:-right-16 sm:-top-16 sm:h-48 sm:w-48" />
       <div className="relative flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -158,10 +158,10 @@ function WelcomeHeader({ daily: _daily, loading: _loading }: { daily?: DailyOps;
             <Sparkles className="h-3 w-3 text-primary" />
             <span className="uppercase tracking-wider">TransCore AI</span>
           </div>
-          <h1 className="mt-0.5 text-[18px] font-semibold leading-tight tracking-tight break-words sm:text-3xl">
+          <h1 className="mt-0.5 text-[16px] font-semibold leading-tight tracking-tight break-words sm:text-3xl">
             {heading}
           </h1>
-          <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-muted-foreground sm:text-sm">
+          <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-muted-foreground sm:text-sm">
             <span className="inline-flex items-center gap-1"><Calendar className="h-3 w-3" /> {dateLabel}</span>
             <span className="inline-flex items-center gap-1 sm:hidden"><Clock className="h-3 w-3" /> <span className="num" suppressHydrationWarning>{timeLabel}</span></span>
           </p>
@@ -367,7 +367,7 @@ function FleetOverview({ daily, loading }: { daily?: DailyOps; loading: boolean 
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="trend" className="mt-3 h-44 sm:h-72">
+          <TabsContent value="trend" className="mt-2 h-36 sm:h-72">
             {loading ? (
               <Skeleton className="h-full w-full rounded-lg" />
             ) : !hasData ? (
@@ -428,17 +428,17 @@ function FleetOverview({ daily, loading }: { daily?: DailyOps; loading: boolean 
                 </ResponsiveContainer>
               </div>
             )}
-            <div className="mt-3 flex items-center justify-center gap-5 text-[11px] font-medium text-muted-foreground">
+            <div className="mt-2 flex items-center justify-center gap-5 text-[11px] font-medium text-muted-foreground">
               <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full ring-2 ring-background" style={{ background: revColor }} /> Revenue</span>
               <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full ring-2 ring-background" style={{ background: fuelColor }} /> Fuel</span>
             </div>
           </TabsContent>
 
-          <TabsContent value="map" className="mt-3">
+          <TabsContent value="map" className="mt-2">
             {live.isLoading ? (
-              <Skeleton className="h-40 w-full rounded-lg sm:h-72" />
+              <Skeleton className="h-36 w-full rounded-lg sm:h-72" />
             ) : markers.length === 0 ? (
-              <div className="h-40 sm:h-72">
+              <div className="h-36 sm:h-72">
                 <EmptyChart
                   message="No live vehicle positions"
                   hint="Start the driver GPS broadcast from Live Tracking to see vehicles here."
@@ -446,7 +446,7 @@ function FleetOverview({ daily, loading }: { daily?: DailyOps; loading: boolean 
               </div>
             ) : (
               <div className="overflow-hidden rounded-lg border border-border/60">
-                <GoogleMapView markers={markers} className="h-40 w-full sm:h-72" zoom={5} />
+                <GoogleMapView markers={markers} className="h-36 w-full sm:h-72" zoom={5} />
               </div>
             )}
             <div className="mt-2 flex items-center justify-between text-[10px] text-muted-foreground">
@@ -487,7 +487,7 @@ function AIInsightsSection({ daily, loading }: { daily?: DailyOps; loading: bool
             </CardTitle>
           </CardHeader>
           <CardContent className="grid gap-2 p-3 pt-0 sm:grid-cols-2 sm:p-6 sm:pt-0">
-            {daily!.insights.slice(0, 3).map((ins, i) => (
+            {daily!.insights.slice(0, 2).map((ins, i) => (
               <motion.div
                 key={ins.id}
                 initial={{ opacity: 0, x: -8 }}
@@ -566,7 +566,7 @@ function RecentTrips({ extras, loading }: { extras?: HomeExtras; loading: boolea
           </div>
         ) : (
           <ul className="divide-y divide-border/60">
-            {extras.recentTrips.slice(0, 4).map((t) => (
+            {extras.recentTrips.slice(0, 3).map((t) => (
               <li key={t.id} className="flex items-center justify-between gap-2 py-2">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5">
@@ -759,7 +759,7 @@ function AlertsPanel({ daily, loading }: { daily?: DailyOps; loading: boolean })
           </div>
         ) : (
           <ul className="space-y-1.5">
-            {daily.priorities.slice(0, 3).map((p) => (
+            {daily.priorities.slice(0, 2).map((p) => (
               <li key={p.id} className="min-w-0">
                 <Link
                   to={p.href}
