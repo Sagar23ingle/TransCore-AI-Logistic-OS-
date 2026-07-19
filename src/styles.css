@@ -235,3 +235,9 @@
     *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
   }
 }
+
+/* Perf: skip rendering off-screen list rows on long lists */
+@utility list-perf {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 96px;
+}
