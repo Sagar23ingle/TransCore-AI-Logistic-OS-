@@ -111,35 +111,46 @@ function DocumentsPage() {
   }
 
   return (
-    <AppShell title="Document Vault" description="RC, insurance, permits, fitness, PUC — securely stored per fleet."
-      action={<Button onClick={() => setOpen(true)}><Plus className="mr-2 h-4 w-4" /> Upload document</Button>}>
+    <AppShell title="Documents" description="RC, insurance, permits, fitness, PUC — securely stored per fleet."
+      action={<Button size="sm" className="h-10 rounded-full px-4" onClick={() => setOpen(true)}><Plus className="mr-1.5 h-4 w-4" /> Upload</Button>}>
       {q.isLoading ? <LoadingState /> : !q.data || q.data.length === 0 ? (
         <EmptyState icon={<FileText className="h-6 w-6" />} title="No documents yet"
           description="Upload the first document — we'll track expiry automatically." />
       ) : (
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-2.5 md:grid-cols-2 xl:grid-cols-3">
           {q.data.map((d) => {
             const days = daysUntil(d.expiry_date);
             const tone = days == null ? "" : days < 0 ? "text-destructive" : days <= 15 ? "text-warning" : "text-muted-foreground";
+            const opt = DOC_TYPE_OPTIONS.find((o) => o.value === d.doc_type);
+            const Icon = opt?.icon ?? FileText;
             return (
-              <Card key={d.id}>
-                <CardContent className="pt-6">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <div className="text-sm font-semibold">{d.title}</div>
-                      <Badge variant="secondary" className="mt-1">{d.doc_type}</Badge>
+              <Card key={d.id} className="rounded-2xl">
+                <CardContent className="p-3.5">
+                  <div className="flex items-start gap-3">
+                    <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+                      <Icon className="h-5 w-5" />
                     </div>
-                    <div className="flex flex-col gap-1">
-                      <Button size="icon" variant="ghost" onClick={() => openDoc(d.id)}><ExternalLink className="h-4 w-4" /></Button>
-                      <Button size="icon" variant="ghost" onClick={() => { if (confirm("Delete this document?")) del.mutate(d.id); }}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <div className="truncate text-sm font-semibold">{d.title}</div>
+                        {days != null && (
+                          <Badge variant={days < 0 ? "destructive" : days <= 15 ? "outline" : "secondary"} className="h-5 shrink-0 px-1.5 text-[10px]">
+                            {days < 0 ? "expired" : `${days}d`}
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="truncate text-[11px] text-muted-foreground">
+                        {opt?.label ?? d.doc_type}
+                        {d.vehicle && <> · {d.vehicle.registration_number}</>}
+                        {d.driver && <> · {d.driver.full_name}</>}
+                      </div>
+                      <div className={`truncate text-[11px] ${tone}`}>Expiry {formatDate(d.expiry_date) ?? "—"}</div>
+                    </div>
+                    <div className="flex shrink-0 -mr-1">
+                      <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openDoc(d.id)}><ExternalLink className="h-4 w-4" /></Button>
+                      <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => { if (confirm("Delete this document?")) del.mutate(d.id); }}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                     </div>
                   </div>
-                  <dl className="mt-3 grid grid-cols-2 gap-y-1 text-xs">
-                    <dt className="text-muted-foreground">Vehicle</dt><dd className="text-right">{d.vehicle?.registration_number ?? "—"}</dd>
-                    <dt className="text-muted-foreground">Driver</dt><dd className="text-right">{d.driver?.full_name ?? "—"}</dd>
-                    <dt className="text-muted-foreground">Issued</dt><dd className="text-right">{formatDate(d.issued_on)}</dd>
-                    <dt className="text-muted-foreground">Expiry</dt><dd className={`text-right ${tone}`}>{formatDate(d.expiry_date)} {days != null && `(${days}d)`}</dd>
-                  </dl>
                 </CardContent>
               </Card>
             );

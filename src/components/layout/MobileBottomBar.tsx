@@ -19,9 +19,9 @@ export function MobileBottomBar() {
   return (
     <nav
       aria-label="Primary"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-border/70 bg-background/85 backdrop-blur-xl pb-[env(safe-area-inset-bottom)] lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-border/70 bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl lg:hidden"
     >
-      <ul className="grid grid-cols-5 px-1">
+      <ul className="grid h-14 grid-cols-5 px-1">
         {ITEMS.map(({ to, label, icon: Icon }) => {
           const active = pathname === to || pathname.startsWith(to + "/");
           return (
@@ -30,19 +30,19 @@ export function MobileBottomBar() {
                 to={to}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "relative mx-auto flex min-h-11 w-full max-w-20 flex-col items-center justify-center gap-1 py-2 text-[10px] font-medium transition-colors",
+                  "relative mx-auto flex h-full w-full max-w-20 flex-col items-center justify-center gap-0.5 text-[11px] font-medium transition-colors",
                   active ? "text-foreground" : "text-muted-foreground/70 hover:text-foreground",
                 )}
               >
                 <span
                   className={cn(
-                    "grid h-8 w-12 place-items-center rounded-full transition-colors",
+                    "grid h-7 w-11 place-items-center rounded-full transition-colors",
                     active && "bg-primary/12 text-primary",
                   )}
                 >
-                  <Icon className="h-[18px] w-[18px]" />
+                  <Icon className="h-[22px] w-[22px]" strokeWidth={active ? 2.25 : 1.75} />
                 </span>
-                <span className="tracking-wide">{label}</span>
+                <span className="leading-none tracking-tight">{label}</span>
               </Link>
             </li>
           );
@@ -52,13 +52,13 @@ export function MobileBottomBar() {
             <SheetTrigger asChild>
               <button
                 type="button"
-                className="relative mx-auto flex min-h-11 w-full max-w-20 flex-col items-center justify-center gap-1 py-2 text-[10px] font-medium text-muted-foreground/70 transition-colors hover:text-foreground"
+                className="relative mx-auto flex h-full w-full max-w-20 flex-col items-center justify-center gap-0.5 text-[11px] font-medium text-muted-foreground/70 transition-colors hover:text-foreground"
                 aria-label="More navigation"
               >
-                <span className="grid h-8 w-12 place-items-center rounded-full">
-                  <MoreHorizontal className="h-[18px] w-[18px]" />
+                <span className="grid h-7 w-11 place-items-center rounded-full">
+                  <MoreHorizontal className="h-[22px] w-[22px]" strokeWidth={1.75} />
                 </span>
-                <span className="tracking-wide">More</span>
+                <span className="leading-none tracking-tight">More</span>
               </button>
             </SheetTrigger>
             <SheetContent side="right" className="w-72 border-sidebar-border bg-sidebar p-0">

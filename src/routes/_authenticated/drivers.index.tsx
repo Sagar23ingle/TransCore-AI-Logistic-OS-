@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQuery, queryOptions, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Plus, Pencil, Trash2, Users } from "lucide-react";
+import { Plus, Pencil, Trash2, Users, Phone } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/button";
@@ -40,7 +40,7 @@ function DriversPage() {
     <AppShell
       title="Drivers"
       description="People behind the wheel — licenses, contacts and status."
-      action={<Button onClick={() => { setEditing(null); setOpen(true); }}><Plus className="mr-2 h-4 w-4" /> Add driver</Button>}
+      action={<Button size="sm" className="h-10 rounded-full px-4" onClick={() => { setEditing(null); setOpen(true); }}><Plus className="mr-1.5 h-4 w-4" /> Add</Button>}
     >
       {q.isLoading ? <LoadingState /> : !q.data || q.data.length === 0 ? (
         <EmptyState icon={<Users className="h-6 w-6" />} title="No drivers yet"
@@ -48,28 +48,38 @@ function DriversPage() {
           action={<Button onClick={() => { setEditing(null); setOpen(true); }}><Plus className="mr-2 h-4 w-4" /> Add driver</Button>}
         />
       ) : (
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {q.data.map((d) => (
-            <Card key={d.id}>
-              <CardContent className="pt-6">
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <div className="text-base font-semibold">{d.full_name}</div>
-                    <div className="text-sm text-muted-foreground">{d.phone || "—"}</div>
-                    <div className="mt-2"><Badge variant={d.status === "active" ? "default" : "secondary"}>{d.status}</Badge></div>
+        <div className="grid gap-2.5 md:grid-cols-2 xl:grid-cols-3">
+          {q.data.map((d) => {
+            const initials = d.full_name.split(/\s+/).slice(0, 2).map(s => s[0]).join("").toUpperCase();
+            return (
+              <Card key={d.id} className="rounded-2xl">
+                <CardContent className="p-3.5">
+                  <div className="flex items-center gap-3">
+                    <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-gradient-to-br from-primary/25 to-primary/10 text-sm font-semibold text-primary">
+                      {initials || "?"}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <div className="truncate text-[15px] font-semibold">{d.full_name}</div>
+                        <Badge variant={d.status === "active" ? "default" : "secondary"} className="h-5 px-1.5 text-[10px]">{d.status}</Badge>
+                      </div>
+                      <div className="truncate text-xs text-muted-foreground">{d.phone || "No phone"} · Lic {d.license_number || "—"}</div>
+                      <div className="text-[11px] text-muted-foreground">Expires {formatDate(d.license_expiry) ?? "—"}</div>
+                    </div>
+                    <div className="flex shrink-0 -mr-1">
+                      {d.phone && (
+                        <a href={`tel:${d.phone}`} className="grid h-9 w-9 place-items-center rounded-full text-primary hover:bg-primary/10" aria-label="Call driver">
+                          <Phone className="h-4 w-4" />
+                        </a>
+                      )}
+                      <Button size="icon" variant="ghost" className="h-9 w-9" onClick={() => { setEditing(d); setOpen(true); }}><Pencil className="h-4 w-4" /></Button>
+                      <Button size="icon" variant="ghost" className="h-9 w-9" onClick={() => { if (confirm("Remove this driver?")) del.mutate(d.id); }}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                    </div>
                   </div>
-                  <div className="flex flex-col gap-1">
-                    <Button size="icon" variant="ghost" onClick={() => { setEditing(d); setOpen(true); }}><Pencil className="h-4 w-4" /></Button>
-                    <Button size="icon" variant="ghost" onClick={() => { if (confirm("Remove this driver?")) del.mutate(d.id); }}><Trash2 className="h-4 w-4 text-destructive" /></Button>
-                  </div>
-                </div>
-                <dl className="mt-4 grid grid-cols-2 gap-y-1 text-xs text-muted-foreground">
-                  <dt>License</dt><dd className="text-right text-foreground">{d.license_number || "—"}</dd>
-                  <dt>License expiry</dt><dd className="text-right text-foreground">{formatDate(d.license_expiry)}</dd>
-                </dl>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
 

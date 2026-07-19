@@ -35,39 +35,38 @@ function TripsPage() {
 
   return (
     <AppShell title="Trips" description="Every load, from planned to completed."
-      action={<Button onClick={() => { setEditing(null); setOpen(true); }}><Plus className="mr-2 h-4 w-4" /> New trip</Button>}>
+      action={<Button size="sm" className="h-10 rounded-full px-4" onClick={() => { setEditing(null); setOpen(true); }}><Plus className="mr-1.5 h-4 w-4" /> New</Button>}>
       {q.isLoading ? <LoadingState /> : !q.data || q.data.length === 0 ? (
         <EmptyState icon={<MapIcon className="h-6 w-6" />} title="No trips yet"
           description="Create your first trip to start tracking revenue, expenses and distance."
           action={<Button onClick={() => { setEditing(null); setOpen(true); }}><Plus className="mr-2 h-4 w-4" /> New trip</Button>} />
       ) : (
-        <div className="grid gap-3">
+        <div className="grid gap-2.5">
           {q.data.map((t) => (
-            <Card key={t.id}>
-              <CardContent className="pt-6">
-                <div className="flex flex-wrap items-start justify-between gap-3">
+            <Card key={t.id} className="rounded-2xl">
+              <CardContent className="p-3.5">
+                <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 text-base font-medium">
+                    <div className="flex min-w-0 items-center gap-1.5 text-sm font-semibold">
                       <span className="truncate">{t.origin}</span>
-                      <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      <ArrowRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                       <span className="truncate">{t.destination}</span>
                     </div>
-                    <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                      <Badge variant={t.status === "completed" ? "default" : t.status === "in_progress" ? "secondary" : t.status === "cancelled" ? "destructive" : "outline"}>
+                    <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground">
+                      <Badge variant={t.status === "completed" ? "default" : t.status === "in_progress" ? "secondary" : t.status === "cancelled" ? "destructive" : "outline"} className="h-5 px-1.5 text-[10px]">
                         {t.status}
                       </Badge>
-                      {t.vehicle && <span>{t.vehicle.registration_number}</span>}
-                      {t.driver && <span>· {t.driver.full_name}</span>}
-                      {t.scheduled_start && <span>· sched {formatDateTime(t.scheduled_start)}</span>}
+                      {t.vehicle && <span className="truncate">{t.vehicle.registration_number}</span>}
+                      {t.driver && <span className="truncate">· {t.driver.full_name}</span>}
                     </div>
-                    {t.client_name && <div className="mt-1 text-xs text-muted-foreground">Client: {t.client_name}</div>}
+                    {t.scheduled_start && <div className="mt-0.5 text-[11px] text-muted-foreground">Scheduled {formatDateTime(t.scheduled_start)}</div>}
                   </div>
-                  <div className="text-right">
+                  <div className="shrink-0 text-right">
                     <div className="num text-sm font-semibold">{formatINR(Number(t.freight_amount))}</div>
-                    <div className="text-xs text-muted-foreground">{t.distance_km ? `${formatNumber(Number(t.distance_km))} km` : "—"}</div>
-                    <div className="mt-2 flex justify-end gap-1">
-                      <Button size="icon" variant="ghost" onClick={() => { setEditing(t); setOpen(true); }}><Pencil className="h-4 w-4" /></Button>
-                      <Button size="icon" variant="ghost" onClick={() => { if (confirm("Remove trip?")) del.mutate(t.id); }}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                    <div className="text-[11px] text-muted-foreground">{t.distance_km ? `${formatNumber(Number(t.distance_km))} km` : "—"}</div>
+                    <div className="mt-1 flex justify-end -mr-1">
+                      <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => { setEditing(t); setOpen(true); }}><Pencil className="h-4 w-4" /></Button>
+                      <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => { if (confirm("Remove trip?")) del.mutate(t.id); }}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                     </div>
                   </div>
                 </div>

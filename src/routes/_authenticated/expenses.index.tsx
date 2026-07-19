@@ -75,34 +75,41 @@ function ExpensesPage() {
 
   return (
     <AppShell title="Expenses" description="Fuel, tolls, maintenance and more. All money out."
-      action={<Button onClick={() => setOpen(true)}><Plus className="mr-2 h-4 w-4" /> Add expense</Button>}>
+      action={<Button size="sm" className="h-10 rounded-full px-4" onClick={() => setOpen(true)}><Plus className="mr-1.5 h-4 w-4" /> Add</Button>}>
       {q.isLoading ? <LoadingState /> : !q.data || q.data.length === 0 ? (
         <EmptyState icon={<Receipt className="h-6 w-6" />} title="No expenses yet"
           description="Log fuel, tolls, and maintenance to see spend broken down on your dashboard."
           action={<Button onClick={() => setOpen(true)}><Plus className="mr-2 h-4 w-4" /> Add expense</Button>} />
       ) : (
         <div className="grid gap-2">
-          {q.data.map((e) => (
-            <Card key={e.id}>
-              <CardContent className="flex items-center justify-between gap-3 py-4">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="secondary">{e.category}</Badge>
-                    <div className="num font-semibold">{formatINR(Number(e.amount))}</div>
+          {q.data.map((e) => {
+            const opt = CATEGORY_OPTIONS.find((c) => c.value === e.category);
+            const Icon = opt?.icon ?? Receipt;
+            return (
+              <Card key={e.id} className="rounded-2xl">
+                <CardContent className="flex items-center gap-3 p-3">
+                  <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+                    <Icon className="h-5 w-5" />
                   </div>
-                  <div className="mt-1 text-xs text-muted-foreground">
-                    {formatDate(e.incurred_on)}
-                    {e.vehicle && <> · {e.vehicle.registration_number}</>}
-                    {e.trip && <> · {e.trip.origin} → {e.trip.destination}</>}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="truncate text-sm font-medium capitalize">{opt?.label ?? e.category}</div>
+                      <div className="num text-sm font-semibold">{formatINR(Number(e.amount))}</div>
+                    </div>
+                    <div className="truncate text-[11px] text-muted-foreground">
+                      {formatDate(e.incurred_on)}
+                      {e.vehicle && <> · {e.vehicle.registration_number}</>}
+                      {e.trip && <> · {e.trip.origin} → {e.trip.destination}</>}
+                    </div>
+                    {e.description && <div className="truncate text-[12px]">{e.description}</div>}
                   </div>
-                  {e.description && <div className="mt-1 text-sm">{e.description}</div>}
-                </div>
-                <Button size="icon" variant="ghost" onClick={() => { if (confirm("Remove?")) del.mutate(e.id); }}>
-                  <Trash2 className="h-4 w-4 text-destructive" />
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
+                  <Button size="icon" variant="ghost" className="h-8 w-8 shrink-0" onClick={() => { if (confirm("Remove?")) del.mutate(e.id); }}>
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
 
