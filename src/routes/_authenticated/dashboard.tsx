@@ -1,375 +1,44 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { Link } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, queryOptions, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo } from "react";
+import { motion } from "motion/react";
 import {
-  Truck, Users, Map as MapIcon, IndianRupee, TrendingDown, Fuel, Percent, Activity,
-  AlertTriangle, ArrowDownRight, ArrowUpRight, CheckCircle2, ChevronRight, Circle,
-  Heart, Lightbulb, Sparkles, Target, TrendingUp, Zap,
+  Truck, Users, Map as MapIcon, IndianRupee, Fuel, AlertTriangle, Bell,
+  Plus, FileText, Receipt, Sparkles, ChevronRight, CheckCircle2, Circle,
+  TrendingUp, TrendingDown, Gauge, MessageSquare, Calendar, Clock,
 } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
-import { getDashboardStats, getRevenueByMonth, getExpenseBreakdown } from "@/lib/dashboard.functions";
-import { getDailyOps } from "@/lib/daily-ops.functions";
+import { Skeleton } from "@/components/ui/skeleton";
+import { getDashboardStats } from "@/lib/dashboard.functions";
+import { getDailyOps, type DailyOps } from "@/lib/daily-ops.functions";
+import { getHomeExtras, type HomeExtras } from "@/lib/home.functions";
 import { recomputeAlerts } from "@/lib/alerts.functions";
+import { formatINR, formatNumber } from "@/lib/format";
+import {
+  Area, AreaChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
+} from "recharts";
+
 const FleetInsightsCards = lazy(() =>
   import("@/components/dashboard/FleetInsightsCards").then((m) => ({ default: m.FleetInsightsCards })),
 );
-import { formatINR, formatNumber } from "@/lib/format";
-import { EmptyState } from "@/components/common/EmptyState";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Area,
-  AreaChart,
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — TransCore AI" }, { name: "robots", content: "noindex" }] }),
   component: Dashboard,
 });
 
-const CHART_COLORS = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))", "hsl(var(--chart-5))"];
-
-function Dashboard() {
-  const statsFn = useServerFn(getDashboardStats);
-  const revenueFn = useServerFn(getRevenueByMonth);
-  const expenseFn = useServerFn(getExpenseBreakdown);
-  const dailyFn = useServerFn(getDailyOps);
-  const recompute = useServerFn(recomputeAlerts);
-  const qc = useQueryClient();
-  const isMobile = useIsMobile();
-
-  // Parallel, non-blocking queries. Each section renders its own skeleton
-  // so the shell paints immediately after login.
-  const stats = useQuery(queryOptions({ queryKey: ["dashboard-stats"], queryFn: () => statsFn(), staleTime: 60_000 }));
-  const revenue = useQuery(queryOptions({ queryKey: ["dashboard-revenue"], queryFn: () => revenueFn(), staleTime: 5 * 60_000 }));
-  const breakdown = useQuery(queryOptions({ queryKey: ["dashboard-expense-breakdown"], queryFn: () => expenseFn(), staleTime: 5 * 60_000 }));
-  const daily = useQuery(queryOptions({ queryKey: ["dashboard-daily-ops"], queryFn: () => dailyFn(), staleTime: 60_000 }));
-
-  useEffect(() => {
-    // Refresh alerts silently on dashboard load.
-    recompute().then(() => qc.invalidateQueries({ queryKey: ["alerts"] })).catch(() => {});
-  }, [recompute, qc]);
-
-  const s = stats.data;
-  const d = daily.data;
-  const bootstrapping = stats.isLoading && daily.isLoading;
-  const isEmpty = !bootstrapping && (!s || (s.totalVehicles === 0 && s.totalTrips === 0)) && (!d || !d.onboarding.hasVehicles);
-
-  return (
-    <AppShell>
-      {bootstrapping ? (
-        <DashboardSkeleton />
-      ) : isEmpty ? (
-        <OnboardingHero daily={d} />
-      ) : (
-        <div className="space-y-4 md:space-y-6">
-          {d && <WelcomeHeader daily={d} />}
-
-          {/* Mobile command center: health summary + KPI grid + priorities */}
-          {d && (
-            <div className="space-y-3 md:hidden">
-              <CompactHealthCard daily={d} />
-              <MobileKpiGrid daily={d} />
-              <PrioritiesCard daily={d} />
-              <TopInsights daily={d} />
-              <Suspense fallback={<Skeleton className="h-32 w-full rounded-xl" />}>
-                <FleetInsightsCards />
-              </Suspense>
-            </div>
-          )}
-
-          {/* Desktop / tablet layout — unmounted on mobile to avoid 0-width chart warnings */}
-          {!isMobile && (
-          <div className="space-y-6">
-            {d && <TodaySnapshot daily={d} />}
-            {d && (
-              <div className="grid gap-4 lg:grid-cols-3">
-                <FleetHealthCard daily={d} />
-                <div className="space-y-4 lg:col-span-2">
-                  <PrioritiesCard daily={d} />
-                </div>
-              </div>
-            )}
-            {d && d.insights.length > 0 && <InsightsGrid daily={d} />}
-            <Suspense fallback={<Skeleton className="h-40 w-full rounded-xl" />}>
-              <FleetInsightsCards />
-            </Suspense>
-            {d && <GoalsCard daily={d} />}
-            {d && <TrendCard daily={d} />}
-
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {s ? (
-                <>
-                  <Kpi icon={<IndianRupee className="h-4 w-4" />} label="Revenue (MTD)" value={formatINR(s.revenueMTD)} />
-                  <Kpi icon={<TrendingDown className="h-4 w-4" />} label="Expenses (MTD)" value={formatINR(s.expensesMTD)} />
-                  <Kpi icon={<Fuel className="h-4 w-4" />} label="Fuel cost (MTD)" value={formatINR(s.fuelMTD)} />
-                  <Kpi
-                    icon={<Activity className="h-4 w-4" />}
-                    label="Profit (MTD)"
-                    value={formatINR(s.profitMTD)}
-                    tone={s.profitMTD >= 0 ? "positive" : "negative"}
-                  />
-                  <Kpi icon={<Truck className="h-4 w-4" />} label="Vehicles" value={`${s.activeVehicles} / ${s.totalVehicles}`} sub="active / total" />
-                  <Kpi icon={<Users className="h-4 w-4" />} label="Drivers" value={formatNumber(s.totalDrivers)} />
-                  <Kpi icon={<MapIcon className="h-4 w-4" />} label="Active trips" value={formatNumber(s.activeTrips)} sub={`${s.completedTrips} completed`} />
-                  <Kpi icon={<Percent className="h-4 w-4" />} label="Fleet utilization" value={`${s.fleetUtilization}%`} />
-                </>
-              ) : (
-                Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />)
-              )}
-            </div>
-          </div>
-          )}
-
-          {/* Mobile: collapsed detail sections */}
-          {d && (
-            <Accordion type="multiple" className="space-y-2 md:hidden">
-              <AccordionItem value="health" className="rounded-xl border border-border/60 bg-card px-3">
-                <AccordionTrigger className="py-3 text-sm font-medium">Fleet health breakdown</AccordionTrigger>
-                <AccordionContent className="pb-4"><FleetHealthCard daily={d} /></AccordionContent>
-              </AccordionItem>
-              <AccordionItem value="analytics" className="rounded-xl border border-border/60 bg-card px-3">
-                <AccordionTrigger className="py-3 text-sm font-medium">Analytics & trends</AccordionTrigger>
-                <AccordionContent className="pb-4 space-y-3">
-                  <TrendCard daily={d} />
-                  <MobileCharts revenue={revenue.data ?? []} breakdown={breakdown.data ?? []} />
-                </AccordionContent>
-              </AccordionItem>
-              <AccordionItem value="goals" className="rounded-xl border border-border/60 bg-card px-3">
-                <AccordionTrigger className="py-3 text-sm font-medium">Monthly goals</AccordionTrigger>
-                <AccordionContent className="pb-4"><GoalsCard daily={d} /></AccordionContent>
-              </AccordionItem>
-              <AccordionItem value="reports" className="rounded-xl border border-border/60 bg-card px-3">
-                <AccordionTrigger className="py-3 text-sm font-medium">All insights ({d.insights.length})</AccordionTrigger>
-                <AccordionContent className="pb-4"><InsightsGrid daily={d} /></AccordionContent>
-              </AccordionItem>
-            </Accordion>
-          )}
-
-          {!isMobile && (
-          <div className="grid gap-6 lg:grid-cols-2">
-            <Card>
-              <CardHeader><CardTitle className="text-base">Revenue vs Expenses (6 mo)</CardTitle></CardHeader>
-              <CardContent className="h-72">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={revenue.data ?? []}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-                    <XAxis dataKey="label" stroke="var(--color-muted-foreground)" fontSize={12} />
-                    <YAxis stroke="var(--color-muted-foreground)" fontSize={12} />
-                    <Tooltip contentStyle={{ background: "var(--color-popover)", border: "1px solid var(--color-border)", borderRadius: 8 }} />
-                    <Bar dataKey="revenue" fill="var(--color-primary)" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="expenses" fill="var(--color-destructive)" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader><CardTitle className="text-base">Expense breakdown (MTD)</CardTitle></CardHeader>
-              <CardContent className="h-72">
-                {(!breakdown.data || breakdown.data.length === 0) ? (
-                  <div className="flex h-full items-center justify-center text-sm text-muted-foreground">No expenses recorded this month.</div>
-                ) : (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie data={breakdown.data} dataKey="amount" nameKey="category" innerRadius={50} outerRadius={90}>
-                        {breakdown.data.map((_, i) => (<Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />))}
-                      </Pie>
-                      <Tooltip contentStyle={{ background: "var(--color-popover)", border: "1px solid var(--color-border)", borderRadius: 8 }} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-          )}
-        </div>
-      )}
-    </AppShell>
-  );
-}
-
-function DashboardSkeleton() {
-  return (
-    <div className="space-y-4 md:space-y-6">
-      <Skeleton className="h-24 w-full rounded-xl" />
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-        {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />)}
-      </div>
-      <div className="grid gap-4 lg:grid-cols-3">
-        <Skeleton className="h-72 rounded-xl lg:col-span-1" />
-        <Skeleton className="h-72 rounded-xl lg:col-span-2" />
-      </div>
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />)}
-      </div>
-    </div>
-  );
-}
-
-/* -------------------- Mobile-first sub-components -------------------- */
-
-function CompactHealthCard({ daily }: { daily: Daily }) {
-  const { score, band, reasons } = daily.health;
-  const color = band === "excellent" ? "text-emerald-500" : band === "good" ? "text-primary" : band === "attention" ? "text-amber-500" : "text-destructive";
-  const top = reasons.slice().sort((a, b) => a.score - b.score)[0];
-  return (
-    <Card className="overflow-hidden">
-      <CardContent className="flex items-center gap-4 p-4">
-        <div className="relative grid h-16 w-16 shrink-0 place-items-center rounded-full border-4 border-border/60">
-          <div className={`text-lg font-semibold ${color}`}><AnimatedNumber value={score} /></div>
-        </div>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <Heart className="h-3.5 w-3.5 text-primary" />
-            <span className="text-xs uppercase tracking-wider text-muted-foreground">Fleet health</span>
-            <Badge variant="outline" className={`ml-auto capitalize text-[10px] ${color}`}>{band}</Badge>
-          </div>
-          <div className="mt-1 truncate text-sm font-medium">{top ? `Lowest: ${top.label} (${top.score})` : "All systems healthy"}</div>
-          <Progress value={score} className="mt-2 h-1.5" />
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function MobileKpiTile({ icon, label, value, tone }: { icon: React.ReactNode; label: string; value: string; tone?: "positive" | "negative" | "warn" }) {
-  const toneCls = tone === "negative" ? "text-destructive" : tone === "warn" ? "text-amber-500" : tone === "positive" ? "text-emerald-500" : "";
-  return (
-    <div className="rounded-xl border border-border/60 bg-card p-3">
-      <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-muted-foreground">
-        <span className="opacity-70">{icon}</span>
-        <span className="truncate">{label}</span>
-      </div>
-      <div className={`num mt-1 text-base font-semibold leading-tight ${toneCls}`}>{value}</div>
-    </div>
-  );
-}
-
-function MobileKpiGrid({ daily }: { daily: Daily }) {
-  const attention = daily.today.pendingDocs + daily.today.overdueDocs;
-  return (
-    <div className="grid grid-cols-2 gap-2">
-      <MobileKpiTile icon={<IndianRupee className="h-3 w-3" />} label="Revenue today" value={formatINR(daily.today.revenue)} tone="positive" />
-      <MobileKpiTile icon={<Truck className="h-3 w-3" />} label="Active trucks" value={`${daily.today.trucksActive}`} />
-      <MobileKpiTile icon={<Fuel className="h-3 w-3" />} label="Fuel today" value={formatINR(daily.today.fuelCost)} />
-      <MobileKpiTile icon={<AlertTriangle className="h-3 w-3" />} label="Alerts" value={`${attention}`} tone={daily.today.overdueDocs > 0 ? "negative" : attention > 0 ? "warn" : undefined} />
-    </div>
-  );
-}
-
-function TopInsights({ daily }: { daily: Daily }) {
-  const [expanded, setExpanded] = useState(false);
-  if (daily.insights.length === 0) return null;
-  const shown = expanded ? daily.insights : daily.insights.slice(0, 2);
-  return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="flex items-center gap-2 text-sm"><Lightbulb className="h-4 w-4 text-primary" /> AI insights</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-2 pt-0">
-        {shown.map((ins) => (
-          <div key={ins.id} className="rounded-lg border border-border/60 bg-muted/20 p-3">
-            <div className="mb-1 flex items-center gap-2"><InsightIcon tone={ins.tone} /><span className="text-[10px] uppercase tracking-wider text-muted-foreground">{ins.tone}</span></div>
-            <div className="text-sm font-semibold leading-snug">{ins.issue}</div>
-            <div className="mt-0.5 text-xs text-muted-foreground">{ins.impact}</div>
-            {ins.href && (
-              <Link to={ins.href} className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline">
-                {ins.action} <ChevronRight className="h-3.5 w-3.5" />
-              </Link>
-            )}
-          </div>
-        ))}
-        {daily.insights.length > 2 && (
-          <Button variant="ghost" size="sm" className="w-full" onClick={() => setExpanded((v) => !v)}>
-            {expanded ? "Show less" : `View ${daily.insights.length - 2} more`}
-          </Button>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
-type RevenuePoint = { key: string; label: string; revenue: number; expenses: number };
-type BreakdownPoint = { category: string; amount: number };
-function MobileCharts({ revenue, breakdown }: { revenue: RevenuePoint[]; breakdown: BreakdownPoint[] }) {
-  return (
-    <div className="space-y-3">
-      <Card>
-        <CardHeader className="pb-2"><CardTitle className="text-sm">Revenue vs Expenses</CardTitle></CardHeader>
-        <CardContent className="h-56">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={revenue}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-              <XAxis dataKey="label" stroke="var(--color-muted-foreground)" fontSize={11} />
-              <YAxis stroke="var(--color-muted-foreground)" fontSize={11} />
-              <Tooltip contentStyle={{ background: "var(--color-popover)", border: "1px solid var(--color-border)", borderRadius: 8 }} />
-              <Bar dataKey="revenue" fill="var(--color-primary)" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="expenses" fill="var(--color-destructive)" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader className="pb-2"><CardTitle className="text-sm">Expense breakdown</CardTitle></CardHeader>
-        <CardContent className="h-56">
-          {breakdown.length === 0 ? (
-            <div className="flex h-full items-center justify-center text-sm text-muted-foreground">No expenses this month.</div>
-          ) : (
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie data={breakdown} dataKey="amount" nameKey="category" innerRadius={40} outerRadius={75}>
-                  {breakdown.map((_, i) => (<Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />))}
-                </Pie>
-                <Tooltip contentStyle={{ background: "var(--color-popover)", border: "1px solid var(--color-border)", borderRadius: 8 }} />
-              </PieChart>
-            </ResponsiveContainer>
-          )}
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
-function Kpi({ icon, label, value, sub, tone }: { icon: React.ReactNode; label: string; value: string; sub?: string; tone?: "positive" | "negative" }) {
-  return (
-    <Card className="surface-hover">
-      <CardContent className="p-4">
-        <div className="flex items-center justify-between text-muted-foreground">
-          <span className="text-[10px] uppercase tracking-[0.14em]">{label}</span>
-          <span className="opacity-60">{icon}</span>
-        </div>
-        <div className={`num mt-3 text-[26px] font-semibold leading-none tracking-tight ${tone === "negative" ? "text-destructive" : tone === "positive" ? "text-accent" : "text-foreground"}`}>
-          {value}
-        </div>
-        {sub && <div className="mt-2 text-xs text-muted-foreground">{sub}</div>}
-      </CardContent>
-    </Card>
-  );
-}
-
-/* -------------------- Daily Ops UI sub-components -------------------- */
-
-type Daily = NonNullable<ReturnType<typeof useDailyPlaceholder>>;
-// Trick: derive the type from the server-fn return via a placeholder hook signature.
-function useDailyPlaceholder() { return null as unknown as Awaited<ReturnType<typeof getDailyOps>>; }
+const FUEL_COLORS: Record<string, string> = {
+  diesel: "hsl(var(--chart-1))",
+  petrol: "hsl(var(--chart-2))",
+  cng: "hsl(var(--chart-3))",
+  electric: "hsl(var(--chart-4))",
+  other: "hsl(var(--chart-5))",
+};
 
 function greeting(hour: number) {
   if (hour < 5) return "Working late";
@@ -379,174 +48,469 @@ function greeting(hour: number) {
   return "Good night";
 }
 
-function WelcomeHeader({ daily }: { daily: Daily }) {
-  const name = daily.user.fullName?.split(" ")[0];
-  const line = useMemo(() => {
-    const parts: string[] = [];
-    if (daily.today.trucksOnRoute > 0) parts.push(`${daily.today.trucksOnRoute} truck${daily.today.trucksOnRoute === 1 ? "" : "s"} on the road`);
-    if (daily.today.tripsCompleted > 0) parts.push(`${daily.today.tripsCompleted} trip${daily.today.tripsCompleted === 1 ? "" : "s"} completed today`);
-    if (daily.today.pendingDocs > 0) parts.push(`${daily.today.pendingDocs} document${daily.today.pendingDocs === 1 ? "" : "s"} need attention`);
-    if (parts.length === 0) return "Fleet is quiet — a good time to plan the week.";
-    return parts.join(" • ");
-  }, [daily]);
-  return (
-    <div className="rounded-sm border border-border/60 bg-card p-5">
-      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-        <Sparkles className="h-3.5 w-3.5 text-primary" /> Daily briefing
-      </div>
-      <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
-        {greeting(daily.user.hour)}{name ? `, ${name}` : ""}.
-      </h1>
-      <p className="mt-1 text-sm text-muted-foreground">{line}</p>
-    </div>
-  );
-}
+function Dashboard() {
+  const statsFn = useServerFn(getDashboardStats);
+  const dailyFn = useServerFn(getDailyOps);
+  const homeFn = useServerFn(getHomeExtras);
+  const recompute = useServerFn(recomputeAlerts);
+  const qc = useQueryClient();
 
-function delta(cur: number, prev: number) {
-  if (prev === 0) return { pct: null as number | null, up: cur > 0 };
-  const pct = Math.round(((cur - prev) / prev) * 100);
-  return { pct, up: pct >= 0 };
-}
+  const stats = useQuery(queryOptions({ queryKey: ["dashboard-stats"], queryFn: () => statsFn(), staleTime: 60_000 }));
+  const daily = useQuery(queryOptions({ queryKey: ["dashboard-daily-ops"], queryFn: () => dailyFn(), staleTime: 60_000 }));
+  const extras = useQuery(queryOptions({ queryKey: ["dashboard-home-extras"], queryFn: () => homeFn(), staleTime: 60_000 }));
 
-function SnapshotChip({ icon, label, value, sub, tone }: { icon: React.ReactNode; label: string; value: string; sub?: React.ReactNode; tone?: "good" | "warn" | "bad" }) {
-  const toneCls = tone === "bad" ? "text-destructive" : tone === "warn" ? "text-amber-500" : tone === "good" ? "text-emerald-500" : "";
-  return (
-    <div className="rounded-xl border border-border/60 bg-card p-4">
-      <div className="flex items-center gap-2 text-[11px] uppercase tracking-wider text-muted-foreground">
-        <span className={toneCls}>{icon}</span>{label}
-      </div>
-      <div className="num font-mono mt-2 text-xl font-semibold">{value}</div>
-      {sub && <div className="mt-1 text-xs text-muted-foreground">{sub}</div>}
-    </div>
-  );
-}
-
-function TodaySnapshot({ daily }: { daily: Daily }) {
-  const revD = delta(daily.today.revenue, daily.today.revenueYesterday);
-  const fuelD = delta(daily.today.fuelCost, daily.today.fuelYesterday);
-  return (
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-      <SnapshotChip icon={<Truck className="h-3.5 w-3.5" />} label="Trucks active" value={`${daily.today.trucksActive}`} sub={`${daily.today.trucksOnRoute} on route`} />
-      <SnapshotChip icon={<Users className="h-3.5 w-3.5" />} label="Drivers on duty" value={`${daily.today.driversActive}`} />
-      <SnapshotChip
-        icon={<IndianRupee className="h-3.5 w-3.5" />} label="Revenue today"
-        value={formatINR(daily.today.revenue)}
-        sub={revD.pct == null ? "no comparison yet" : (<span className={revD.up ? "text-emerald-500" : "text-destructive"}>{revD.up ? "▲" : "▼"} {Math.abs(revD.pct)}% vs yesterday</span>)}
-        tone="good"
-      />
-      <SnapshotChip
-        icon={<Fuel className="h-3.5 w-3.5" />} label="Fuel today"
-        value={formatINR(daily.today.fuelCost)}
-        sub={fuelD.pct == null ? "no comparison yet" : (<span className={fuelD.up ? "text-amber-500" : "text-emerald-500"}>{fuelD.up ? "▲" : "▼"} {Math.abs(fuelD.pct)}% vs yesterday</span>)}
-      />
-      <SnapshotChip
-        icon={<AlertTriangle className="h-3.5 w-3.5" />}
-        label="Needs attention"
-        value={`${daily.today.pendingDocs}`}
-        sub={daily.today.overdueDocs > 0 ? `${daily.today.overdueDocs} overdue` : `${daily.today.upcomingRenewals} due in 30d`}
-        tone={daily.today.overdueDocs > 0 ? "bad" : daily.today.upcomingRenewals > 0 ? "warn" : "good"}
-      />
-    </div>
-  );
-}
-
-function healthTone(band: Daily["health"]["band"]) {
-  return band === "excellent" ? "text-emerald-500"
-    : band === "good" ? "text-primary"
-    : band === "attention" ? "text-amber-500"
-    : "text-destructive";
-}
-
-function AnimatedNumber({ value }: { value: number }) {
-  const [n, setN] = useState(0);
   useEffect(() => {
-    const start = performance.now();
-    const dur = 800;
-    let raf = 0;
-    const tick = (t: number) => {
-      const p = Math.min(1, (t - start) / dur);
-      setN(Math.round(value * (1 - Math.pow(1 - p, 3))));
-      if (p < 1) raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [value]);
-  return <>{n}</>;
-}
+    recompute().then(() => qc.invalidateQueries({ queryKey: ["alerts"] })).catch(() => {});
+  }, [recompute, qc]);
 
-function FleetHealthCard({ daily }: { daily: Daily }) {
-  const { score, band, reasons } = daily.health;
-  const size = 160, stroke = 12, r = (size - stroke) / 2, c = 2 * Math.PI * r;
-  const dash = c * (score / 100);
-  const color = band === "excellent" ? "hsl(var(--chart-2))" : band === "good" ? "hsl(var(--primary))" : band === "attention" ? "hsl(38 92% 55%)" : "hsl(var(--destructive))";
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="flex items-center gap-2 text-base"><Heart className="h-4 w-4 text-primary" /> Fleet health</CardTitle>
-        <Badge variant="outline" className={`capitalize ${healthTone(band)}`}>{band}</Badge>
-      </CardHeader>
-      <CardContent>
-        <div className="relative flex items-center justify-center">
-          <svg width={size} height={size} className="-rotate-90">
-            <circle cx={size / 2} cy={size / 2} r={r} strokeWidth={stroke} className="fill-none stroke-border/60" />
-            <circle
-              cx={size / 2} cy={size / 2} r={r} strokeWidth={stroke} strokeLinecap="round"
-              stroke={color} fill="none"
-              strokeDasharray={`${dash} ${c}`}
-              style={{ transition: "stroke-dasharray 800ms ease-out" }}
-            />
-          </svg>
-          <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
-            <div className={`font-mono text-4xl font-semibold ${healthTone(band)}`}><AnimatedNumber value={score} /></div>
-            <div className="text-[11px] uppercase tracking-wider text-muted-foreground">out of 100</div>
+    <AppShell>
+      <div className="space-y-6">
+        <WelcomeHeader daily={daily.data} loading={daily.isLoading} />
+
+        <KpiRow stats={stats.data} daily={daily.data} extras={extras.data} loading={stats.isLoading} />
+
+        <div className="grid gap-4 lg:grid-cols-3">
+          <div className="lg:col-span-2">
+            <FleetOverview daily={daily.data} loading={daily.isLoading} />
+          </div>
+          <FuelSummary extras={extras.data} loading={extras.isLoading} />
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-3">
+          <div className="lg:col-span-2 space-y-4">
+            <AIInsightsSection daily={daily.data} loading={daily.isLoading} />
+            <RecentTrips extras={extras.data} loading={extras.isLoading} />
+          </div>
+          <div className="space-y-4">
+            <AlertsPanel daily={daily.data} loading={daily.isLoading} />
+            <QuickActions />
           </div>
         </div>
-        <div className="mt-4 space-y-2">
-          {reasons.map((r) => (
-            <div key={r.label} className="space-y-1">
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <span>{r.label}</span>
-                <span className="num">{r.score}</span>
-              </div>
-              <Progress value={r.score} className="h-1.5" />
-            </div>
-          ))}
+
+        {daily.data && !daily.data.onboarding.hasVehicles && <OnboardingCard daily={daily.data} />}
+      </div>
+    </AppShell>
+  );
+}
+
+/* ---------- Welcome Header ---------- */
+function WelcomeHeader({ daily, loading }: { daily?: DailyOps; loading: boolean }) {
+  const now = new Date();
+  const dateLabel = now.toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+  const name = daily?.user.fullName?.split(" ")[0];
+  const hour = daily?.user.hour ?? now.getHours();
+
+  if (loading) return <Skeleton className="h-24 w-full rounded-2xl" />;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
+      className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-card via-card to-primary/5 p-5 sm:p-6"
+    >
+      <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-primary/10 blur-3xl" />
+      <div className="relative flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Sparkles className="h-3.5 w-3.5 text-primary" />
+            <span className="uppercase tracking-wider">TransCore AI</span>
+          </div>
+          <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
+            {greeting(hour)}{name ? `, ${name}` : ""}.
+          </h1>
+          <p className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground">
+            <Calendar className="h-3.5 w-3.5" /> {dateLabel}
+          </p>
         </div>
+        <div className="hidden sm:flex items-center gap-2">
+          <Badge variant="outline" className="gap-1.5 rounded-full px-3 py-1">
+            <Clock className="h-3 w-3" />
+            <span className="num">{now.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}</span>
+          </Badge>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+/* ---------- KPI Cards ---------- */
+type Stats = Awaited<ReturnType<typeof getDashboardStats>>;
+
+function KpiRow({ stats, daily, extras, loading }: {
+  stats?: Stats; daily?: DailyOps; extras?: HomeExtras; loading: boolean;
+}) {
+  const items = [
+    { label: "Total Fleet", value: stats ? formatNumber(stats.totalVehicles) : "0", sub: stats ? `${stats.activeVehicles} active` : "—", icon: Truck, tone: "primary" as const },
+    { label: "Active Trips", value: stats ? formatNumber(stats.activeTrips) : "0", sub: stats ? `${stats.completedTrips} completed` : "—", icon: MapIcon, tone: "info" as const },
+    { label: "Revenue (MTD)", value: stats ? formatINR(stats.revenueMTD) : "₹0", sub: daily ? deltaLabel(daily.periods.revenueMTD, daily.periods.revenuePrevMTD) : "—", icon: IndianRupee, tone: "positive" as const },
+    { label: "Fuel Efficiency", value: extras && extras.fuel.kmpl > 0 ? `${extras.fuel.kmpl} km/L` : "0 km/L", sub: "Fleet average", icon: Gauge, tone: "warn" as const },
+    { label: "Alerts", value: daily ? formatNumber(daily.today.newAlerts) : "0", sub: daily && daily.today.overdueDocs > 0 ? `${daily.today.overdueDocs} overdue` : "All clear", icon: Bell, tone: (daily && daily.today.overdueDocs > 0 ? "negative" : "neutral") as "negative" | "neutral" },
+  ];
+
+  if (loading) {
+    return (
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-28 rounded-2xl" />)}
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+      {items.map((k, i) => (
+        <motion.div
+          key={k.label}
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, delay: i * 0.05, ease: "easeOut" }}
+        >
+          <KpiCard {...k} />
+        </motion.div>
+      ))}
+    </div>
+  );
+}
+
+function deltaLabel(cur: number, prev: number) {
+  if (prev === 0) return cur === 0 ? "No prior data" : "First month";
+  const pct = Math.round(((cur - prev) / prev) * 100);
+  return `${pct >= 0 ? "▲" : "▼"} ${Math.abs(pct)}% vs last month`;
+}
+
+function KpiCard({ label, value, sub, icon: Icon, tone }: {
+  label: string; value: string; sub: string;
+  icon: React.ComponentType<{ className?: string }>;
+  tone: "primary" | "positive" | "negative" | "warn" | "info" | "neutral";
+}) {
+  const toneRing = {
+    primary: "bg-primary/10 text-primary",
+    positive: "bg-emerald-500/10 text-emerald-500",
+    negative: "bg-destructive/10 text-destructive",
+    warn: "bg-amber-500/10 text-amber-500",
+    info: "bg-sky-500/10 text-sky-500",
+    neutral: "bg-muted text-muted-foreground",
+  }[tone];
+  return (
+    <Card className="group relative overflow-hidden border-border/60 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/5 hover:border-primary/30">
+      <CardContent className="p-4">
+        <div className="flex items-start justify-between">
+          <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{label}</span>
+          <div className={`grid h-8 w-8 place-items-center rounded-lg ${toneRing}`}>
+            <Icon className="h-4 w-4" />
+          </div>
+        </div>
+        <div className="num mt-3 text-2xl font-semibold tracking-tight">{value}</div>
+        <div className="mt-1 text-xs text-muted-foreground truncate">{sub}</div>
       </CardContent>
     </Card>
   );
 }
 
-function severityStyles(s: "critical" | "warning" | "info") {
-  return s === "critical" ? "border-destructive/40 bg-destructive/5 text-destructive"
-    : s === "warning" ? "border-amber-500/40 bg-amber-500/5 text-amber-600 dark:text-amber-400"
-    : "border-border/60 bg-muted/30";
+/* ---------- Fleet Overview (30-day trend) ---------- */
+function FleetOverview({ daily, loading }: { daily?: DailyOps; loading: boolean }) {
+  const data = useMemo(() =>
+    (daily?.trend ?? []).map((r) => ({ ...r, label: r.date.slice(5) })),
+  [daily]);
+  const hasData = data.some((d) => d.revenue > 0 || d.fuel > 0 || d.trips > 0);
+
+  return (
+    <Card className="border-border/60">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+        <div>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <TrendingUp className="h-4 w-4 text-primary" /> Fleet Overview
+          </CardTitle>
+          <p className="mt-0.5 text-xs text-muted-foreground">Revenue & fuel spend — last 30 days</p>
+        </div>
+        <Badge variant="outline" className="text-[10px]">30D</Badge>
+      </CardHeader>
+      <CardContent className="h-72">
+        {loading ? (
+          <Skeleton className="h-full w-full rounded-lg" />
+        ) : !hasData ? (
+          <EmptyChart message="No Data Available" hint="Log trips and fuel to see trends here." />
+        ) : (
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={data} margin={{ top: 6, right: 12, left: 0, bottom: 0 }}>
+              <defs>
+                <linearGradient id="ov-rev" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.5} />
+                  <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                </linearGradient>
+                <linearGradient id="ov-fuel" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="hsl(var(--chart-3))" stopOpacity={0.5} />
+                  <stop offset="100%" stopColor="hsl(var(--chart-3))" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.4} />
+              <XAxis dataKey="label" stroke="hsl(var(--muted-foreground))" fontSize={11} interval={4} />
+              <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} />
+              <Tooltip
+                contentStyle={{ background: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: 12, fontSize: 12 }}
+                formatter={(v: number, name: string) => [name === "trips" ? v : formatINR(v), name]}
+              />
+              <Area type="monotone" dataKey="revenue" stroke="hsl(var(--primary))" fill="url(#ov-rev)" strokeWidth={2} />
+              <Area type="monotone" dataKey="fuel" stroke="hsl(var(--chart-3))" fill="url(#ov-fuel)" strokeWidth={2} />
+            </AreaChart>
+          </ResponsiveContainer>
+        )}
+      </CardContent>
+    </Card>
+  );
 }
 
-function PrioritiesCard({ daily }: { daily: Daily }) {
-  const items = daily.priorities;
+function EmptyChart({ message, hint }: { message: string; hint?: string }) {
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="flex items-center gap-2 text-base"><Target className="h-4 w-4 text-primary" /> Today’s priorities</CardTitle>
-        <Link to="/alerts" className="text-xs text-muted-foreground hover:text-foreground">View all →</Link>
+    <div className="flex h-full flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border/60 bg-muted/10 text-center">
+      <div className="text-sm font-medium text-foreground">{message}</div>
+      {hint && <div className="text-xs text-muted-foreground">{hint}</div>}
+    </div>
+  );
+}
+
+/* ---------- AI Insights ---------- */
+function AIInsightsSection({ daily, loading }: { daily?: DailyOps; loading: boolean }) {
+  if (loading) return <Skeleton className="h-40 w-full rounded-2xl" />;
+
+  const hasAny = (daily?.insights.length ?? 0) > 0;
+
+  return (
+    <div className="space-y-3">
+      {hasAny ? (
+        <Card className="border-border/60">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Sparkles className="h-4 w-4 text-primary" /> AI Insights
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-2 sm:grid-cols-2">
+            {daily!.insights.slice(0, 4).map((ins, i) => (
+              <motion.div
+                key={ins.id}
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.3, delay: i * 0.05 }}
+                className="group rounded-xl border border-border/60 bg-muted/20 p-3 transition hover:border-primary/40 hover:bg-muted/40"
+              >
+                <div className="mb-1 flex items-center gap-1.5">
+                  <InsightIcon tone={ins.tone} />
+                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{ins.tone}</span>
+                </div>
+                <div className="text-sm font-medium leading-snug">{ins.issue}</div>
+                <div className="mt-0.5 text-xs text-muted-foreground">{ins.impact}</div>
+                {ins.href && (
+                  <Link to={ins.href} className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline">
+                    {ins.action} <ChevronRight className="h-3 w-3" />
+                  </Link>
+                )}
+              </motion.div>
+            ))}
+          </CardContent>
+        </Card>
+      ) : (
+        <Card className="border-dashed border-border/60">
+          <CardContent className="flex flex-col items-center gap-2 py-8 text-center">
+            <div className="grid h-10 w-10 place-items-center rounded-full bg-primary/10 text-primary">
+              <Sparkles className="h-5 w-5" />
+            </div>
+            <div className="text-sm font-medium">No insights available yet.</div>
+            <div className="max-w-sm text-xs text-muted-foreground">
+              Start using TransCore to unlock AI recommendations.
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <Suspense fallback={<Skeleton className="h-32 w-full rounded-2xl" />}>
+        <FleetInsightsCards />
+      </Suspense>
+    </div>
+  );
+}
+
+function InsightIcon({ tone }: { tone: DailyOps["insights"][number]["tone"] }) {
+  const cls = tone === "positive" ? "text-emerald-500"
+    : tone === "warning" ? "text-amber-500"
+    : tone === "critical" ? "text-destructive"
+    : "text-primary";
+  const Icon = tone === "positive" ? TrendingUp
+    : tone === "critical" ? AlertTriangle
+    : tone === "warning" ? TrendingDown
+    : Sparkles;
+  return <Icon className={`h-3.5 w-3.5 ${cls}`} />;
+}
+
+/* ---------- Recent Trips ---------- */
+function RecentTrips({ extras, loading }: { extras?: HomeExtras; loading: boolean }) {
+  return (
+    <Card className="border-border/60">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+        <CardTitle className="flex items-center gap-2 text-base">
+          <MapIcon className="h-4 w-4 text-primary" /> Recent Trips
+        </CardTitle>
+        <Link to="/trips" className="text-xs text-muted-foreground hover:text-foreground">
+          View all <ChevronRight className="ml-0.5 inline h-3 w-3" />
+        </Link>
       </CardHeader>
       <CardContent>
-        {items.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-2 py-8 text-center text-sm text-muted-foreground">
+        {loading ? (
+          <div className="space-y-2">
+            {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-14 w-full rounded-lg" />)}
+          </div>
+        ) : !extras || extras.recentTrips.length === 0 ? (
+          <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-border/60 py-8 text-center">
+            <MapIcon className="h-8 w-8 text-muted-foreground/50" />
+            <div className="text-sm text-muted-foreground">No trips recorded yet.</div>
+            <Button asChild size="sm"><Link to="/trips"><Plus className="mr-1 h-3.5 w-3.5" /> Add Trip</Link></Button>
+          </div>
+        ) : (
+          <ul className="divide-y divide-border/60">
+            {extras.recentTrips.map((t) => (
+              <li key={t.id} className="flex items-center justify-between gap-3 py-2.5">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="truncate text-sm font-medium">{t.origin} → {t.destination}</span>
+                    <StatusBadge status={t.status} />
+                  </div>
+                  <div className="mt-0.5 truncate text-xs text-muted-foreground">
+                    {t.vehicle ?? "—"} · {t.driver ?? "Unassigned"}
+                    {t.when && ` · ${new Date(t.when).toLocaleDateString("en-IN", { day: "2-digit", month: "short" })}`}
+                  </div>
+                </div>
+                <div className="num shrink-0 text-sm font-semibold">{formatINR(t.freight_amount)}</div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function StatusBadge({ status }: { status: string }) {
+  const cls = status === "completed" ? "border-emerald-500/40 text-emerald-500 bg-emerald-500/5"
+    : status === "in_progress" ? "border-sky-500/40 text-sky-500 bg-sky-500/5"
+    : status === "cancelled" ? "border-destructive/40 text-destructive bg-destructive/5"
+    : "border-border/60 text-muted-foreground";
+  return <Badge variant="outline" className={`text-[9px] uppercase ${cls}`}>{status.replace("_", " ")}</Badge>;
+}
+
+/* ---------- Fuel Summary ---------- */
+function FuelSummary({ extras, loading }: { extras?: HomeExtras; loading: boolean }) {
+  const total = extras?.fuel.totalCost ?? 0;
+  const rows = ["diesel", "petrol", "cng", "electric"].map((k) => ({
+    type: k,
+    amount: extras?.fuel.byType.find((b) => b.type === k)?.amount ?? 0,
+  }));
+  const chartData = (extras?.fuel.byType ?? []).length > 0 ? extras!.fuel.byType : [];
+
+  return (
+    <Card className="border-border/60">
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-base">
+          <Fuel className="h-4 w-4 text-primary" /> Fuel Summary
+        </CardTitle>
+        <p className="text-xs text-muted-foreground">Month-to-date fuel spending</p>
+      </CardHeader>
+      <CardContent>
+        {loading ? (
+          <Skeleton className="h-48 w-full rounded-lg" />
+        ) : (
+          <>
+            <div className="relative mx-auto h-40 w-40">
+              {chartData.length === 0 ? (
+                <div className="grid h-full w-full place-items-center rounded-full border-2 border-dashed border-border/60">
+                  <div className="text-center">
+                    <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Total</div>
+                    <div className="num text-lg font-semibold">₹0</div>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie data={chartData} dataKey="amount" nameKey="type" innerRadius={50} outerRadius={72} paddingAngle={2}>
+                        {chartData.map((d, i) => (
+                          <Cell key={i} fill={FUEL_COLORS[d.type] ?? "hsl(var(--chart-5))"} />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        contentStyle={{ background: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: 12, fontSize: 12 }}
+                        formatter={(v: number) => formatINR(v)}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+                    <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Total</div>
+                    <div className="num text-lg font-semibold">{formatINR(total)}</div>
+                  </div>
+                </>
+              )}
+            </div>
+            <div className="mt-4 space-y-1.5">
+              {rows.map((r) => (
+                <div key={r.type} className="flex items-center justify-between text-xs">
+                  <span className="flex items-center gap-2 capitalize text-muted-foreground">
+                    <span className="h-2 w-2 rounded-full" style={{ background: FUEL_COLORS[r.type] }} />
+                    {r.type}
+                  </span>
+                  <span className="num font-medium">{formatINR(r.amount)}</span>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+/* ---------- Alerts & Reminders ---------- */
+function AlertsPanel({ daily, loading }: { daily?: DailyOps; loading: boolean }) {
+  return (
+    <Card className="border-border/60">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+        <CardTitle className="flex items-center gap-2 text-base">
+          <Bell className="h-4 w-4 text-primary" /> Alerts & Reminders
+        </CardTitle>
+        <Link to="/alerts" className="text-xs text-muted-foreground hover:text-foreground">
+          All <ChevronRight className="ml-0.5 inline h-3 w-3" />
+        </Link>
+      </CardHeader>
+      <CardContent>
+        {loading ? (
+          <div className="space-y-2">
+            {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-12 w-full rounded-lg" />)}
+          </div>
+        ) : !daily || daily.priorities.length === 0 ? (
+          <div className="flex flex-col items-center gap-2 py-6 text-center">
             <CheckCircle2 className="h-8 w-8 text-emerald-500" />
-            You’re all caught up. No urgent actions today.
+            <div className="text-sm text-muted-foreground">No pending alerts.</div>
           </div>
         ) : (
           <ul className="space-y-2">
-            {items.map((p) => (
+            {daily.priorities.slice(0, 5).map((p) => (
               <li key={p.id}>
-                <Link to={p.href} className={`group flex items-start justify-between gap-3 rounded-lg border px-3 py-2.5 transition hover:border-primary/50 hover:shadow-sm ${severityStyles(p.severity)}`}>
-                  <div className="min-w-0">
+                <Link
+                  to={p.href}
+                  className={`group flex items-start gap-2.5 rounded-xl border px-3 py-2.5 text-sm transition hover:border-primary/40 hover:shadow-sm ${
+                    p.severity === "critical" ? "border-destructive/40 bg-destructive/5"
+                    : p.severity === "warning" ? "border-amber-500/40 bg-amber-500/5"
+                    : "border-border/60 bg-muted/20"
+                  }`}
+                >
+                  <AlertTriangle className={`mt-0.5 h-4 w-4 shrink-0 ${
+                    p.severity === "critical" ? "text-destructive"
+                    : p.severity === "warning" ? "text-amber-500"
+                    : "text-muted-foreground"
+                  }`} />
+                  <div className="min-w-0 flex-1">
                     <div className="truncate text-sm font-medium">{p.title}</div>
-                    <div className="truncate text-xs opacity-80">{p.message}</div>
+                    <div className="truncate text-xs text-muted-foreground">{p.message}</div>
                   </div>
-                  <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 opacity-60 transition group-hover:translate-x-0.5" />
+                  <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 opacity-40 transition group-hover:translate-x-0.5 group-hover:opacity-100" />
                 </Link>
               </li>
             ))}
@@ -557,151 +521,82 @@ function PrioritiesCard({ daily }: { daily: Daily }) {
   );
 }
 
-function InsightIcon({ tone }: { tone: Daily["insights"][number]["tone"] }) {
-  const cls = tone === "positive" ? "text-emerald-500" : tone === "warning" ? "text-amber-500" : tone === "critical" ? "text-destructive" : "text-primary";
-  const Icon = tone === "positive" ? TrendingUp : tone === "critical" ? AlertTriangle : tone === "warning" ? ArrowDownRight : Lightbulb;
-  return <Icon className={`h-4 w-4 ${cls}`} />;
-}
-
-function InsightsGrid({ daily }: { daily: Daily }) {
+/* ---------- Quick Actions ---------- */
+function QuickActions() {
+  const actions = [
+    { label: "Add Vehicle", href: "/vehicles", icon: Truck },
+    { label: "Add Driver", href: "/drivers", icon: Users },
+    { label: "Log Trip", href: "/trips", icon: MapIcon },
+    { label: "Fuel Entry", href: "/fuel", icon: Fuel },
+    { label: "Expenses", href: "/expenses", icon: Receipt },
+    { label: "Documents", href: "/documents", icon: FileText },
+    { label: "AI Chat", href: "/ai", icon: MessageSquare },
+  ] as const;
   return (
-    <div>
-      <div className="mb-3 flex items-center gap-2">
-        <Lightbulb className="h-4 w-4 text-primary" />
-        <h2 className="text-sm font-medium tracking-tight">Insights from your data</h2>
-      </div>
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-        {daily.insights.slice(0, 6).map((ins) => (
-          <Card key={ins.id} className="transition hover:shadow-md">
-            <CardContent className="pt-5">
-              <div className="mb-2 flex items-center gap-2"><InsightIcon tone={ins.tone} /><span className="text-xs uppercase tracking-wider text-muted-foreground">{ins.tone}</span></div>
-              <div className="text-sm font-semibold">{ins.issue}</div>
-              <div className="mt-1 text-xs text-muted-foreground">{ins.impact}</div>
-              {ins.href ? (
-                <Link to={ins.href} className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline">
-                  {ins.action} <ChevronRight className="h-3.5 w-3.5" />
-                </Link>
-              ) : (
-                <div className="mt-3 text-xs text-muted-foreground">{ins.action}</div>
-              )}
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function formatGoal(g: Daily["goals"][number]) {
-  if (g.unit === "inr") return formatINR(g.current);
-  if (g.unit === "pct") return `${g.current}%`;
-  if (g.unit === "kmpl") return `${g.current} km/L`;
-  return formatNumber(g.current);
-}
-function formatTarget(g: Daily["goals"][number]) {
-  if (g.unit === "inr") return formatINR(g.target);
-  if (g.unit === "pct") return `${g.target}%`;
-  if (g.unit === "kmpl") return `${g.target} km/L`;
-  return formatNumber(g.target);
-}
-
-function GoalsCard({ daily }: { daily: Daily }) {
-  return (
-    <Card>
-      <CardHeader className="pb-2"><CardTitle className="flex items-center gap-2 text-base"><Zap className="h-4 w-4 text-primary" /> Monthly goals</CardTitle></CardHeader>
-      <CardContent>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {daily.goals.map((g) => {
-            const pct = g.target > 0 ? Math.min(100, Math.round((g.current / g.target) * 100)) : 0;
-            const met = pct >= 100;
-            return (
-              <div key={g.key} className="space-y-2">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-muted-foreground">{g.label}</span>
-                  <span className={met ? "text-emerald-500" : "text-muted-foreground"}>{pct}%</span>
-                </div>
-                <Progress value={pct} className="h-2" />
-                <div className="flex items-baseline justify-between text-xs">
-                  <span className="num font-medium">{formatGoal(g)}</span>
-                  <span className="text-muted-foreground">of {formatTarget(g)}</span>
-                </div>
+    <Card className="border-border/60">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base">Quick Actions</CardTitle>
+      </CardHeader>
+      <CardContent className="grid grid-cols-2 gap-2">
+        {actions.map((a, i) => (
+          <motion.div
+            key={a.label}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.25, delay: i * 0.03 }}
+          >
+            <Link
+              to={a.href}
+              className="group flex flex-col items-start gap-2 rounded-xl border border-border/60 bg-card p-3 transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:bg-primary/5 hover:shadow-md"
+            >
+              <div className="grid h-8 w-8 place-items-center rounded-lg bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-primary-foreground">
+                <a.icon className="h-4 w-4" />
               </div>
-            );
-          })}
-        </div>
-        <p className="mt-3 text-[11px] text-muted-foreground">Targets are based on last month’s performance to keep goals honest.</p>
+              <span className="text-xs font-medium">{a.label}</span>
+            </Link>
+          </motion.div>
+        ))}
       </CardContent>
     </Card>
   );
 }
 
-function TrendCard({ daily }: { daily: Daily }) {
-  const data = daily.trend.map((r) => ({ ...r, label: r.date.slice(5) }));
-  return (
-    <Card>
-      <CardHeader className="pb-2"><CardTitle className="flex items-center gap-2 text-base"><TrendingUp className="h-4 w-4 text-primary" /> 30-day revenue & fuel trend</CardTitle></CardHeader>
-      <CardContent className="h-56">
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data} margin={{ top: 6, right: 12, left: 0, bottom: 0 }}>
-            <defs>
-              <linearGradient id="rev" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="var(--color-primary)" stopOpacity={0.4} />
-                <stop offset="100%" stopColor="var(--color-primary)" stopOpacity={0} />
-              </linearGradient>
-              <linearGradient id="fuel" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="var(--color-accent)" stopOpacity={0.4} />
-                <stop offset="100%" stopColor="var(--color-accent)" stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-            <XAxis dataKey="label" stroke="var(--color-muted-foreground)" fontSize={11} interval={4} />
-            <YAxis stroke="var(--color-muted-foreground)" fontSize={11} />
-            <Tooltip contentStyle={{ background: "var(--color-popover)", border: "1px solid var(--color-border)", borderRadius: 8 }} />
-            <Area type="monotone" dataKey="revenue" stroke="var(--color-primary)" fill="url(#rev)" strokeWidth={2} />
-            <Area type="monotone" dataKey="fuel" stroke="var(--color-accent)" fill="url(#fuel)" strokeWidth={2} />
-          </AreaChart>
-        </ResponsiveContainer>
-      </CardContent>
-    </Card>
-  );
-}
-
-function OnboardingHero({ daily }: { daily: Daily | undefined }) {
+/* ---------- Onboarding (new users) ---------- */
+function OnboardingCard({ daily }: { daily: DailyOps }) {
   const steps = [
-    { key: "vehicles", label: "Add your first vehicle", href: "/vehicles", done: !!daily?.onboarding.hasVehicles },
-    { key: "drivers", label: "Add a driver", href: "/drivers", done: !!daily?.onboarding.hasDrivers },
-    { key: "trips", label: "Log a trip", href: "/trips", done: !!daily?.onboarding.hasTrips },
-    { key: "fuel", label: "Record a fuel entry", href: "/fuel", done: !!daily?.onboarding.hasFuel },
+    { key: "vehicles", label: "Add Vehicle", href: "/vehicles", done: daily.onboarding.hasVehicles },
+    { key: "drivers", label: "Add Driver", href: "/drivers", done: daily.onboarding.hasDrivers },
+    { key: "trips", label: "Log First Trip", href: "/trips", done: daily.onboarding.hasTrips },
+    { key: "fuel", label: "Record Fuel", href: "/fuel", done: daily.onboarding.hasFuel },
   ];
   const done = steps.filter((s) => s.done).length;
   const pct = Math.round((done / steps.length) * 100);
   return (
-    <div className="mx-auto max-w-2xl">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base"><Sparkles className="h-4 w-4 text-primary" /> Welcome to TransCore</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">A few quick steps and your dashboard turns on — every metric here is computed from your real data.</p>
-          <div className="mt-4 space-y-1">
-            <div className="flex items-center justify-between text-xs text-muted-foreground"><span>Setup progress</span><span>{pct}%</span></div>
-            <Progress value={pct} className="h-2" />
-          </div>
-          <ul className="mt-4 space-y-2">
-            {steps.map((s) => (
-              <li key={s.key}>
-                <Link to={s.href} className="flex items-center justify-between rounded-lg border border-border/60 px-3 py-2.5 text-sm transition hover:border-primary/50">
-                  <span className="flex items-center gap-2">
-                    {s.done ? <CheckCircle2 className="h-4 w-4 text-emerald-500" /> : <Circle className="h-4 w-4 text-muted-foreground" />}
-                    <span className={s.done ? "text-muted-foreground line-through" : ""}>{s.label}</span>
-                  </span>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </CardContent>
-      </Card>
-    </div>
+    <Card className="border-primary/30 bg-gradient-to-br from-card to-primary/5">
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-base">
+          <Sparkles className="h-4 w-4 text-primary" /> Complete your setup
+        </CardTitle>
+        <div className="mt-2 flex items-center gap-3">
+          <Progress value={pct} className="h-2 flex-1" />
+          <span className="num text-xs font-medium text-muted-foreground">{pct}%</span>
+        </div>
+      </CardHeader>
+      <CardContent className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+        {steps.map((s) => (
+          <Link
+            key={s.key}
+            to={s.href}
+            className="flex items-center justify-between rounded-xl border border-border/60 bg-background/50 px-3 py-2.5 text-sm transition hover:border-primary/50"
+          >
+            <span className="flex items-center gap-2">
+              {s.done ? <CheckCircle2 className="h-4 w-4 text-emerald-500" /> : <Circle className="h-4 w-4 text-muted-foreground" />}
+              <span className={s.done ? "text-muted-foreground line-through" : ""}>{s.label}</span>
+            </span>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </Link>
+        ))}
+      </CardContent>
+    </Card>
   );
 }
