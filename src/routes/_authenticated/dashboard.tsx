@@ -608,52 +608,36 @@ function FuelSummary({ extras, loading }: { extras?: HomeExtras; loading: boolea
   }));
   const trackColor = isDark ? "rgba(148,163,184,0.10)" : "rgba(148,163,184,0.18)";
 
-  // Real-time fuel gauge: previous month acts as a self-calibrating budget.
-  // "Remaining" is a fuel-tank metaphor — as spend rises, the gauge empties.
+  // Segmented donut: each fuel type is its own gradient slice.
+  // If only one type has spend, that slice fills the entire ring.
+  const segments = rows.filter((r) => r.amount > 0);
+  const chartData = segments.length > 0
+    ? segments.map((r) => ({ name: r.type, value: r.amount }))
+    : [{ name: "empty", value: 1 }];
   const hasBudget = budget > 0;
-  const usedPct = hasBudget ? Math.min(200, (total / budget) * 100) : total > 0 ? 100 : 0;
-  const remainingPct = hasBudget ? Math.max(0, Math.min(100, 100 - usedPct)) : total > 0 ? 0 : 100;
-  // Color thresholds mirror a fuel gauge: full → green, near empty → red.
-  const level: "ok" | "warn" | "low" | "critical" =
-    !hasBudget ? "ok"
-    : remainingPct >= 50 ? "ok"
-    : remainingPct >= 25 ? "warn"
-    : remainingPct >= 10 ? "low"
-    : "critical";
-  const levelColor = {
-    ok: { from: "#10b981", to: "#059669", text: "text-emerald-600 dark:text-emerald-400", label: "Healthy" },
-    warn: { from: "#f59e0b", to: "#d97706", text: "text-amber-600 dark:text-amber-400", label: "Watch" },
-    low: { from: "#f97316", to: "#ea580c", text: "text-orange-600 dark:text-orange-400", label: "Low" },
-    critical: { from: "#ef4444", to: "#dc2626", text: "text-red-600 dark:text-red-400", label: "Critical" },
-  }[level];
-  // The active pie slice IS the "fuel remaining" — the rest is the empty tank.
-  const gaugeData = [
-    { name: "remaining", value: Math.max(0.0001, remainingPct) },
-    { name: "used", value: Math.max(0.0001, 100 - remainingPct) },
-  ];
+  const deltaPct = hasBudget ? Math.round(((total - budget) / budget) * 100) : 0;
   const overBudget = hasBudget && total > budget;
+  const trendLabel = !hasBudget
+    ? "No prior month"
+    : deltaPct === 0
+    ? "Same as last month"
+    : `${deltaPct > 0 ? "▲" : "▼"} ${Math.abs(deltaPct)}% vs last month`;
+  const trendTone = !hasBudget
+    ? "text-muted-foreground"
+    : overBudget
+    ? "text-red-600 dark:text-red-400"
+    : "text-emerald-600 dark:text-emerald-400";
 
   return (
     <Card className="border-border/60">
       <CardHeader className="p-3 pb-2 sm:p-6 sm:pb-3">
         <div className="flex items-center justify-between gap-2">
           <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
-            <Fuel className={`h-4 w-4 ${levelColor.text}`} /> Fuel Summary
+            <Fuel className="h-4 w-4 text-primary" /> Fuel Summary
           </CardTitle>
-          {hasBudget && (
-            <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium ring-1 ring-inset ${levelColor.text} ring-current/30 sm:text-[11px]`}>
-              <span className="h-1.5 w-1.5 rounded-full bg-current" />
-              {levelColor.label}
-            </span>
-          )}
+          <Badge variant="outline" className="text-[10px]">MTD</Badge>
         </div>
-        <p className="text-[11px] text-muted-foreground sm:text-xs">
-          {hasBudget
-            ? overBudget
-              ? `Over last month by ${formatINR(total - budget)}`
-              : `${formatINR(total)} of ${formatINR(budget)} baseline`
-            : "Month-to-date fuel"}
-        </p>
+        <p className={`text-[11px] sm:text-xs ${trendTone}`}>{trendLabel}</p>
       </CardHeader>
       <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
         {loading ? (
@@ -664,12 +648,14 @@ function FuelSummary({ extras, loading }: { extras?: HomeExtras; loading: boolea
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <defs>
-                    <linearGradient id="fuel-gauge-grad" x1="0" y1="0" x2="1" y2="1">
-                      <stop offset="0%" stopColor={levelColor.from} stopOpacity={0.95} />
-                      <stop offset="100%" stopColor={levelColor.to} stopOpacity={0.95} />
-                    </linearGradient>
+                    {(["diesel", "petrol", "cng", "electric", "other"] as const).map((k) => (
+                      <linearGradient key={k} id={`fs-${k}`} x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="0%" stopColor={FUEL_COLORS[k].from} stopOpacity={0.98} />
+                        <stop offset="100%" stopColor={FUEL_COLORS[k].to} stopOpacity={0.98} />
+                      </linearGradient>
+                    ))}
                   </defs>
-                  {/* Empty-tank track */}
+                  {/* Ring track behind segments so donut never looks empty. */}
                   <Pie
                     data={[{ name: "track", value: 1 }]} dataKey="value"
                     innerRadius="65%" outerRadius="95%"
@@ -678,35 +664,49 @@ function FuelSummary({ extras, loading }: { extras?: HomeExtras; loading: boolea
                     startAngle={90} endAngle={-270}
                   />
                   <Pie
-                    data={gaugeData} dataKey="value" nameKey="name"
+                    data={chartData} dataKey="value" nameKey="name"
                     innerRadius="65%" outerRadius="95%"
                     startAngle={90} endAngle={-270}
                     stroke="none"
-                    cornerRadius={6}
+                    cornerRadius={segments.length > 1 ? 4 : 8}
+                    paddingAngle={segments.length > 1 ? 2 : 0}
                     animationDuration={900} animationBegin={100}
                     isAnimationActive
                   >
-                    <Cell fill="url(#fuel-gauge-grad)" />
-                    <Cell fill="transparent" />
+                    {chartData.map((d, i) => (
+                      <Cell
+                        key={i}
+                        fill={d.name === "empty" ? trackColor : `url(#fs-${d.name})`}
+                      />
+                    ))}
                   </Pie>
+                  {segments.length > 0 && (
+                    <Tooltip
+                      contentStyle={{
+                        background: isDark ? "rgba(15,15,20,0.92)" : "rgba(255,255,255,0.98)",
+                        border: "1px solid hsl(var(--border))",
+                        borderRadius: 12,
+                        fontSize: 12,
+                        padding: "6px 10px",
+                      }}
+                      formatter={(v: number, n: string) => [
+                        formatINR(v),
+                        FUEL_COLORS[n]?.label ?? n,
+                      ]}
+                    />
+                  )}
                 </PieChart>
               </ResponsiveContainer>
               <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center px-1 text-center">
-                {hasBudget ? (
-                  <>
-                    <div className="text-[8px] uppercase tracking-[0.14em] text-muted-foreground sm:text-[10px]">Budget left</div>
-                    <div className={`num text-[15px] font-bold leading-tight tracking-tight sm:text-2xl ${levelColor.text}`}>
-                      {Math.round(remainingPct)}%
-                    </div>
-                    <div className="mt-0.5 text-[8px] text-muted-foreground sm:text-[10px]">{formatINR(total)} used</div>
-                  </>
-                ) : (
-                  <>
-                    <div className="text-[8px] uppercase tracking-[0.14em] text-muted-foreground sm:text-[10px]">Total</div>
-                    <div className="num text-[13px] font-bold leading-tight tracking-tight sm:text-xl">{formatINR(total)}</div>
-                    <div className="mt-0.5 text-[8px] text-muted-foreground sm:text-[10px]">This month</div>
-                  </>
-                )}
+                <div className="text-[8px] uppercase tracking-[0.14em] text-muted-foreground sm:text-[10px]">Total spend</div>
+                <div className="num text-[14px] font-bold leading-tight tracking-tight sm:text-2xl">
+                  {formatINR(total)}
+                </div>
+                <div className="mt-0.5 text-[8px] text-muted-foreground sm:text-[10px]">
+                  {segments.length > 0
+                    ? `${segments.length} fuel type${segments.length === 1 ? "" : "s"}`
+                    : "No spend yet"}
+                </div>
               </div>
             </div>
             <div className="flex-1 space-y-1.5 sm:mt-5">
