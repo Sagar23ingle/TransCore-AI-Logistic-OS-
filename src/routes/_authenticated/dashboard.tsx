@@ -225,16 +225,16 @@ function FleetOverview({ daily, loading }: { daily?: DailyOps; loading: boolean 
 
   return (
     <Card className="border-border/60">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 pb-2 sm:p-6 sm:pb-3">
         <div>
-          <CardTitle className="flex items-center gap-2 text-base">
+          <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
             <TrendingUp className="h-4 w-4 text-primary" /> Fleet Overview
           </CardTitle>
-          <p className="mt-0.5 text-xs text-muted-foreground">Revenue & fuel spend — last 30 days</p>
+          <p className="mt-0.5 text-[11px] text-muted-foreground sm:text-xs">Revenue & fuel — last 30 days</p>
         </div>
         <Badge variant="outline" className="text-[10px]">30D</Badge>
       </CardHeader>
-      <CardContent className="h-72">
+      <CardContent className="h-44 p-3 pt-0 sm:h-72 sm:p-6 sm:pt-0">
         {loading ? (
           <Skeleton className="h-full w-full rounded-lg" />
         ) : !hasData ? (
@@ -252,9 +252,9 @@ function FleetOverview({ daily, loading }: { daily?: DailyOps; loading: boolean 
                   <stop offset="100%" stopColor="hsl(var(--chart-3))" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.4} />
-              <XAxis dataKey="label" stroke="hsl(var(--muted-foreground))" fontSize={11} interval={4} />
-              <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} />
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} vertical={false} />
+              <XAxis dataKey="label" stroke="hsl(var(--muted-foreground))" fontSize={10} interval={6} tickLine={false} axisLine={false} />
+              <YAxis stroke="hsl(var(--muted-foreground))" fontSize={10} tickLine={false} axisLine={false} width={28} />
               <Tooltip
                 contentStyle={{ background: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: 12, fontSize: 12 }}
                 formatter={(v: number, name: string) => [name === "trips" ? v : formatINR(v), name]}
