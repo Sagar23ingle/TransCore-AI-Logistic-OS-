@@ -169,6 +169,14 @@ async function buildCompanyContext(supabase: typeof import("@supabase/supabase-j
       alerts: alerts.data?.length ?? 0,
       documents: documents.data?.length ?? 0,
     },
+    aggregates: computeAggregates({
+      vehicles: vehicles.data ?? [],
+      trips: trips.data ?? [],
+      fuel: fuel.data ?? [],
+      expenses: expenses.data ?? [],
+      invoices: invoices.data ?? [],
+      documents: documents.data ?? [],
+    }),
     vehicles: vehicles.data ?? [],
     drivers: drivers.data ?? [],
     trips: trips.data ?? [],
@@ -179,6 +187,80 @@ async function buildCompanyContext(supabase: typeof import("@supabase/supabase-j
     alerts: alerts.data ?? [],
     documents: documents.data ?? [],
     driver_scores: driverScores.data ?? [],
+  };
+}
+
+type Row = Record<string, unknown>;
+function num(v: unknown): number { const n = Number(v); return Number.isFinite(n) ? n : 0; }
+function computeAggregates(d: { vehicles: Row[]; trips: Row[]; fuel: Row[]; expenses: Row[]; invoices: Row[]; documents: Row[] }) {
+  const now = Date.now();
+  const in30 = now + 30 * 86400_000;
+  const startOfMonth = new Date(); startOfMonth.setDate(1); startOfMonth.setHours(0, 0, 0, 0);
+  const monthStart = startOfMonth.getTime();
+
+  const fuelThisMonth = d.fuel.filter((f) => new Date(String(f.filled_at)).getTime() >= monthStart);
+  const expensesThisMonth = d.expenses.filter((e) => new Date(String(e.incurred_on)).getTime() >= monthStart);
+  const tripsThisMonth = d.trips.filter((t) => new Date(String(t.actual_start ?? t.planned_start)).getTime() >= monthStart);
+
+  const revenueThisMonth = tripsThisMonth.reduce((s, t) => s + num(t.freight_amount), 0);
+  const fuelSpendThisMonth = fuelThisMonth.reduce((s, f) => s + num(f.total_amount), 0);
+  const otherExpensesThisMonth = expensesThisMonth.reduce((s, e) => s + num(e.amount), 0);
+
+  const litresByVehicle = new Map<string, { l: number; km: number; cost: number }>();
+  for (const f of d.fuel) {
+    const k = String(f.vehicle_id ?? "");
+    const prev = litresByVehicle.get(k) ?? { l: 0, km: 0, cost: 0 };
+    prev.l += num(f.quantity_liters); prev.cost += num(f.total_amount);
+    litresByVehicle.set(k, prev);
+  }
+  const kmByVehicle = new Map<string, number>();
+  for (const t of d.trips) {
+    const k = String(t.vehicle_id ?? "");
+    kmByVehicle.set(k, (kmByVehicle.get(k) ?? 0) + num(t.distance_km));
+  }
+  const vehicleMileage = d.vehicles.map((v) => {
+    const id = String(v.id);
+    const f = litresByVehicle.get(id) ?? { l: 0, km: 0, cost: 0 };
+    const km = kmByVehicle.get(id) ?? 0;
+    return {
+      registration: v.registration_number,
+      km_travelled: km,
+      litres_consumed: +f.l.toFixed(1),
+      kmpl: f.l > 0 ? +(km / f.l).toFixed(2) : null,
+      fuel_cost: +f.cost.toFixed(0),
+      cost_per_km: km > 0 ? +(f.cost / km).toFixed(2) : null,
+    };
+  });
+
+  const expiringDocs = d.documents
+    .filter((doc) => doc.expiry_date && new Date(String(doc.expiry_date)).getTime() <= in30)
+    .map((doc) => ({ name: doc.name, doc_type: doc.doc_type, expiry_date: doc.expiry_date }));
+
+  const overdueInvoices = d.invoices
+    .filter((i) => i.status !== "paid" && i.due_on && new Date(String(i.due_on)).getTime() < now)
+    .map((i) => ({ invoice_number: i.invoice_number, customer: i.customer_name, amount: i.total_amount, due_on: i.due_on }));
+
+  const tripStatus = d.trips.reduce<Record<string, number>>((acc, t) => {
+    const s = String(t.status ?? "unknown"); acc[s] = (acc[s] ?? 0) + 1; return acc;
+  }, {});
+
+  const vehicleStatus = d.vehicles.reduce<Record<string, number>>((acc, v) => {
+    const s = String(v.status ?? "unknown"); acc[s] = (acc[s] ?? 0) + 1; return acc;
+  }, {});
+
+  return {
+    this_month: {
+      revenue_inr: revenueThisMonth,
+      fuel_spend_inr: fuelSpendThisMonth,
+      other_expenses_inr: otherExpensesThisMonth,
+      gross_margin_inr: revenueThisMonth - fuelSpendThisMonth - otherExpensesThisMonth,
+      trips_count: tripsThisMonth.length,
+    },
+    vehicle_mileage: vehicleMileage,
+    trip_status_counts: tripStatus,
+    vehicle_status_counts: vehicleStatus,
+    expiring_docs_30d: expiringDocs,
+    overdue_invoices: overdueInvoices,
   };
 }
 
