@@ -52,21 +52,26 @@ function clientIp(): string {
 async function sendLockoutEmail(email: string, unlockAt: Date) {
   try {
     const { sendLovableEmail } = await import("@lovable.dev/email-js");
-    await sendLovableEmail({
-      apiKey: process.env.LOVABLE_API_KEY!,
-      to: email,
-      subject: "TransCore AI — Sign-in temporarily locked",
-      html: `
-        <p>Hi,</p>
-        <p>We temporarily locked sign-in for your TransCore AI account after
-        too many failed password attempts. Access will be restored
-        automatically at <strong>${unlockAt.toUTCString()}</strong>
-        (about ${ACCOUNT_LOCK_MINUTES} minutes from now).</p>
-        <p>If this wasn't you, someone may be trying to guess your password.
-        We recommend resetting it as soon as the lock expires.</p>
-        <p>— TransCore AI Security</p>
-      `,
-    });
+    const html = `
+      <p>Hi,</p>
+      <p>We temporarily locked sign-in for your TransCore AI account after
+      too many failed password attempts. Access will be restored
+      automatically at <strong>${unlockAt.toUTCString()}</strong>
+      (about ${ACCOUNT_LOCK_MINUTES} minutes from now).</p>
+      <p>If this wasn't you, someone may be trying to guess your password.
+      We recommend resetting it as soon as the lock expires.</p>
+      <p>— TransCore AI Security</p>
+    `;
+    await sendLovableEmail(
+      {
+        to: email,
+        from: "security@transcoreai.lovable.app",
+        subject: "TransCore AI — Sign-in temporarily locked",
+        html,
+        text: `We temporarily locked sign-in for your TransCore AI account after too many failed password attempts. Access is restored at ${unlockAt.toUTCString()}.`,
+      },
+      { apiKey: process.env.LOVABLE_API_KEY! },
+    );
   } catch (err) {
     // Email is best-effort; never blocks the auth flow.
     console.error("[lockout-email] failed", err);
