@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { ROLE_LABELS } from "@/lib/rbac";
 import { useProfile, useInvalidateProfile, initialsFrom } from "@/hooks/use-profile";
+import { updateMyProfile } from "@/lib/auth.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -138,6 +139,8 @@ function ProfilePage() {
 
   async function handleSave() {
     if (!user) return;
+    // Light client-side check for instant feedback only — the server
+    // re-validates every field and is the source of truth.
     const parsed = profileSchema.safeParse({ full_name: fullName, phone, company_name: companyName });
     if (!parsed.success) {
       toast.error(parsed.error.issues[0]?.message ?? "Please check your inputs");
@@ -145,16 +148,14 @@ function ProfilePage() {
     }
     setSaving(true);
     try {
-      const now = new Date().toISOString();
-      const { error } = await supabase.from("profiles").upsert({
-        id: user.id,
-        full_name: parsed.data.full_name,
-        phone: parsed.data.phone || null,
-        company_name: parsed.data.company_name || null,
-        updated_at: now,
+      const res = await updateMyProfile({
+        data: {
+          full_name: fullName,
+          phone: phone,
+          company_name: companyName,
+        },
       });
-      if (error) throw error;
-      await supabase.auth.updateUser({ data: { full_name: parsed.data.full_name } });
+      await supabase.auth.updateUser({ data: { full_name: res.full_name } });
       invalidateProfile();
       toast.success("Profile updated");
     } catch (e) {
