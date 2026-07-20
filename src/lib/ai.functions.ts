@@ -72,7 +72,7 @@ async function callGemini(prompt: string, kind: string): Promise<string> {
   if (!key) throw new Error("AI service is not configured on this server.");
   const gateway = createLovableAiGatewayProvider(key);
   // Pro for grounded chat (deeper reasoning), flash for quick tasks.
-  const modelId = kind === "chat" ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash";
+  const modelId = kind === "chat" ? "google/gemini-2.5-flash" : "google/gemini-2.5-flash";
   const model = gateway(modelId);
 
   let lastError: unknown;
