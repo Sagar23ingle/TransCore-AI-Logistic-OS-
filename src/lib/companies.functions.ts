@@ -111,7 +111,9 @@ export const addCompanyMember = createServerFn({ method: "POST" })
       if (target) break;
       if (!list?.users || list.users.length < 1000) break;
     }
-    if (!target) throw new Error("No user with that email. Ask them to sign up first.");
+    // Do not confirm/deny whether an account with that email exists —
+    // otherwise this endpoint becomes an account-enumeration oracle.
+    if (!target) throw new Error("Unable to add member. Please try again.");
     const { error } = await context.supabase
       .from("company_members")
       .upsert({ company_id: data.company_id, user_id: target.id, role: data.role, invited_by: context.userId } as never, { onConflict: "company_id,user_id" });

@@ -75,14 +75,14 @@ function AuthPage() {
         access_token: tokens.access_token,
         refresh_token: tokens.refresh_token,
       });
-      if (error) throw new Error("Invalid email or password.");
+      if (error) throw new Error("Incorrect email or password");
       toast.success("Welcome back");
       // onAuthStateChange handles navigation once the session is persisted,
       // which avoids the _authenticated guard racing an unpersisted session.
     } catch (err) {
       // Never surface the underlying reason — the server already normalised
       // it to a single generic string.
-      toast.error("Invalid email or password.");
+      toast.error("Incorrect email or password");
       setLoading(false);
     }
   }
@@ -105,9 +105,14 @@ function AuthPage() {
           data: { full_name: clean.full_name },
         },
       });
-      if (error) throw error;
-      toast.success("Account created — check your inbox to confirm your email.");
+      // Never confirm or deny whether the email is already registered.
+      // Swallow provider errors (e.g. "User already registered") behind the
+      // same generic message so signup cannot be used to enumerate accounts.
+      if (error) console.error("[signup]", error);
+      toast.success("If this email isn't already in use, we've sent a confirmation link.");
     } catch (err) {
+      // Only validation errors from our own server fn surface here; those are
+      // already generic ("Invalid submission.").
       toast.error(err instanceof Error ? err.message : "Sign-up failed");
     } finally {
       setLoading(false);
