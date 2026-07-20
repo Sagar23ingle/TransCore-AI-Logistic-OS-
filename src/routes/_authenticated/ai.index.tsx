@@ -349,12 +349,6 @@ function AiPage() {
     }
   }
 
-  // Keep a stable button somewhere: expose mute toggle via settings + inline.
-  // (settingsAction already contains Stop/Replay; mute now handled here.)
-  function _unused() { toggleMute; }
-  {
-  }
-
   const settingsAction = (
     <Popover>
       <PopoverTrigger asChild>
