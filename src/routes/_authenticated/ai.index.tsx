@@ -157,8 +157,10 @@ function AiPage() {
   function speak(text: string) {
     if (!ttsSupported || !ttsEnabled) { setVoiceState("idle"); return; }
     window.speechSynthesis.cancel();
+    const clean = sanitizeForSpeech(text);
+    if (!clean) { setVoiceState("idle"); return; }
     // Split long responses into sentence chunks for smoother playback.
-    const chunks = text.match(/[^.!?\n।]+[.!?\n।]?/g) ?? [text];
+    const chunks = clean.match(/[^.!?\n।]+[.!?\n।]?/g) ?? [clean];
     setVoiceState("speaking");
     const voice = voices.find((v) => v.voiceURI === voiceURI) ?? null;
     let i = 0;
