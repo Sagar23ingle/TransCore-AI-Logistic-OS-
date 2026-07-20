@@ -555,10 +555,16 @@ function AiPage() {
             onPointerDown={onMicPointerDown}
             onPointerUp={onMicPointerUp}
             onPointerLeave={() => { if (longPressTimer.current) { clearTimeout(longPressTimer.current); longPressTimer.current = null; } }}
-            className={`relative ${voiceState === "listening" ? "animate-pulse shadow-[0_0_0_6px_rgba(239,68,68,0.15)]" : ""}`}
+            className={`relative h-12 w-12 rounded-full shrink-0 ${voiceState === "listening" ? "shadow-[0_0_0_10px_rgba(239,68,68,0.15)]" : ""}`}
             title={micDisabled ? "Voice not supported in this browser" : "Tap to speak · Hold for continuous"}
           >
-            {voiceState === "listening" ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+            {voiceState === "listening" && (
+              <>
+                <span className="absolute inset-0 rounded-full bg-destructive/30 animate-ping" />
+                <span className="absolute inset-0 rounded-full bg-destructive/20 animate-pulse" />
+              </>
+            )}
+            {voiceState === "listening" ? <MicOff className="h-5 w-5 relative" /> : <Mic className="h-5 w-5 relative" />}
           </Button>
           {ttsSupported && (
             <Button
