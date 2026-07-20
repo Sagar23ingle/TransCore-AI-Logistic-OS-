@@ -223,7 +223,7 @@ function computeAggregates(d: { vehicles: Row[]; trips: Row[]; fuel: Row[]; expe
     const f = litresByVehicle.get(id) ?? { l: 0, km: 0, cost: 0 };
     const km = kmByVehicle.get(id) ?? 0;
     return {
-      registration: v.registration_number,
+      registration: String(v.registration_number ?? ""),
       km_travelled: km,
       litres_consumed: +f.l.toFixed(1),
       kmpl: f.l > 0 ? +(km / f.l).toFixed(2) : null,
@@ -234,11 +234,11 @@ function computeAggregates(d: { vehicles: Row[]; trips: Row[]; fuel: Row[]; expe
 
   const expiringDocs = d.documents
     .filter((doc) => doc.expiry_date && new Date(String(doc.expiry_date)).getTime() <= in30)
-    .map((doc) => ({ name: doc.name, doc_type: doc.doc_type, expiry_date: doc.expiry_date }));
+    .map((doc) => ({ name: String(doc.name ?? ""), doc_type: String(doc.doc_type ?? ""), expiry_date: String(doc.expiry_date ?? "") }));
 
   const overdueInvoices = d.invoices
     .filter((i) => i.status !== "paid" && i.due_on && new Date(String(i.due_on)).getTime() < now)
-    .map((i) => ({ invoice_number: i.invoice_number, customer: i.customer_name, amount: i.total_amount, due_on: i.due_on }));
+    .map((i) => ({ invoice_number: String(i.invoice_number ?? ""), customer: String(i.customer_name ?? ""), amount: num(i.total_amount), due_on: String(i.due_on ?? "") }));
 
   const tripStatus = d.trips.reduce<Record<string, number>>((acc, t) => {
     const s = String(t.status ?? "unknown"); acc[s] = (acc[s] ?? 0) + 1; return acc;
