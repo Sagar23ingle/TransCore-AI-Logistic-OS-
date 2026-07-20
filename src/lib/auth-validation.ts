@@ -22,12 +22,36 @@ const cleanText = (max: number) =>
 
 export const emailSchema = z.string().trim().toLowerCase().max(254).email();
 
+/**
+ * Password policy (server-authoritative).
+ *
+ * - 12+ chars (NIST recommends length over complexity, but we still
+ *   require character-class diversity to defeat trivial patterns).
+ * - Must include lowercase, uppercase, digit, and symbol.
+ * - Rejects whitespace-only padding and 3+ repeated chars ("aaaa", "1111").
+ * - Rejects a handful of obvious weak passwords that pass regex checks.
+ * - Leaked-password (HIBP) rejection is enforced by Supabase Auth at
+ *   signUp / updateUser time — this schema catches everything before we
+ *   even call Supabase.
+ */
+const WEAK_PASSWORDS = new Set([
+  "password", "password1", "password123", "passw0rd",
+  "qwerty", "qwerty123", "iloveyou", "admin", "welcome",
+  "letmein", "monkey", "dragon", "master", "football",
+  "abc123", "123456", "12345678", "123456789", "1234567890",
+]);
+
 export const passwordSchema = z
   .string()
-  .min(8)
-  .max(128)
-  .regex(/[A-Za-z]/)
-  .regex(/\d/);
+  .min(12, "invalid")
+  .max(128, "invalid")
+  .refine((v) => /[a-z]/.test(v), "invalid")
+  .refine((v) => /[A-Z]/.test(v), "invalid")
+  .refine((v) => /\d/.test(v), "invalid")
+  .refine((v) => /[^A-Za-z0-9]/.test(v), "invalid")
+  .refine((v) => !/\s/.test(v), "invalid")
+  .refine((v) => !/(.)\1{2,}/.test(v), "invalid")
+  .refine((v) => !WEAK_PASSWORDS.has(v.toLowerCase()), "invalid");
 
 export const fullNameSchema = cleanText(80).pipe(z.string().min(2));
 

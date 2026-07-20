@@ -189,8 +189,11 @@ function AuthPage() {
                   </div>
                   <div className="space-y-1">
                     <Label htmlFor="password2">Password</Label>
-                    <Input id="password2" type="password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} />
-                    <p className="text-xs text-muted-foreground">At least 8 characters.</p>
+                    <Input id="password2" type="password" required minLength={12} value={password} onChange={(e) => setPassword(e.target.value)} />
+                    <p className="text-xs text-muted-foreground">
+                      12+ characters with upper &amp; lower case, a number, and a symbol.
+                      Leaked passwords are blocked.
+                    </p>
                   </div>
                   <Button type="submit" disabled={loading} className="w-full">
                     {loading ? "Creating..." : "Create account"}
