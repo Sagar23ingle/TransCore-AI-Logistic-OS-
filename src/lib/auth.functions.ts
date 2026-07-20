@@ -137,6 +137,29 @@ export const validateSignup = createServerFn({ method: "POST" })
     return { ok: true as const, data: parsed.data };
   })
   .handler(async ({ data }) => {
+    // Per-IP signup throttle: 3 attempts / hour. Blocks scripted account
+    // farming without penalising a real user who mistypes.
+    const ip = clientIp();
+    try {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { data: allowed } = await supabaseAdmin.rpc("check_rate_limit", {
+        _key: `signup_ip:${ip}`,
+        _max: 3,
+        _window_seconds: 3600,
+      });
+      if (allowed === false) {
+        await logAuthReject({
+          action: "auth.signup.reject",
+          email: data.ok ? data.data.email : (typeof data.raw?.email === "string" ? data.raw.email : null),
+          reasons: ["ip_rate_limited"],
+        });
+        throw new Error("Too many signup attempts. Please try again later.");
+      }
+    } catch (err) {
+      if (err instanceof Error && /Too many signup/.test(err.message)) throw err;
+      console.error("[validateSignup] rate-limit check failed", err);
+    }
+
     if (!data.ok) {
       await logAuthReject({
         action: "auth.signup.reject",
