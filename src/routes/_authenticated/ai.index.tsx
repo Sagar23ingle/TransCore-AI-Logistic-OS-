@@ -385,8 +385,8 @@ function AiPage() {
       description="Ask Gemini about your fleet — grounded in your real data."
       action={settingsAction}
     >
-      <div className="flex flex-col h-[calc(100dvh-11rem)] gap-3">
-        <Card className="flex-1 min-h-0">
+      <div className="flex flex-col h-[calc(100dvh-14rem)] sm:h-[calc(100dvh-13rem)] gap-3 overflow-hidden">
+        <Card className="flex-1 min-h-0 overflow-hidden">
           <CardContent ref={scrollRef} className="space-y-3 py-4 h-full overflow-y-auto">
             {messages.length === 0 && (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -417,7 +417,7 @@ function AiPage() {
             )}
           </CardContent>
         </Card>
-        <div className="flex items-end gap-2 sticky bottom-0 bg-background pt-2 pb-[env(safe-area-inset-bottom)]">
+        <div className="flex items-end gap-2 shrink-0 bg-background pt-2 pb-[env(safe-area-inset-bottom)]">
           <Textarea rows={2} value={input} onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleSend(); }}
             placeholder={voiceState === "listening" ? "Listening..." : "Ask, or press & hold mic for a live conversation"} />
