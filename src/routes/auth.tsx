@@ -4,6 +4,7 @@ import { Truck } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
+import { validateSignin, validateSignup } from "@/lib/auth.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -66,7 +67,13 @@ function AuthPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      // Server-side re-validation. Bad input never reaches Supabase Auth
+      // and is logged for later review.
+      const clean = await validateSignin({ data: { email, password } });
+      const { error } = await supabase.auth.signInWithPassword({
+        email: clean.email,
+        password,
+      });
       if (error) throw error;
       toast.success("Welcome back");
       // onAuthStateChange handles navigation once the session is persisted,
@@ -81,12 +88,18 @@ function AuthPage() {
     e.preventDefault();
     setLoading(true);
     try {
+      // Server-side re-validation returns sanitised values; we then hand
+      // ONLY those to Supabase Auth so nothing free-typed by the browser
+      // slips through into auth metadata or the profile trigger.
+      const clean = await validateSignup({
+        data: { email, password, full_name: fullName },
+      });
       const { error } = await supabase.auth.signUp({
-        email,
+        email: clean.email,
         password,
         options: {
           emailRedirectTo: window.location.origin + (safe ?? "/dashboard"),
-          data: { full_name: fullName },
+          data: { full_name: clean.full_name },
         },
       });
       if (error) throw error;
