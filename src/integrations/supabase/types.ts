@@ -1156,6 +1156,30 @@ export type Database = {
           },
         ]
       }
+      login_attempts: {
+        Row: {
+          email: string
+          fail_count: number
+          last_failure_at: string | null
+          locked_until: string | null
+          updated_at: string
+        }
+        Insert: {
+          email: string
+          fail_count?: number
+          last_failure_at?: string | null
+          locked_until?: string | null
+          updated_at?: string
+        }
+        Update: {
+          email?: string
+          fail_count?: number
+          last_failure_at?: string | null
+          locked_until?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       maintenance_logs: {
         Row: {
           company_id: string | null
@@ -1731,6 +1755,13 @@ export type Database = {
       }
       current_user_is_admin: { Args: never; Returns: boolean }
       default_company_for: { Args: { _user: string }; Returns: string }
+      get_login_lock: {
+        Args: { _email: string }
+        Returns: {
+          fail_count: number
+          locked_until: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1743,6 +1774,20 @@ export type Database = {
         Returns: number
       }
       is_company_member: { Args: { _company: string }; Returns: boolean }
+      record_login_failure: {
+        Args: {
+          _email: string
+          _lock_minutes?: number
+          _lock_threshold?: number
+          _reset_after_minutes?: number
+        }
+        Returns: {
+          fail_count: number
+          just_locked: boolean
+          locked_until: string
+        }[]
+      }
+      reset_login_failures: { Args: { _email: string }; Returns: undefined }
     }
     Enums: {
       alert_severity: "info" | "warning" | "critical"
