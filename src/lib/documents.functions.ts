@@ -26,6 +26,19 @@ const ALLOWED_MIME = new Set([
 ]);
 const MAX_BYTES = 20 * 1024 * 1024;
 
+// Safe, whitelisted extensions derived from MIME. Never trust the
+// extension from the uploaded filename — attacker-controlled.
+const MIME_TO_EXT: Record<string, string> = {
+  "application/pdf": "pdf",
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+  "image/heic": "heic",
+  "image/heif": "heif",
+};
+// Only these extensions may appear in a storage_path.
+const ALLOWED_EXTS = new Set(Object.values(MIME_TO_EXT));
+
 export const listDocuments = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -47,8 +60,19 @@ export const createDocument = createServerFn({ method: "POST" })
     if (!data.storage_path.startsWith(context.userId + "/")) {
       throw new Error("Invalid storage path");
     }
+    // Enforce whitelisted extension in the stored key so nothing
+    // like `.html` / `.svg` / `.js` can ever land in the bucket.
+    const ext = data.storage_path.split(".").pop()?.toLowerCase() ?? "";
+    if (!ALLOWED_EXTS.has(ext)) {
+      throw new Error("Unsupported file type. Allowed: PDF, JPEG, PNG, WebP, HEIC.");
+    }
     if (data.mime_type && !ALLOWED_MIME.has(data.mime_type)) {
       throw new Error("Unsupported file type. Allowed: PDF, JPEG, PNG, WebP, HEIC.");
+    }
+    // MIME/extension must agree — blocks disguised uploads
+    // (e.g. text/html payload stored as `foo.pdf`).
+    if (data.mime_type && MIME_TO_EXT[data.mime_type] !== ext) {
+      throw new Error("File extension does not match its content type.");
     }
     if (data.size_bytes != null && data.size_bytes > MAX_BYTES) {
       throw new Error("File too large. Max size is 20 MB.");
@@ -88,7 +112,10 @@ export const signDocumentUrl = createServerFn({ method: "POST" })
     if (!row) throw new Error("Document not found");
     const { data: signed, error } = await context.supabase.storage
       .from("documents")
-      .createSignedUrl(row.storage_path, 60 * 10);
+      // `download: true` forces `Content-Disposition: attachment`, so browsers
+      // save the file instead of executing it inline. Neutralises the risk of
+      // a malicious/mis-typed file rendering as HTML/SVG in the tab.
+      .createSignedUrl(row.storage_path, 60 * 10, { download: true });
     if (error) { console.error(error); throw new Error("Request failed. Please try again."); }
     return { url: signed.signedUrl };
   });
