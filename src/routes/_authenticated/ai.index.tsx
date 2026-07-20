@@ -73,6 +73,27 @@ function getSpeechRecognition(): SRCtor | null {
   return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
 }
 
+// Strip markdown, emoji and stray symbols so TTS speaks only the words —
+// never "asterisk asterisk" or "hash hash".
+function sanitizeForSpeech(text: string): string {
+  let t = text;
+  t = t.replace(/```[\s\S]*?```/g, " ");           // code blocks
+  t = t.replace(/`([^`]+)`/g, "$1");                // inline code
+  t = t.replace(/!\[[^\]]*\]\([^)]+\)/g, " ");     // images
+  t = t.replace(/\[([^\]]+)\]\([^)]+\)/g, "$1");   // links -> label
+  t = t.replace(/^\s{0,3}#{1,6}\s+/gm, "");         // headings
+  t = t.replace(/^\s*[-*+]\s+/gm, "");              // bullets
+  t = t.replace(/^\s*\d+\.\s+/gm, "");              // numbered lists
+  t = t.replace(/^\s*>\s?/gm, "");                  // blockquotes
+  t = t.replace(/([*_~`#]){1,3}/g, "");             // md emphasis marks
+  t = t.replace(/\|/g, " ");                        // table pipes
+  t = t.replace(/[•●◦▪■□◆★☆→←↑↓✓✔✗✘]/g, " ");
+  // Strip emoji / pictographs
+  t = t.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{1F000}-\u{1F2FF}]/gu, " ");
+  t = t.replace(/\s{2,}/g, " ").trim();
+  return t;
+}
+
 function AiPage() {
   const askFn = useServerFn(askCompanyAi);
   const [messages, setMessages] = useState<Msg[]>([]);
