@@ -73,7 +73,19 @@ function DocumentsPage() {
       const { data: sessionRes } = await supabase.auth.getSession();
       const userId = sessionRes.session?.user?.id;
       if (!userId) throw new Error("Not signed in");
-      const ext = file.name.split(".").pop() || "bin";
+      // Derive the extension from the validated MIME type, never from the
+      // user-supplied filename. This keeps `.html`/`.svg`/`.js` out of the
+      // bucket even if the picker is bypassed.
+      const extByMime: Record<string, string> = {
+        "application/pdf": "pdf",
+        "image/jpeg": "jpg",
+        "image/png": "png",
+        "image/webp": "webp",
+        "image/heic": "heic",
+        "image/heif": "heif",
+      };
+      const ext = extByMime[file.type];
+      if (!ext) { toast.error("Unsupported file type. Allowed: PDF, JPEG, PNG, WebP, HEIC."); setUploading(false); return; }
       const path = `${userId}/${crypto.randomUUID()}.${ext}`;
       const upl = await supabase.storage.from("documents").upload(path, file, { contentType: file.type, upsert: false });
       if (upl.error) throw upl.error;
