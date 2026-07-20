@@ -2,13 +2,16 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Sparkles, Send, Mic, MicOff, Volume2, VolumeX, Square, RotateCcw, Loader2 } from "lucide-react";
+import { Sparkles, Send, Mic, MicOff, Volume2, VolumeX, Square, RotateCcw, Loader2, Settings2 } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { askCompanyAi } from "@/lib/ai.functions";
 
@@ -20,6 +23,34 @@ export const Route = createFileRoute("/_authenticated/ai/")({
 interface Msg { role: "user" | "assistant" | "error"; text: string }
 
 type VoiceState = "idle" | "listening" | "processing" | "speaking";
+
+// Recognition languages — covers Indian + major world locales. "auto" cycles
+// through India-first fallbacks so Hindi/Hinglish/English all get a shot.
+const REC_LANGS: Array<{ value: string; label: string }> = [
+  { value: "auto", label: "Auto (Hindi + English)" },
+  { value: "hi-IN", label: "हिन्दी (India)" },
+  { value: "en-IN", label: "English (India)" },
+  { value: "en-US", label: "English (US)" },
+  { value: "en-GB", label: "English (UK)" },
+  { value: "mr-IN", label: "मराठी" },
+  { value: "bn-IN", label: "বাংলা" },
+  { value: "ta-IN", label: "தமிழ்" },
+  { value: "te-IN", label: "తెలుగు" },
+  { value: "gu-IN", label: "ગુજરાતી" },
+  { value: "kn-IN", label: "ಕನ್ನಡ" },
+  { value: "ml-IN", label: "മലയാളം" },
+  { value: "pa-IN", label: "ਪੰਜਾਬੀ" },
+  { value: "ur-IN", label: "اُردُو" },
+  { value: "ar-SA", label: "العربية" },
+  { value: "es-ES", label: "Español" },
+  { value: "fr-FR", label: "Français" },
+  { value: "de-DE", label: "Deutsch" },
+  { value: "pt-BR", label: "Português (BR)" },
+  { value: "ru-RU", label: "Русский" },
+  { value: "zh-CN", label: "中文" },
+  { value: "ja-JP", label: "日本語" },
+];
+const AUTO_CHAIN = ["hi-IN", "en-IN", "en-US"];
 
 // Minimal typings for the Web Speech API (not in lib.dom).
 interface SRAlt { transcript: string }
@@ -50,16 +81,23 @@ function AiPage() {
   const [ttsEnabled, setTtsEnabled] = useState(true);
   const [rate, setRate] = useState(1);
   const [voiceURI, setVoiceURI] = useState<string>("");
+  const [recLang, setRecLang] = useState<string>(() => {
+    if (typeof window === "undefined") return "auto";
+    return window.localStorage.getItem("tc.voice.lang") || "auto";
+  });
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [continuous, setContinuous] = useState(false);
 
   const recRef = useRef<SpeechRec | null>(null);
   const finalRef = useRef<string>("");
+  const autoIdxRef = useRef(0);
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const SR = useMemo(() => getSpeechRecognition(), []);
   const ttsSupported = typeof window !== "undefined" && "speechSynthesis" in window;
+
+  useEffect(() => { try { window.localStorage.setItem("tc.voice.lang", recLang); } catch { /* noop */ } }, [recLang]);
 
   // Load voices
   useEffect(() => {
@@ -120,7 +158,7 @@ function AiPage() {
     if (!ttsSupported || !ttsEnabled) { setVoiceState("idle"); return; }
     window.speechSynthesis.cancel();
     // Split long responses into sentence chunks for smoother playback.
-    const chunks = text.match(/[^.!?\n]+[.!?\n]?/g) ?? [text];
+    const chunks = text.match(/[^.!?\n।]+[.!?\n।]?/g) ?? [text];
     setVoiceState("speaking");
     const voice = voices.find((v) => v.voiceURI === voiceURI) ?? null;
     let i = 0;
@@ -130,7 +168,9 @@ function AiPage() {
         if (continuous) startListening();
         return;
       }
-      const u = new SpeechSynthesisUtterance(chunks[i++].trim());
+      const chunk = chunks[i++].trim();
+      if (!chunk) { next(); return; }
+      const u = new SpeechSynthesisUtterance(chunk);
       if (voice) u.voice = voice;
       u.rate = rate;
       u.onend = next;
@@ -150,16 +190,30 @@ function AiPage() {
     if (last) speak(last.text);
   }
 
-  const startListening = useCallback(() => {
+  const startListening = useCallback(async () => {
     if (!SR) { toast.error("Voice input isn't supported in this browser."); return; }
     if (voiceState === "listening" || send.isPending) return;
     if (ttsSupported) window.speechSynthesis.cancel();
+
+    // On Android WebViews mic permission is only granted after an explicit
+    // getUserMedia call; do it once so SpeechRecognition doesn't silently fail.
+    if (navigator.mediaDevices?.getUserMedia) {
+      try {
+        const s = await navigator.mediaDevices.getUserMedia({ audio: true });
+        s.getTracks().forEach((t) => t.stop());
+      } catch {
+        toast.error("Microphone blocked. Allow mic access in browser settings.");
+        return;
+      }
+    }
+
     try {
       const rec = new SR();
-      rec.lang = "en-IN"; // en-IN handles Hinglish reasonably; Hindi words are accepted
-      rec.continuous = false;
+      const activeLang = recLang === "auto" ? AUTO_CHAIN[autoIdxRef.current % AUTO_CHAIN.length] : recLang;
+      rec.lang = activeLang;
+      rec.continuous = true; // keep session open; we finalize on onend / silence
       rec.interimResults = true;
-      rec.maxAlternatives = 1;
+      rec.maxAlternatives = 3;
       finalRef.current = "";
       rec.onresult = (e) => {
         let interim = "";
@@ -173,7 +227,16 @@ function AiPage() {
       rec.onerror = (ev) => {
         if (ev.error === "not-allowed" || ev.error === "service-not-allowed") {
           toast.error("Microphone permission denied. Enable it in browser settings.");
-        } else if (ev.error !== "no-speech" && ev.error !== "aborted") {
+          setVoiceState("idle");
+          return;
+        }
+        if (ev.error === "language-not-supported" && recLang === "auto") {
+          autoIdxRef.current += 1;
+          setVoiceState("idle");
+          startListening();
+          return;
+        }
+        if (ev.error !== "no-speech" && ev.error !== "aborted") {
           toast.error(`Voice error: ${ev.error}`);
         }
         setVoiceState("idle");
@@ -181,8 +244,22 @@ function AiPage() {
       rec.onend = () => {
         const finalText = finalRef.current.trim();
         recRef.current = null;
-        if (finalText) submit(finalText);
-        else setVoiceState("idle");
+        if (finalText) {
+          if (recLang === "auto") autoIdxRef.current = 0; // reset after success
+          submit(finalText);
+        } else {
+          // Auto mode: rotate to next language if the current one heard nothing.
+          if (recLang === "auto") {
+            autoIdxRef.current += 1;
+            if (autoIdxRef.current < AUTO_CHAIN.length) {
+              setVoiceState("idle");
+              startListening();
+              return;
+            }
+            autoIdxRef.current = 0;
+          }
+          setVoiceState("idle");
+        }
       };
       recRef.current = rec;
       setVoiceState("listening");
@@ -190,7 +267,7 @@ function AiPage() {
     } catch {
       setVoiceState("idle");
     }
-  }, [SR, voiceState, send.isPending, ttsSupported, submit]);
+  }, [SR, voiceState, send.isPending, ttsSupported, submit, recLang]);
 
   const stopListening = useCallback(() => {
     try { recRef.current?.stop(); } catch { /* noop */ }
@@ -231,8 +308,71 @@ function AiPage() {
 
   const micDisabled = !SR;
 
+  const settingsAction = (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button size="icon" variant="ghost" aria-label="Voice settings">
+          <Settings2 className="h-5 w-5" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-80 space-y-4">
+        <div>
+          <Label className="text-xs">Recognition language</Label>
+          <Select value={recLang} onValueChange={setRecLang}>
+            <SelectTrigger className="h-9 mt-1"><SelectValue /></SelectTrigger>
+            <SelectContent className="max-h-72">
+              {REC_LANGS.map((l) => (
+                <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="mt-1 text-[11px] text-muted-foreground">Auto cycles Hindi → English (India) → English (US).</p>
+        </div>
+
+        {ttsSupported && (
+          <>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="tts-toggle" className="text-xs">Speak replies aloud</Label>
+              <Switch id="tts-toggle" checked={ttsEnabled} onCheckedChange={setTtsEnabled} />
+            </div>
+            <div>
+              <Label className="text-xs">Voice</Label>
+              <Select value={voiceURI} onValueChange={setVoiceURI}>
+                <SelectTrigger className="h-9 mt-1"><SelectValue placeholder="System default" /></SelectTrigger>
+                <SelectContent className="max-h-72">
+                  {voices.map((v) => (
+                    <SelectItem key={v.voiceURI} value={v.voiceURI}>{v.name} · {v.lang}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <div className="flex items-center justify-between text-xs">
+                <Label>Speed</Label>
+                <span className="tabular-nums text-muted-foreground">{rate.toFixed(2)}x</span>
+              </div>
+              <Slider value={[rate]} min={0.5} max={1.75} step={0.05} onValueChange={(v) => setRate(v[0])} className="mt-2" />
+            </div>
+            <div className="flex gap-2">
+              <Button size="sm" variant="secondary" className="flex-1" onClick={stopSpeaking} disabled={voiceState !== "speaking"}>
+                <Square className="h-3.5 w-3.5 mr-1" /> Stop
+              </Button>
+              <Button size="sm" variant="secondary" className="flex-1" onClick={replay} disabled={!messages.some((m) => m.role === "assistant")}>
+                <RotateCcw className="h-3.5 w-3.5 mr-1" /> Replay
+              </Button>
+            </div>
+          </>
+        )}
+      </PopoverContent>
+    </Popover>
+  );
+
   return (
-    <AppShell title="AI Assistant" description="Ask Gemini about your fleet — grounded in your real data.">
+    <AppShell
+      title="AI Assistant"
+      description="Ask Gemini about your fleet — grounded in your real data."
+      action={settingsAction}
+    >
       <div className="grid gap-4">
         <Card>
           <CardContent ref={scrollRef} className="space-y-3 py-6 max-h-[55vh] overflow-y-auto">
@@ -281,42 +421,22 @@ function AiPage() {
           >
             {voiceState === "listening" ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
           </Button>
+          {ttsSupported && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => setTtsEnabled((v) => !v)}
+              title={ttsEnabled ? "Mute replies" : "Unmute replies"}
+            >
+              {ttsEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+            </Button>
+          )}
           <Button onClick={handleSend} disabled={send.isPending || !input.trim()}>
             <Send className="h-4 w-4" />
           </Button>
         </div>
 
-        {ttsSupported && (
-          <Card>
-            <CardContent className="flex flex-wrap items-center gap-3 py-3 text-xs">
-              <Button size="sm" variant="ghost" onClick={() => setTtsEnabled((v) => !v)}>
-                {ttsEnabled ? <Volume2 className="h-4 w-4 mr-1" /> : <VolumeX className="h-4 w-4 mr-1" />}
-                {ttsEnabled ? "Mute" : "Unmute"}
-              </Button>
-              <Button size="sm" variant="ghost" onClick={stopSpeaking} disabled={voiceState !== "speaking"}>
-                <Square className="h-4 w-4 mr-1" /> Stop
-              </Button>
-              <Button size="sm" variant="ghost" onClick={replay} disabled={!messages.some((m) => m.role === "assistant")}>
-                <RotateCcw className="h-4 w-4 mr-1" /> Replay
-              </Button>
-              <div className="flex items-center gap-2 min-w-[160px]">
-                <span className="text-muted-foreground">Speed</span>
-                <Slider value={[rate]} min={0.5} max={1.75} step={0.05} onValueChange={(v) => setRate(v[0])} className="w-28" />
-                <span className="tabular-nums">{rate.toFixed(2)}x</span>
-              </div>
-              {voices.length > 0 && (
-                <Select value={voiceURI} onValueChange={setVoiceURI}>
-                  <SelectTrigger className="h-8 w-[220px]"><SelectValue placeholder="Voice" /></SelectTrigger>
-                  <SelectContent>
-                    {voices.map((v) => (
-                      <SelectItem key={v.voiceURI} value={v.voiceURI}>{v.name} · {v.lang}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            </CardContent>
-          </Card>
-        )}
         {!SR && (
           <p className="text-xs text-muted-foreground">Voice input isn't supported in this browser. Chrome (Android/Desktop) and Safari (iOS) work best.</p>
         )}
