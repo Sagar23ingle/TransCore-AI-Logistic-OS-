@@ -30,7 +30,7 @@ const IP_WINDOW_SEC = 15 * 60;
 const ACCOUNT_LOCK_THRESHOLD = 10;
 const ACCOUNT_LOCK_MINUTES = 15;
 const ACCOUNT_RESET_MINUTES = 60;
-const GENERIC_SIGNIN_ERROR = "Invalid email or password.";
+const GENERIC_SIGNIN_ERROR = "Incorrect email or password";
 
 function backoffMsFor(failCount: number): number {
   // failCount is the count AFTER this failure — delay the NEXT response.
