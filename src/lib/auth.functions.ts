@@ -9,6 +9,71 @@ import {
 } from "@/lib/auth-validation";
 
 /**
+ * Brute-force protection tuning.
+ *
+ * Layer 1 (per-IP): 20 attempts per 15 min. A real user retries a couple
+ *   of times; a script hitting hundreds of combinations trips this in
+ *   seconds. Uses the existing `check_rate_limit` Postgres RPC (backed by
+ *   the `rate_limits` table — the fast key/value store in this stack).
+ *
+ * Layer 2 (per-account): first 4 wrong passwords: no delay. Attempts 5-9:
+ *   exponential backoff (2^(n-4) seconds, capped at 16s) applied server-
+ *   side before responding, so a script can't parallelise around it.
+ *   Attempt 10 locks the account for 15 min and emails the owner.
+ *   Streak resets after a successful login OR 60 min without any failure.
+ *
+ * All failure paths return the SAME generic string, so an attacker cannot
+ * distinguish "wrong password" vs "rate-limited" vs "locked".
+ */
+const IP_MAX = 20;
+const IP_WINDOW_SEC = 15 * 60;
+const ACCOUNT_LOCK_THRESHOLD = 10;
+const ACCOUNT_LOCK_MINUTES = 15;
+const ACCOUNT_RESET_MINUTES = 60;
+const GENERIC_SIGNIN_ERROR = "Invalid email or password.";
+
+function backoffMsFor(failCount: number): number {
+  // failCount is the count AFTER this failure — delay the NEXT response.
+  if (failCount < 5) return 0;
+  const exp = Math.min(failCount - 4, 4); // caps at 2^4 = 16s
+  return Math.pow(2, exp) * 1000;
+}
+
+function clientIp(): string {
+  try {
+    const req = getRequest();
+    const fwd = req?.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
+    return fwd || req?.headers.get("x-real-ip") || "unknown";
+  } catch {
+    return "unknown";
+  }
+}
+
+async function sendLockoutEmail(email: string, unlockAt: Date) {
+  try {
+    const { sendLovableEmail } = await import("@lovable.dev/email-js");
+    await sendLovableEmail({
+      apiKey: process.env.LOVABLE_API_KEY!,
+      to: email,
+      subject: "TransCore AI — Sign-in temporarily locked",
+      html: `
+        <p>Hi,</p>
+        <p>We temporarily locked sign-in for your TransCore AI account after
+        too many failed password attempts. Access will be restored
+        automatically at <strong>${unlockAt.toUTCString()}</strong>
+        (about ${ACCOUNT_LOCK_MINUTES} minutes from now).</p>
+        <p>If this wasn't you, someone may be trying to guess your password.
+        We recommend resetting it as soon as the lock expires.</p>
+        <p>— TransCore AI Security</p>
+      `,
+    });
+  } catch (err) {
+    // Email is best-effort; never blocks the auth flow.
+    console.error("[lockout-email] failed", err);
+  }
+}
+
+/**
  * Persist a rejected auth submission to `audit_log` so attack attempts are
  * reviewable later. Best-effort — never blocks the request or leaks details
  * to the caller. Uses the service-role client so pre-auth (anon) rejects
