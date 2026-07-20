@@ -332,15 +332,27 @@ function AiPage() {
   const micDisabled = !SR;
 
   function toggleMute() {
-    setTtsEnabled((v) => {
-      const next = !v;
-      // Muting should immediately silence any ongoing/queued speech.
-      if (!next && ttsSupported) {
-        try { window.speechSynthesis.cancel(); } catch { /* noop */ }
-        setVoiceState((s) => (s === "speaking" ? "idle" : s));
+    const next = !ttsEnabled;
+    setTtsEnabled(next);
+    if (!next) {
+      // Muting: immediately silence any ongoing/queued speech.
+      if (ttsSupported) { try { window.speechSynthesis.cancel(); } catch { /* noop */ } }
+      setVoiceState((s) => (s === "speaking" ? "idle" : s));
+    } else {
+      // Unmuting: replay the last assistant message so speech resumes.
+      const last = [...messages].reverse().find((m) => m.role === "assistant");
+      if (last && ttsSupported) {
+        // speak() reads ttsEnabled from state which may still be stale in this
+        // tick — call directly with a small delay so React commits first.
+        setTimeout(() => speak(last.text), 0);
       }
-      return next;
-    });
+    }
+  }
+
+  // Keep a stable button somewhere: expose mute toggle via settings + inline.
+  // (settingsAction already contains Stop/Replay; mute now handled here.)
+  function _unused() { toggleMute; }
+  {
   }
 
   const settingsAction = (
