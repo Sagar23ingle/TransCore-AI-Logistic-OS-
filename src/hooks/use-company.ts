@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { listMyCompanies } from "@/lib/companies.functions";
+import { useAuth } from "@/hooks/use-auth";
 
 const STORAGE_KEY = "transcore.active_company_id";
 const EVENT = "transcore:active-company-changed";
@@ -32,7 +33,13 @@ export function setActiveCompanyId(id: string) {
 
 export function useCompanies() {
   const listFn = useServerFn(listMyCompanies);
-  const q = useQuery({ queryKey: ["my-companies"], queryFn: () => listFn(), staleTime: 30_000 });
+  const { user } = useAuth();
+  const q = useQuery({
+    queryKey: ["my-companies", user?.id ?? null],
+    queryFn: () => listFn(),
+    staleTime: 30_000,
+    enabled: !!user,
+  });
   // NOTE: never read localStorage in the useState initializer — SSR returns null
   // while the client returns the stored id, which hydration-mismatches every
   // consumer of activeCompanyId. Read it in an effect after mount.
