@@ -55,6 +55,16 @@ export const createDocument = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((raw: unknown) => DocumentMeta.parse(raw))
   .handler(async ({ context, data }) => {
+    // Per-user daily cap: 20 document uploads / 24h.
+    const { data: allowed } = await context.supabase.rpc("check_rate_limit", {
+      _key: `docs_upload:${context.userId}`,
+      _max: 20,
+      _window_seconds: 24 * 3600,
+    });
+    if (allowed === false) {
+      throw new Error("Daily upload limit reached (20 files / 24h). Please try again tomorrow.");
+    }
+
     // The client uploaded the file directly to Storage using the browser client's auth.
     // Validate the storage_path is scoped to this user's folder.
     if (!data.storage_path.startsWith(context.userId + "/")) {
