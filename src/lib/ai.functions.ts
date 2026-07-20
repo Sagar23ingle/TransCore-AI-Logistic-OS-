@@ -5,9 +5,47 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { createLovableAiGatewayProvider } from "./ai-gateway.server";
 
 const AiInput = z.object({
-  kind: z.enum(["chat", "trip_analysis", "expense_insight", "document_summary"]),
+  kind: z.enum(["chat", "trip_analysis", "expense_insight", "document_summary", "route_optimize", "suggestion"]),
   prompt: z.string().trim().min(2).max(4000),
 });
+
+// Per-kind rate limits (see docs/user requirements).
+// Values are (max, window seconds). All are per authenticated user.
+const KIND_LIMITS: Record<string, ReadonlyArray<{ max: number; window: number; label: string }>> = {
+  chat: [{ max: 10, window: 60, label: "minute" }],
+  route_optimize: [{ max: 20, window: 3600, label: "hour" }],
+  suggestion: [{ max: 15, window: 3600, label: "hour" }],
+  trip_analysis: [{ max: 10, window: 3600, label: "hour" }],
+  expense_insight: [{ max: 10, window: 3600, label: "hour" }],
+  document_summary: [{ max: 15, window: 3600, label: "hour" }],
+};
+const AI_GLOBAL_HOUR = { max: 200, window: 3600 };
+
+async function enforceAiLimits(
+  supabase: { rpc: (name: string, args: Record<string, unknown>) => Promise<{ data: boolean | null }> },
+  userId: string,
+  kind: string,
+): Promise<string | null> {
+  const tiers = KIND_LIMITS[kind] ?? [{ max: 10, window: 60, label: "minute" }];
+  const checks = await Promise.all([
+    ...tiers.map((t) =>
+      supabase.rpc("check_rate_limit", {
+        _key: `ai:${userId}:${kind}:${t.window}`,
+        _max: t.max,
+        _window_seconds: t.window,
+      }),
+    ),
+    supabase.rpc("check_rate_limit", {
+      _key: `ai:${userId}:all:h`,
+      _max: AI_GLOBAL_HOUR.max,
+      _window_seconds: AI_GLOBAL_HOUR.window,
+    }),
+  ]);
+  if (checks.some((c) => c.data === false)) {
+    return "Rate limit reached. Please wait before making another AI request.";
+  }
+  return null;
+}
 
 const SYSTEM_PROMPT = `You are TransCore AI, a truthful logistics assistant for an Indian truck fleet company.
 
@@ -53,15 +91,8 @@ export const runAi = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
 
-    // Per-user cost guard: 20 AI calls / minute and 200 / hour.
-    // Uses a Postgres SECURITY DEFINER counter (see check_rate_limit).
-    const [minute, hour] = await Promise.all([
-      supabase.rpc("check_rate_limit", { _key: `ai:${userId}:m`, _max: 20, _window_seconds: 60 }),
-      supabase.rpc("check_rate_limit", { _key: `ai:${userId}:h`, _max: 200, _window_seconds: 3600 }),
-    ]);
-    if (minute.data === false || hour.data === false) {
-      return { ok: false as const, error: "You're sending AI requests too fast. Please wait a moment and try again." };
-    }
+    const blocked = await enforceAiLimits(supabase as never, userId, data.kind);
+    if (blocked) return { ok: false as const, error: blocked };
 
     try {
       const response = await callGemini(data.prompt, data.kind);
@@ -151,13 +182,8 @@ export const askCompanyAi = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
 
-    const [minute, hour] = await Promise.all([
-      supabase.rpc("check_rate_limit", { _key: `ai:${userId}:m`, _max: 20, _window_seconds: 60 }),
-      supabase.rpc("check_rate_limit", { _key: `ai:${userId}:h`, _max: 200, _window_seconds: 3600 }),
-    ]);
-    if (minute.data === false || hour.data === false) {
-      return { ok: false as const, error: "You're sending AI requests too fast. Please wait a moment and try again." };
-    }
+    const blocked = await enforceAiLimits(supabase as never, userId, "chat");
+    if (blocked) return { ok: false as const, error: blocked };
 
     try {
       const ctx = await buildCompanyContext(supabase as never, userId);
