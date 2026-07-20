@@ -120,6 +120,8 @@ function AuthPage() {
   }
 
   async function handleGoogle() {
+    if (loading) return;
+    setLoading(true);
     try {
       const result = await lovable.auth.signInWithOAuth("google", {
         // Same-origin public URL. We re-apply `next` after the session hydrates
@@ -128,6 +130,7 @@ function AuthPage() {
       });
       if (result.error) {
         toast.error(result.error.message ?? "Google sign-in failed");
+        setLoading(false);
         return;
       }
       if (result.redirected) return;
@@ -135,6 +138,7 @@ function AuthPage() {
       else navigate({ to: "/dashboard", replace: true });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Google sign-in failed");
+      setLoading(false);
     }
   }
 
