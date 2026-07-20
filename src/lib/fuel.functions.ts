@@ -34,6 +34,19 @@ export const upsertFuelLog = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((raw: unknown) => FuelInput.parse(raw))
   .handler(async ({ context, data }) => {
+    // Block accidental double-submits: if this user just saved a fuel log
+    // for the same vehicle+date within 3 seconds, reject as a duplicate.
+    if (!data.id) {
+      const key = `fuel_dedupe:${context.userId}:${data.vehicle_id}:${data.filled_on}`;
+      const { data: fresh } = await context.supabase.rpc("check_rate_limit", {
+        _key: key,
+        _max: 1,
+        _window_seconds: 3,
+      });
+      if (fresh === false) {
+        throw new Error("Duplicate submission detected. Please wait a moment.");
+      }
+    }
     const { data: row, error } = await context.supabase
       .from("fuel_logs")
       .upsert({ ...data, owner_id: context.userId } as never, { onConflict: "id" })
