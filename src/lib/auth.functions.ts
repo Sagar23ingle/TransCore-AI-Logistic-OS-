@@ -173,6 +173,129 @@ export const validateSignin = createServerFn({ method: "POST" })
   });
 
 /**
+ * Server-authoritative sign-in with brute-force protection.
+ *
+ * The client submits credentials here; on success we return the tokens so
+ * the browser can persist the session via `supabase.auth.setSession`. On
+ * ANY failure path (bad input, IP throttled, account locked, wrong
+ * password) we throw the SAME string, so the caller cannot tell them
+ * apart. Per-account exponential backoff is applied server-side before
+ * returning, so a script cannot bypass it by parallelising requests.
+ */
+export const attemptSignin = createServerFn({ method: "POST" })
+  .inputValidator((raw: unknown) => {
+    const parsed = signinSchema.safeParse(raw);
+    if (!parsed.success) {
+      return {
+        ok: false as const,
+        reasons: parsed.error.issues.map((i) => `${i.path.join(".")}:${i.code}`),
+        raw: raw as { email?: unknown },
+      };
+    }
+    return { ok: true as const, data: parsed.data };
+  })
+  .handler(async ({ data }) => {
+    const ip = clientIp();
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Bad input → same generic error, but still log the attempt.
+    if (!data.ok) {
+      await logAuthReject({
+        action: "auth.signin.reject",
+        email: typeof data.raw?.email === "string" ? data.raw.email : null,
+        reasons: data.reasons,
+      });
+      throw new Error(GENERIC_SIGNIN_ERROR);
+    }
+    const email = data.data.email;
+
+    // Layer 1 — per-IP throttle (fails closed on RPC error).
+    try {
+      const { data: allowed } = await supabaseAdmin.rpc("check_rate_limit", {
+        _key: `login_ip:${ip}`,
+        _max: IP_MAX,
+        _window_seconds: IP_WINDOW_SEC,
+      });
+      if (allowed === false) {
+        await logAuthReject({
+          action: "auth.signin.reject",
+          email,
+          reasons: ["ip_rate_limited"],
+        });
+        throw new Error(GENERIC_SIGNIN_ERROR);
+      }
+    } catch (err) {
+      if (err instanceof Error && err.message === GENERIC_SIGNIN_ERROR) throw err;
+      console.error("[attemptSignin] rate-limit check failed", err);
+    }
+
+    // Layer 2a — is the account currently locked?
+    const { data: lockRow } = await supabaseAdmin
+      .rpc("get_login_lock", { _email: email })
+      .maybeSingle<{ fail_count: number; locked_until: string | null }>();
+    if (lockRow?.locked_until && new Date(lockRow.locked_until) > new Date()) {
+      await logAuthReject({
+        action: "auth.signin.reject",
+        email,
+        reasons: ["account_locked"],
+      });
+      // Same delay as a mid-streak failure so timing doesn't reveal state.
+      await new Promise((r) => setTimeout(r, 1500));
+      throw new Error(GENERIC_SIGNIN_ERROR);
+    }
+
+    // Attempt sign-in against Supabase Auth using a server-local publishable client.
+    const { createClient } = await import("@supabase/supabase-js");
+    const authClient = createClient(
+      process.env.SUPABASE_URL!,
+      process.env.SUPABASE_PUBLISHABLE_KEY!,
+      { auth: { persistSession: false, autoRefreshToken: false } },
+    );
+    const { data: signInData, error } = await authClient.auth.signInWithPassword({
+      email,
+      password: data.data.password,
+    });
+
+    if (error || !signInData.session) {
+      // Layer 2b — record failure, compute backoff, maybe lock + email.
+      const { data: recRow } = await supabaseAdmin
+        .rpc("record_login_failure", {
+          _email: email,
+          _lock_threshold: ACCOUNT_LOCK_THRESHOLD,
+          _lock_minutes: ACCOUNT_LOCK_MINUTES,
+          _reset_after_minutes: ACCOUNT_RESET_MINUTES,
+        })
+        .maybeSingle<{ fail_count: number; locked_until: string | null; just_locked: boolean }>();
+
+      const failCount = recRow?.fail_count ?? 0;
+      const delay = backoffMsFor(failCount);
+      if (delay > 0) await new Promise((r) => setTimeout(r, delay));
+
+      if (recRow?.just_locked && recRow.locked_until) {
+        await sendLockoutEmail(email, new Date(recRow.locked_until));
+      }
+
+      await logAuthReject({
+        action: "auth.signin.reject",
+        email,
+        reasons: [
+          "bad_credentials",
+          `fail_count:${failCount}`,
+          recRow?.just_locked ? "locked" : "",
+        ].filter(Boolean),
+      });
+      throw new Error(GENERIC_SIGNIN_ERROR);
+    }
+
+    // Success — reset the counter and return tokens for the browser to persist.
+    await supabaseAdmin.rpc("reset_login_failures", { _email: email });
+    return {
+      access_token: signInData.session.access_token,
+      refresh_token: signInData.session.refresh_token,
+    };
+  });
+
+/**
  * Server-authoritative profile update. Replaces the direct
  * `supabase.from('profiles').upsert` the browser used to run — RLS
  * protected the row but not the field values.
