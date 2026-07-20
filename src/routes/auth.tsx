@@ -4,7 +4,7 @@ import { Truck } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
-import { validateSignin, validateSignup } from "@/lib/auth.functions";
+import { attemptSignin, validateSignup } from "@/lib/auth.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -67,19 +67,22 @@ function AuthPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      // Server-side re-validation. Bad input never reaches Supabase Auth
-      // and is logged for later review.
-      const clean = await validateSignin({ data: { email, password } });
-      const { error } = await supabase.auth.signInWithPassword({
-        email: clean.email,
-        password,
+      // All brute-force protection (per-IP throttle, per-account lockout,
+      // exponential backoff, lockout email) runs server-side. The response
+      // is deliberately identical for every failure mode.
+      const tokens = await attemptSignin({ data: { email, password } });
+      const { error } = await supabase.auth.setSession({
+        access_token: tokens.access_token,
+        refresh_token: tokens.refresh_token,
       });
-      if (error) throw error;
+      if (error) throw new Error("Invalid email or password.");
       toast.success("Welcome back");
       // onAuthStateChange handles navigation once the session is persisted,
       // which avoids the _authenticated guard racing an unpersisted session.
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Sign-in failed");
+      // Never surface the underlying reason — the server already normalised
+      // it to a single generic string.
+      toast.error("Invalid email or password.");
       setLoading(false);
     }
   }
