@@ -73,6 +73,50 @@ function getSpeechRecognition(): SRCtor | null {
   return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
 }
 
+// ---------- Transcript cleanup ----------
+// Filler words (multi-lingual) that carry no meaning for the LLM.
+const FILLERS = new Set([
+  "um", "uh", "uhh", "uhm", "hmm", "hmmm", "aaa", "aa", "aah", "err", "erm",
+  "mmm", "matlab", "yaani", "yaani-ki", "toh", "actually", "basically",
+  "like", "you-know", "you", "know", "so", "well",
+]);
+// Collapse consecutive duplicate words (case-insensitive) — the #1 cause
+// of "fuel fuel fuel ka ka kharcha" from mobile speech engines.
+function dedupeWords(text: string): string {
+  const tokens = text.split(/\s+/).filter(Boolean);
+  const out: string[] = [];
+  for (const w of tokens) {
+    const prev = out[out.length - 1];
+    if (prev && prev.toLowerCase() === w.toLowerCase()) continue;
+    out.push(w);
+  }
+  return out.join(" ");
+}
+// Collapse repeated phrases up to 4 words long: "kitna hua kitna hua" -> "kitna hua".
+function dedupePhrases(text: string): string {
+  let t = text;
+  for (let n = 4; n >= 2; n--) {
+    const re = new RegExp(`\\b((?:\\S+\\s+){${n - 1}}\\S+)\\s+\\1\\b`, "gi");
+    let prev = "";
+    while (prev !== t) { prev = t; t = t.replace(re, "$1"); }
+  }
+  return t;
+}
+function stripFillers(text: string): string {
+  return text
+    .split(/\s+/)
+    .filter((w) => w.length > 0 && !FILLERS.has(w.toLowerCase().replace(/[.,!?]/g, "")))
+    .join(" ");
+}
+function cleanTranscript(raw: string): string {
+  const step1 = raw.replace(/\s+/g, " ").trim();
+  const step2 = dedupeWords(step1);
+  const step3 = dedupePhrases(step2);
+  const step4 = stripFillers(step3);
+  // Capitalise first letter for nicer display.
+  return step4.charAt(0).toUpperCase() + step4.slice(1);
+}
+
 // Strip markdown, emoji and stray symbols so TTS speaks only the words —
 // never "asterisk asterisk" or "hash hash".
 function sanitizeForSpeech(text: string): string {
@@ -113,6 +157,8 @@ function AiPage() {
   const finalRef = useRef<string>("");
   const autoIdxRef = useRef(0);
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const silenceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastSpeechAt = useRef<number>(0);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const SR = useMemo(() => getSpeechRecognition(), []);
@@ -141,29 +187,35 @@ function AiPage() {
   }, [messages, voiceState]);
 
   const send = useMutation({
-    mutationFn: async (question: string) => askFn({ data: { question } }),
+    mutationFn: async (question: string) => {
+      // Silent single retry on transient failures.
+      try {
+        return await askFn({ data: { question } });
+      } catch {
+        await new Promise((r) => setTimeout(r, 600));
+        return await askFn({ data: { question } });
+      }
+    },
     onSuccess: (r) => {
       if (r.ok) {
-        setMessages((m) => [...m, { role: "assistant", text: r.response }]);
-        if (ttsEnabled) speak(r.response);
-        else if (continuous) startListening();
-        else setVoiceState("idle");
+        // Typewriter reveal for a "streaming" feel — instant first token.
+        revealAssistant(r.response);
       } else {
         setMessages((m) => [...m, { role: "error", text: r.error }]);
         setVoiceState("idle");
       }
     },
     onError: () => {
-      setMessages((m) => [...m, { role: "error", text: "AI service temporarily unavailable. Please try again later." }]);
+      setMessages((m) => [...m, { role: "error", text: "Connection slow hai. Thodi der baad try karein." }]);
       setVoiceState("idle");
     },
   });
 
   const submit = useCallback((raw: string) => {
-    const p = raw.trim();
+    const p = cleanTranscript(raw);
     if (!p || send.isPending) return;
-    // Build short conversation memory (last 8 turns) for follow-ups.
-    const history = messages.slice(-8).filter((m) => m.role !== "error");
+    // Build conversation memory (last 20 turns) for real follow-ups.
+    const history = messages.slice(-20).filter((m) => m.role !== "error");
     const framed = history.length
       ? `Prior conversation (for context, do not repeat):\n${history.map((m) => `${m.role === "user" ? "User" : "Assistant"}: ${m.text}`).join("\n")}\n\nCurrent question: ${p}`
       : p;
@@ -174,6 +226,36 @@ function AiPage() {
   }, [messages, send]);
 
   function handleSend() { submit(input); }
+
+  // Progressive text reveal — feels like streaming even though the server
+  // returns the full response at once.
+  function revealAssistant(full: string) {
+    const text = full.trim();
+    // Speak immediately in parallel (voice-first UX).
+    if (ttsEnabled) speak(text); else if (continuous) startListening(); else setVoiceState("idle");
+    setMessages((m) => [...m, { role: "assistant", text: "" }]);
+    const words = text.split(/(\s+)/);
+    let i = 0;
+    const tick = () => {
+      i += Math.max(1, Math.round(words.length / 40));
+      if (i >= words.length) {
+        setMessages((m) => {
+          const copy = [...m];
+          copy[copy.length - 1] = { role: "assistant", text };
+          return copy;
+        });
+        return;
+      }
+      const partial = words.slice(0, i).join("");
+      setMessages((m) => {
+        const copy = [...m];
+        copy[copy.length - 1] = { role: "assistant", text: partial };
+        return copy;
+      });
+      setTimeout(tick, 35);
+    };
+    tick();
+  }
 
   function speak(text: string) {
     if (!ttsSupported || !ttsEnabled) { setVoiceState("idle"); return; }
@@ -238,6 +320,15 @@ function AiPage() {
       rec.interimResults = true;
       rec.maxAlternatives = 3;
       finalRef.current = "";
+      lastSpeechAt.current = Date.now();
+      const armSilence = () => {
+        if (silenceTimer.current) clearTimeout(silenceTimer.current);
+        silenceTimer.current = setTimeout(() => {
+          // 1.8s of pure silence -> stop and submit.
+          try { rec.stop(); } catch { /* noop */ }
+        }, 1800);
+      };
+      armSilence();
       rec.onresult = (e) => {
         let interim = "";
         for (let i = e.resultIndex; i < e.results.length; i++) {
@@ -245,7 +336,9 @@ function AiPage() {
           if (res.isFinal) finalRef.current += res[0].transcript + " ";
           else interim += res[0].transcript;
         }
-        setInput((finalRef.current + interim).trim());
+        lastSpeechAt.current = Date.now();
+        armSilence();
+        setInput(cleanTranscript(finalRef.current + interim));
       };
       rec.onerror = (ev) => {
         if (ev.error === "not-allowed" || ev.error === "service-not-allowed") {
@@ -265,7 +358,8 @@ function AiPage() {
         setVoiceState("idle");
       };
       rec.onend = () => {
-        const finalText = finalRef.current.trim();
+        if (silenceTimer.current) { clearTimeout(silenceTimer.current); silenceTimer.current = null; }
+        const finalText = cleanTranscript(finalRef.current);
         recRef.current = null;
         if (finalText) {
           if (recLang === "auto") autoIdxRef.current = 0; // reset after success
@@ -286,6 +380,8 @@ function AiPage() {
       };
       recRef.current = rec;
       setVoiceState("listening");
+      // Gentle haptic feedback on mobile.
+      try { navigator.vibrate?.(15); } catch { /* noop */ }
       rec.start();
     } catch {
       setVoiceState("idle");
@@ -294,6 +390,8 @@ function AiPage() {
 
   const stopListening = useCallback(() => {
     try { recRef.current?.stop(); } catch { /* noop */ }
+    try { navigator.vibrate?.(10); } catch { /* noop */ }
+    if (silenceTimer.current) { clearTimeout(silenceTimer.current); silenceTimer.current = null; }
   }, []);
 
   useEffect(() => () => {
@@ -325,9 +423,9 @@ function AiPage() {
   }
 
   const statusLabel =
-    voiceState === "listening" ? "🎤 Listening..." :
-    voiceState === "processing" ? "🤖 Thinking..." :
-    voiceState === "speaking" ? "🔊 Speaking..." : null;
+    voiceState === "listening" ? "Listening…" :
+    voiceState === "processing" ? "Thinking…" :
+    voiceState === "speaking" ? "Speaking…" : null;
 
   const micDisabled = !SR;
 
