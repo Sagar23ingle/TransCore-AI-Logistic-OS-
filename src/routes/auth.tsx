@@ -181,7 +181,7 @@ function AuthPage() {
                   </Button>
                 </form>
                 <Separator />
-                <Button type="button" variant="outline" onClick={handleGoogle} className="w-full">
+                <Button type="button" variant="outline" onClick={handleGoogle} disabled={loading} className="w-full">
                   Continue with Google
                 </Button>
               </TabsContent>
@@ -209,7 +209,7 @@ function AuthPage() {
                   </Button>
                 </form>
                 <Separator />
-                <Button type="button" variant="outline" onClick={handleGoogle} className="w-full">
+                <Button type="button" variant="outline" onClick={handleGoogle} disabled={loading} className="w-full">
                   Continue with Google
                 </Button>
               </TabsContent>
