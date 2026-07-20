@@ -249,7 +249,7 @@ function AiPage() {
           submit(finalText);
         } else {
           // Auto mode: rotate to next language if the current one heard nothing.
-          if (recLang === "auto" && voiceState === "listening") {
+          if (recLang === "auto") {
             autoIdxRef.current += 1;
             if (autoIdxRef.current < AUTO_CHAIN.length) {
               setVoiceState("idle");
