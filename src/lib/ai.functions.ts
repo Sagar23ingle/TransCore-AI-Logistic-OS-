@@ -47,20 +47,33 @@ async function enforceAiLimits(
   return null;
 }
 
-const SYSTEM_PROMPT = `You are TransCore AI, a truthful logistics assistant for an Indian truck fleet company.
+const SYSTEM_PROMPT = `You are TransCore AI — a sharp, senior operations analyst for an Indian truck fleet company. You think like a fleet manager, CFO and dispatcher combined.
 
-STRICT GROUNDING RULES:
-1. A JSON block labelled COMPANY_DATA is provided with the user's real fleet, drivers, trips, fuel, expenses, maintenance, invoices, alerts and documents.
-2. Answer EVERY question using ONLY facts derivable from COMPANY_DATA. Never use generic/world knowledge, industry averages, or invented numbers when COMPANY_DATA is non-empty.
-3. If the specific fact the user asked about is not in COMPANY_DATA, reply exactly: "I don't have that information in your company data yet." — then suggest what to log so the answer becomes available.
-4. Only when COMPANY_DATA is entirely empty (a brand-new account with no records at all) may you give generic logistics guidance, and you must prefix it with "General guidance (no company data found):".
-5. Cite specifics: registration numbers, driver names, trip IDs, amounts in ₹, dates. Be concise and actionable.`;
+STRICT GROUNDING:
+1. A JSON block COMPANY_DATA holds the user's real fleet, drivers, trips, fuel, expenses, maintenance, invoices, alerts, documents, and pre-computed AGGREGATES.
+2. Use ONLY facts derivable from COMPANY_DATA. Never invent numbers or use industry averages when COMPANY_DATA is populated.
+3. If a fact is missing, say: "I don't have that in your company data yet." then say exactly which record type to log.
+4. If COMPANY_DATA is entirely empty, prefix generic advice with "General guidance (no company data found):".
+
+HOW TO THINK:
+- Do the math. Aggregate, rank, compare periods, compute mileage (km ÷ litres), cost/km, on-time %, utilisation, margin (freight − expenses).
+- Correlate across tables: a trip's fuel_logs + expenses + driver + vehicle tell one story.
+- Detect anomalies: expiring docs (<30 days), idle vehicles, drops in mileage, cost spikes, unpaid invoices past due.
+- Handle vague questions ("how are we doing?", "kaisa chal raha hai?") by giving a 4-line executive snapshot: revenue, expenses, top issue, next action.
+- Respect the user's language: reply in the same language/script they used (Hindi, Hinglish, English, regional). Keep numbers in ₹ with Indian formatting (e.g. ₹1,25,000).
+
+STYLE:
+- Be concise, structured, actionable. Use short bullets or a tiny table when it helps. No fluff, no disclaimers.
+- Cite specifics: registration numbers, driver names, trip IDs, ₹ amounts, dates.
+- End answers that reveal a problem with a one-line "Next step:" recommendation.`;
 
 async function callGemini(prompt: string, kind: string): Promise<string> {
   const key = process.env.LOVABLE_API_KEY;
   if (!key) throw new Error("AI service is not configured on this server.");
   const gateway = createLovableAiGatewayProvider(key);
-  const model = gateway("google/gemini-2.5-flash");
+  // Pro for grounded chat (deeper reasoning), flash for quick tasks.
+  const modelId = kind === "chat" ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash";
+  const model = gateway(modelId);
 
   let lastError: unknown;
   for (let attempt = 0; attempt < 2; attempt++) {
@@ -69,6 +82,7 @@ async function callGemini(prompt: string, kind: string): Promise<string> {
         model,
         system: SYSTEM_PROMPT,
         prompt: `[Task: ${kind}]\n${prompt}`,
+        temperature: 0.3,
       });
       return text;
     } catch (err) {
@@ -155,6 +169,14 @@ async function buildCompanyContext(supabase: typeof import("@supabase/supabase-j
       alerts: alerts.data?.length ?? 0,
       documents: documents.data?.length ?? 0,
     },
+    aggregates: computeAggregates({
+      vehicles: vehicles.data ?? [],
+      trips: trips.data ?? [],
+      fuel: fuel.data ?? [],
+      expenses: expenses.data ?? [],
+      invoices: invoices.data ?? [],
+      documents: documents.data ?? [],
+    }),
     vehicles: vehicles.data ?? [],
     drivers: drivers.data ?? [],
     trips: trips.data ?? [],
@@ -165,6 +187,80 @@ async function buildCompanyContext(supabase: typeof import("@supabase/supabase-j
     alerts: alerts.data ?? [],
     documents: documents.data ?? [],
     driver_scores: driverScores.data ?? [],
+  };
+}
+
+type Row = Record<string, unknown>;
+function num(v: unknown): number { const n = Number(v); return Number.isFinite(n) ? n : 0; }
+function computeAggregates(d: { vehicles: Row[]; trips: Row[]; fuel: Row[]; expenses: Row[]; invoices: Row[]; documents: Row[] }) {
+  const now = Date.now();
+  const in30 = now + 30 * 86400_000;
+  const startOfMonth = new Date(); startOfMonth.setDate(1); startOfMonth.setHours(0, 0, 0, 0);
+  const monthStart = startOfMonth.getTime();
+
+  const fuelThisMonth = d.fuel.filter((f) => new Date(String(f.filled_at)).getTime() >= monthStart);
+  const expensesThisMonth = d.expenses.filter((e) => new Date(String(e.incurred_on)).getTime() >= monthStart);
+  const tripsThisMonth = d.trips.filter((t) => new Date(String(t.actual_start ?? t.planned_start)).getTime() >= monthStart);
+
+  const revenueThisMonth = tripsThisMonth.reduce((s, t) => s + num(t.freight_amount), 0);
+  const fuelSpendThisMonth = fuelThisMonth.reduce((s, f) => s + num(f.total_amount), 0);
+  const otherExpensesThisMonth = expensesThisMonth.reduce((s, e) => s + num(e.amount), 0);
+
+  const litresByVehicle = new Map<string, { l: number; km: number; cost: number }>();
+  for (const f of d.fuel) {
+    const k = String(f.vehicle_id ?? "");
+    const prev = litresByVehicle.get(k) ?? { l: 0, km: 0, cost: 0 };
+    prev.l += num(f.quantity_liters); prev.cost += num(f.total_amount);
+    litresByVehicle.set(k, prev);
+  }
+  const kmByVehicle = new Map<string, number>();
+  for (const t of d.trips) {
+    const k = String(t.vehicle_id ?? "");
+    kmByVehicle.set(k, (kmByVehicle.get(k) ?? 0) + num(t.distance_km));
+  }
+  const vehicleMileage = d.vehicles.map((v) => {
+    const id = String(v.id);
+    const f = litresByVehicle.get(id) ?? { l: 0, km: 0, cost: 0 };
+    const km = kmByVehicle.get(id) ?? 0;
+    return {
+      registration: String(v.registration_number ?? ""),
+      km_travelled: km,
+      litres_consumed: +f.l.toFixed(1),
+      kmpl: f.l > 0 ? +(km / f.l).toFixed(2) : null,
+      fuel_cost: +f.cost.toFixed(0),
+      cost_per_km: km > 0 ? +(f.cost / km).toFixed(2) : null,
+    };
+  });
+
+  const expiringDocs = d.documents
+    .filter((doc) => doc.expiry_date && new Date(String(doc.expiry_date)).getTime() <= in30)
+    .map((doc) => ({ name: String(doc.name ?? ""), doc_type: String(doc.doc_type ?? ""), expiry_date: String(doc.expiry_date ?? "") }));
+
+  const overdueInvoices = d.invoices
+    .filter((i) => i.status !== "paid" && i.due_on && new Date(String(i.due_on)).getTime() < now)
+    .map((i) => ({ invoice_number: String(i.invoice_number ?? ""), customer: String(i.customer_name ?? ""), amount: num(i.total_amount), due_on: String(i.due_on ?? "") }));
+
+  const tripStatus = d.trips.reduce<Record<string, number>>((acc, t) => {
+    const s = String(t.status ?? "unknown"); acc[s] = (acc[s] ?? 0) + 1; return acc;
+  }, {});
+
+  const vehicleStatus = d.vehicles.reduce<Record<string, number>>((acc, v) => {
+    const s = String(v.status ?? "unknown"); acc[s] = (acc[s] ?? 0) + 1; return acc;
+  }, {});
+
+  return {
+    this_month: {
+      revenue_inr: revenueThisMonth,
+      fuel_spend_inr: fuelSpendThisMonth,
+      other_expenses_inr: otherExpensesThisMonth,
+      gross_margin_inr: revenueThisMonth - fuelSpendThisMonth - otherExpensesThisMonth,
+      trips_count: tripsThisMonth.length,
+    },
+    vehicle_mileage: vehicleMileage,
+    trip_status_counts: tripStatus,
+    vehicle_status_counts: vehicleStatus,
+    expiring_docs_30d: expiringDocs,
+    overdue_invoices: overdueInvoices,
   };
 }
 

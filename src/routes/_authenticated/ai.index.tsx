@@ -308,6 +308,18 @@ function AiPage() {
 
   const micDisabled = !SR;
 
+  function toggleMute() {
+    setTtsEnabled((v) => {
+      const next = !v;
+      // Muting should immediately silence any ongoing/queued speech.
+      if (!next && ttsSupported) {
+        try { window.speechSynthesis.cancel(); } catch { /* noop */ }
+        setVoiceState((s) => (s === "speaking" ? "idle" : s));
+      }
+      return next;
+    });
+  }
+
   const settingsAction = (
     <Popover>
       <PopoverTrigger asChild>
@@ -373,9 +385,9 @@ function AiPage() {
       description="Ask Gemini about your fleet — grounded in your real data."
       action={settingsAction}
     >
-      <div className="grid gap-4">
-        <Card>
-          <CardContent ref={scrollRef} className="space-y-3 py-6 max-h-[55vh] overflow-y-auto">
+      <div className="flex flex-col h-[calc(100dvh-11rem)] gap-3">
+        <Card className="flex-1 min-h-0">
+          <CardContent ref={scrollRef} className="space-y-3 py-4 h-full overflow-y-auto">
             {messages.length === 0 && (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Sparkles className="h-4 w-4 text-primary" />
@@ -405,7 +417,7 @@ function AiPage() {
             )}
           </CardContent>
         </Card>
-        <div className="flex items-end gap-2">
+        <div className="flex items-end gap-2 sticky bottom-0 bg-background pt-2 pb-[env(safe-area-inset-bottom)]">
           <Textarea rows={2} value={input} onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleSend(); }}
             placeholder={voiceState === "listening" ? "Listening..." : "Ask, or press & hold mic for a live conversation"} />
@@ -426,7 +438,7 @@ function AiPage() {
               type="button"
               variant="ghost"
               size="icon"
-              onClick={() => setTtsEnabled((v) => !v)}
+              onClick={toggleMute}
               title={ttsEnabled ? "Mute replies" : "Unmute replies"}
             >
               {ttsEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
