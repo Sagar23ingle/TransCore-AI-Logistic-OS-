@@ -114,7 +114,7 @@ function ExpensesPage() {
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[92dvh] overflow-y-auto">
           <DialogHeader><DialogTitle>Add expense</DialogTitle></DialogHeader>
           <form onSubmit={handleSubmit((v) => mut.mutate(v))} className="grid gap-3 sm:grid-cols-2">
             <F label="Category" full>
