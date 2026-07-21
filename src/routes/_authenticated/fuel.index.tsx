@@ -185,9 +185,9 @@ function FuelPage() {
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-lg max-h-[92dvh] overflow-y-auto">
-          <DialogHeader><DialogTitle>Log fuel fill</DialogTitle></DialogHeader>
-          <form onSubmit={handleSubmit((v) => mut.mutate(v))} className="grid gap-3 sm:grid-cols-2">
+        <DialogContent className="max-w-lg max-h-[92dvh] gap-3 overflow-hidden p-0 sm:p-6 flex flex-col">
+          <DialogHeader className="px-4 pt-4 sm:px-0 sm:pt-0"><DialogTitle>Log fuel fill</DialogTitle></DialogHeader>
+          <form onSubmit={handleSubmit((v) => mut.mutate(v))} className="grid gap-3 sm:grid-cols-2 overflow-y-auto px-4 pb-4 sm:px-0 sm:pb-0 min-h-0 flex-1">
             <F label="Vehicle *" full>
               <SearchableDropdown
                 placeholder="Select vehicle" ariaLabel="Vehicle"
@@ -207,7 +207,7 @@ function FuelPage() {
               <Label htmlFor="ft" className="text-xs">Tank filled to full (required for mileage calc)</Label>
             </div>
             <F label="Notes" full><Input {...register("notes")} /></F>
-            <DialogFooter className="sm:col-span-2">
+            <DialogFooter className="sm:col-span-2 sticky bottom-0 bg-background pt-3 -mx-4 px-4 sm:mx-0 sm:px-0 border-t sm:border-t-0">
               <Button type="button" variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
               <Button type="submit" disabled={mut.isPending || !watch("vehicle_id")}>{mut.isPending ? "Saving..." : "Save"}</Button>
             </DialogFooter>
