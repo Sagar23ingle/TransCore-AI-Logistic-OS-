@@ -171,7 +171,7 @@ function DocumentsPage() {
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[92dvh] overflow-y-auto">
           <DialogHeader><DialogTitle>Upload document</DialogTitle></DialogHeader>
           <form onSubmit={handleSubmit(onSubmit)} className="grid gap-3 sm:grid-cols-2">
             <F label="Document type" full>

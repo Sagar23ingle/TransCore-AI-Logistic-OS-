@@ -85,7 +85,7 @@ export function CompanySwitcher() {
       </DropdownMenu>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
+        <DialogContent className="max-h-[92dvh] overflow-y-auto">
           <DialogHeader><DialogTitle>New company</DialogTitle></DialogHeader>
           <div className="grid gap-3">
             <div className="grid gap-1.5">

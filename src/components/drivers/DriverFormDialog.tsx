@@ -56,7 +56,7 @@ export function DriverFormDialog({ open, onOpenChange, initial, onSaved }: { ope
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl">
+      <DialogContent className="max-w-xl max-h-[92dvh] overflow-y-auto">
         <DialogHeader><DialogTitle>{initial ? "Edit driver" : "Add driver"}</DialogTitle></DialogHeader>
         <form onSubmit={handleSubmit((v) => mut.mutate(v))} className="grid gap-3 sm:grid-cols-2">
           <F label="Full name *"><Input {...register("full_name", { required: true })} /></F>

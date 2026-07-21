@@ -149,7 +149,7 @@ function MarketplacePage() {
       )}
 
       <Dialog open={postOpen} onOpenChange={setPostOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[92dvh] overflow-y-auto">
           <DialogHeader><DialogTitle>Post a load</DialogTitle></DialogHeader>
           <form onSubmit={handleSubmit((v) => post.mutate(v))} className="grid gap-3 sm:grid-cols-2">
             <F label="Title *" full><Input required {...register("title")} /></F>

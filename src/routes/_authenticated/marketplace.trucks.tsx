@@ -114,7 +114,7 @@ function TrucksPage() {
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[92dvh] overflow-y-auto">
           <DialogHeader><DialogTitle>Post available truck</DialogTitle></DialogHeader>
           <form onSubmit={handleSubmit((v) => post.mutate(v))} className="grid gap-3 sm:grid-cols-2">
             <F label="From *"><Input required {...register("from_location")} /></F>
