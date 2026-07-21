@@ -77,9 +77,9 @@ export function TripFormDialog({ open, onOpenChange, initial, onSaved }: { open:
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader><DialogTitle>{initial ? "Edit trip" : "New trip"}</DialogTitle></DialogHeader>
-        <form onSubmit={handleSubmit((v) => mut.mutate(v))} className="grid gap-3 sm:grid-cols-2">
+      <DialogContent className="max-w-2xl max-h-[92dvh] gap-3 overflow-hidden p-0 sm:p-6 flex flex-col">
+        <DialogHeader className="px-4 pt-4 sm:px-0 sm:pt-0"><DialogTitle>{initial ? "Edit trip" : "New trip"}</DialogTitle></DialogHeader>
+        <form onSubmit={handleSubmit((v) => mut.mutate(v))} className="grid gap-3 sm:grid-cols-2 overflow-y-auto px-4 pb-4 sm:px-0 sm:pb-0 min-h-0 flex-1">
           <F label="Origin *"><Input {...register("origin", { required: true })} /></F>
           <F label="Destination *"><Input {...register("destination", { required: true })} /></F>
           <F label="Vehicle">
@@ -119,7 +119,7 @@ export function TripFormDialog({ open, onOpenChange, initial, onSaved }: { open:
           <F label="Advance paid (₹)"><Input type="number" step="0.01" {...register("advance_paid")} /></F>
           <F label="Goods description" full><Input {...register("goods_description")} /></F>
           <F label="Notes" full><Textarea rows={2} {...register("notes")} /></F>
-          <DialogFooter className="sm:col-span-2">
+          <DialogFooter className="sm:col-span-2 sticky bottom-0 bg-background pt-3 -mx-4 px-4 sm:mx-0 sm:px-0 border-t sm:border-t-0">
             <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
             <Button type="submit" disabled={mut.isPending}>{mut.isPending ? "Saving..." : "Save"}</Button>
           </DialogFooter>
