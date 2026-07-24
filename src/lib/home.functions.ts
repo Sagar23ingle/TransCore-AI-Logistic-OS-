@@ -15,6 +15,12 @@ export const getHomeExtras = createServerFn({ method: "GET" })
     prevMonthStart.setMonth(prevMonthStart.getMonth() - 1);
     const prevStartISO = prevMonthStart.toISOString().slice(0, 10);
     const prevEndISO = startISO; // exclusive
+    // Fuel-efficiency lookback: 120 days is more than enough for full-tank
+    // pairs. Previously this pulled up to 2000 rows across all history on
+    // every dashboard load — a huge waste for long-running fleets.
+    const kmplSince = new Date();
+    kmplSince.setDate(kmplSince.getDate() - 120);
+    const kmplSinceISO = kmplSince.toISOString().slice(0, 10);
 
     const [recentR, vehR, fuelR, kmplR, expR, prevFuelR, prevExpR] = await Promise.all([
       supabase
@@ -33,8 +39,9 @@ export const getHomeExtras = createServerFn({ method: "GET" })
         .from("fuel_logs")
         .select("vehicle_id, litres, odometer_km, filled_on, is_full_tank")
         .eq("owner_id", userId)
+        .gte("filled_on", kmplSinceISO)
         .order("filled_on", { ascending: true })
-        .limit(2000),
+        .limit(500),
       supabase
         .from("expenses")
         .select("vehicle_id, amount, incurred_on")
