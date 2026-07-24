@@ -16,7 +16,7 @@ export function AppShell({ children, title, description, action }: AppShellProps
       <Sidebar />
       <div className="lg:pl-64">
         <TopBar />
-        <main className="mx-auto w-full max-w-[1400px] px-4 pt-3 pb-[calc(72px+env(safe-area-inset-bottom))] sm:px-6 sm:pt-5 lg:px-8 lg:pt-6 lg:pb-10">
+        <main className="mx-auto w-full max-w-[1400px] px-4 pt-3 pb-[calc(104px+env(safe-area-inset-bottom))] sm:px-6 sm:pt-5 lg:px-8 lg:pt-6 lg:pb-10">
           {(title || action) && (
             <div className="mb-3 flex flex-col gap-2 sm:mb-6 sm:flex-row sm:items-end sm:justify-between sm:gap-3">
               <div className="min-w-0">

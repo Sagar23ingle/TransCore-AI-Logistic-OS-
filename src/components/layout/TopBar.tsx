@@ -61,8 +61,9 @@ export function TopBar() {
         onClick={toggleTheme}
         aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
         title={theme === "dark" ? "Light mode" : "Dark mode"}
+        className="h-10 w-10 rounded-full bg-card shadow-[var(--shadow-neo-sm)] active:shadow-[var(--shadow-neo-inset)] active:translate-y-px transition-all duration-300"
       >
-        {theme === "dark" ? <Sun className="h-4 w-4 text-muted-foreground" /> : <Moon className="h-4 w-4 text-muted-foreground" />}
+        {theme === "dark" ? <Sun className="h-[18px] w-[18px] text-primary" /> : <Moon className="h-[18px] w-[18px] text-foreground" />}
       </Button>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
