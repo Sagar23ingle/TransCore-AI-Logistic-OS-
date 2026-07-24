@@ -136,15 +136,15 @@ function DocumentsPage() {
             const opt = DOC_TYPE_OPTIONS.find((o) => o.value === d.doc_type);
             const Icon = opt?.icon ?? FileText;
             return (
-              <Card key={d.id} className="list-perf rounded-2xl">
-                <CardContent className="p-3.5">
-                  <div className="flex items-start gap-3">
+              <Card key={d.id} className="list-perf rounded-2xl overflow-hidden">
+                <CardContent className="p-3.5 min-w-0">
+                  <div className="flex items-start gap-3 min-w-0">
                     <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
                       <Icon className="h-5 w-5" />
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <div className="truncate text-sm font-semibold">{d.title}</div>
+                    <div className="min-w-0 flex-1 overflow-hidden">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="truncate text-sm font-semibold min-w-0 flex-1">{d.title}</div>
                         {days != null && (
                           <Badge variant={days < 0 ? "destructive" : days <= 15 ? "outline" : "secondary"} className="h-5 shrink-0 px-1.5 text-[10px]">
                             {days < 0 ? "expired" : `${days}d`}
