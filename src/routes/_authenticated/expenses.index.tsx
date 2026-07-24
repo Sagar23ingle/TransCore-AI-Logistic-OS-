@@ -86,26 +86,28 @@ function ExpensesPage() {
             const opt = CATEGORY_OPTIONS.find((c) => c.value === e.category);
             const Icon = opt?.icon ?? Receipt;
             return (
-              <Card key={e.id} className="list-perf rounded-2xl">
-                <CardContent className="flex items-center gap-3 p-3">
+              <Card key={e.id} className="list-perf rounded-2xl overflow-hidden">
+                <CardContent className="flex items-start gap-3 p-3 min-w-0">
                   <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
                     <Icon className="h-5 w-5" />
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="truncate text-sm font-medium capitalize">{opt?.label ?? e.category}</div>
-                      <div className="num text-sm font-semibold">{formatINR(Number(e.amount))}</div>
-                    </div>
+                  <div className="min-w-0 flex-1 overflow-hidden">
+                    <div className="truncate text-sm font-medium capitalize">{opt?.label ?? e.category}</div>
                     <div className="truncate text-[11px] text-muted-foreground">
                       {formatDate(e.incurred_on)}
                       {e.vehicle && <> · {e.vehicle.registration_number}</>}
                       {e.trip && <> · {e.trip.origin} → {e.trip.destination}</>}
                     </div>
-                    {e.description && <div className="truncate text-[12px]">{e.description}</div>}
+                    {e.description && (
+                      <div className="mt-0.5 text-[12px] leading-snug break-words line-clamp-2">{e.description}</div>
+                    )}
                   </div>
-                  <Button size="icon" variant="ghost" className="h-8 w-8 shrink-0" onClick={() => { if (confirm("Remove?")) del.mutate(e.id); }}>
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
+                  <div className="flex shrink-0 flex-col items-end gap-1">
+                    <div className="num whitespace-nowrap text-sm font-semibold">{formatINR(Number(e.amount))}</div>
+                    <Button size="icon" variant="ghost" className="h-8 w-8 -mr-1" onClick={() => { if (confirm("Remove?")) del.mutate(e.id); }}>
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             );
