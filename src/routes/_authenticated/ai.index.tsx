@@ -513,7 +513,7 @@ function AiPage() {
       description="Ask Gemini about your fleet — grounded in your real data."
       action={settingsAction}
     >
-      <div className="flex flex-col h-[calc(100dvh-14rem)] sm:h-[calc(100dvh-13rem)] gap-3 overflow-hidden">
+      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden h-[calc(100dvh-8.5rem)] sm:h-[calc(100dvh-10rem)]">
         <Card className="flex-1 min-h-0 overflow-hidden">
           <CardContent ref={scrollRef} className="space-y-3 py-4 h-full overflow-y-auto">
             {messages.length === 0 && (
@@ -544,7 +544,7 @@ function AiPage() {
             )}
           </CardContent>
         </Card>
-        <div className="shrink-0 bg-background pt-2 pb-[env(safe-area-inset-bottom)]">
+        <div className="shrink-0 bg-background pt-2 pb-[calc(env(safe-area-inset-bottom)+8px)]">
           <div className="flex items-end gap-2 rounded-3xl bg-card p-2 shadow-[var(--shadow-neo-sm)] transition-shadow duration-200 focus-within:shadow-[var(--glow-primary)]">
           <Textarea rows={1} value={input} onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}

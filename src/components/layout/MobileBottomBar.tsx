@@ -13,6 +13,10 @@ const ITEMS = [
 export function MobileBottomBar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
+  // Hide the bottom dashbar on the AI Assistant screen so the chat surface
+  // owns the full viewport and the composer sits flush to the bottom.
+  if (pathname === "/ai" || pathname.startsWith("/ai/")) return null;
+
   return (
     <nav
       aria-label="Primary"
