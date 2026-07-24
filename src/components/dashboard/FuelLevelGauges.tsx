@@ -11,12 +11,12 @@ import { Link } from "@tanstack/react-router";
 import { getVehicleFuelLevels, type VehicleFuelLevel } from "@/lib/fuel-level.functions";
 
 function stopsFor(pct: number) {
-  // Smooth green → yellow → orange → red gradient anchored on the current pct.
-  if (pct >= 75) return { from: "#22c55e", to: "#16a34a", ring: "text-emerald-500", tone: "healthy" as const };
-  if (pct >= 50) return { from: "#84cc16", to: "#eab308", ring: "text-lime-500", tone: "healthy" as const };
-  if (pct >= 30) return { from: "#facc15", to: "#f59e0b", ring: "text-amber-500", tone: "warn" as const };
-  if (pct > 20)  return { from: "#fb923c", to: "#f97316", ring: "text-orange-500", tone: "warn" as const };
-  if (pct > 10)  return { from: "#f97316", to: "#ef4444", ring: "text-orange-600", tone: "low" as const };
+  // Neon Lime → Deep Teal → Amber → Red gradient tied to fuel level.
+  if (pct >= 75) return { from: "#E6FF2B", to: "#C6E31A", ring: "text-primary", tone: "healthy" as const };
+  if (pct >= 50) return { from: "#C6E31A", to: "#0B4650", ring: "text-primary", tone: "healthy" as const };
+  if (pct >= 30) return { from: "#facc15", to: "#eab308", ring: "text-amber-500", tone: "warn" as const };
+  if (pct > 20)  return { from: "#facc15", to: "#f59e0b", ring: "text-amber-500", tone: "warn" as const };
+  if (pct > 10)  return { from: "#f59e0b", to: "#ef4444", ring: "text-amber-600", tone: "low" as const };
   return { from: "#ef4444", to: "#b91c1c", ring: "text-red-600", tone: "critical" as const };
 }
 
@@ -49,7 +49,7 @@ function Gauge({ v }: { v: VehicleFuelLevel }) {
             </Badge>
           )}
           {v.severity === "low" && !insufficient && (
-            <Badge className="h-4 border-transparent bg-orange-500/15 px-1.5 py-0 text-[9px] text-orange-600 dark:text-orange-400">
+            <Badge className="h-4 border-transparent bg-amber-500/15 px-1.5 py-0 text-[9px] text-amber-600 dark:text-amber-400">
               LOW
             </Badge>
           )}
