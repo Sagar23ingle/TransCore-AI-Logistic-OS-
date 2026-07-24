@@ -15,12 +15,19 @@ interface AppShellProps {
 export function AppShell({ children, title, description, action }: AppShellProps) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const showBack = pathname !== "/dashboard" && pathname !== "/";
+  const isAi = pathname === "/ai" || pathname.startsWith("/ai/");
   return (
-    <div className="min-h-dvh bg-background text-foreground">
+    <div className={isAi ? "h-[100dvh] overflow-hidden bg-background text-foreground" : "min-h-dvh bg-background text-foreground"}>
       <Sidebar />
       <div className="lg:pl-64">
         <TopBar />
-        <main className="mx-auto w-full max-w-[1400px] px-4 pt-3 pb-[calc(104px+env(safe-area-inset-bottom))] sm:px-6 sm:pt-5 lg:px-8 lg:pt-6 lg:pb-10">
+        <main
+          className={
+            isAi
+              ? "mx-auto flex w-full max-w-[1400px] flex-col overflow-hidden px-4 pt-3 pb-0 sm:px-6 sm:pt-5 lg:px-8 lg:pt-6 lg:pb-6"
+              : "mx-auto w-full max-w-[1400px] px-4 pt-3 pb-[calc(104px+env(safe-area-inset-bottom))] sm:px-6 sm:pt-5 lg:px-8 lg:pt-6 lg:pb-10"
+          }
+        >
           {showBack && (
             <Link
               to="/dashboard"
