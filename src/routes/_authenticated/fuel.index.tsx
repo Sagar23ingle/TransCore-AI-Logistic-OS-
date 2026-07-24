@@ -157,24 +157,24 @@ function FuelPage() {
               ) : (
                 <div className="grid gap-1.5">
                   {logs.data.map((l) => (
-                    <div key={l.id} className="list-perf flex items-center gap-3 rounded-xl border border-border/70 p-2.5">
+                    <div key={l.id} className="list-perf flex items-start gap-3 rounded-xl border border-border/70 p-2.5 min-w-0 overflow-hidden">
                       <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
                         <Fuel className="h-4 w-4" />
                       </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="truncate text-sm font-semibold">
-                            {l.vehicle?.registration_number ?? "Vehicle"} · {formatNumber(Number(l.litres), 1)} L
-                          </div>
-                          <div className="num shrink-0 text-sm font-semibold">{formatINR(Number(l.total_amount))}</div>
+                      <div className="min-w-0 flex-1 overflow-hidden">
+                        <div className="truncate text-sm font-semibold">
+                          {l.vehicle?.registration_number ?? "Vehicle"} · {formatNumber(Number(l.litres), 1)} L
                         </div>
-                        <div className="truncate text-[11px] text-muted-foreground">
+                        <div className="text-[11px] leading-snug text-muted-foreground break-words line-clamp-2">
                           {formatDate(l.filled_on)} · ₹{Number(l.price_per_litre).toFixed(2)}/L · odo {formatNumber(Number(l.odometer_km))} km{l.station ? ` · ${l.station}` : ""}
                         </div>
                       </div>
-                      <Button size="icon" variant="ghost" className="h-8 w-8 shrink-0" onClick={() => { if (confirm("Remove entry?")) del.mutate(l.id as string); }}>
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
+                      <div className="flex shrink-0 flex-col items-end gap-1">
+                        <div className="num whitespace-nowrap text-sm font-semibold">{formatINR(Number(l.total_amount))}</div>
+                        <Button size="icon" variant="ghost" className="h-8 w-8 -mr-1" onClick={() => { if (confirm("Remove entry?")) del.mutate(l.id as string); }}>
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>
