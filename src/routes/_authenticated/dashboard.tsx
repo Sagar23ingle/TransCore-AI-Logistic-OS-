@@ -26,12 +26,9 @@ import { GoogleMapView } from "@/components/tracking/GoogleMap";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { formatINR, formatNumber } from "@/lib/format";
 import {
-  Area, AreaChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
+  Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from "recharts";
 
-const FleetInsightsCards = lazy(() =>
-  import("@/components/dashboard/FleetInsightsCards").then((m) => ({ default: m.FleetInsightsCards })),
-);
 const FuelLevelGauges = lazy(() =>
   import("@/components/dashboard/FuelLevelGauges").then((m) => ({ default: m.FuelLevelGauges })),
 );
@@ -386,7 +383,8 @@ function FleetOverview({ daily, loading }: { daily?: DailyOps; loading: boolean 
             ) : !hasData ? (
               <EmptyChart message="No Data Available" hint="Log trips and fuel to see trends here." />
             ) : (
-              <div className="h-full w-full overflow-hidden rounded-xl border border-border/60 bg-gradient-to-br from-muted/30 via-background to-background p-1 shadow-inner">
+              <div className="flex h-full w-full flex-col overflow-hidden rounded-xl border border-border/60 bg-gradient-to-br from-muted/30 via-background to-background p-1 pb-2 shadow-inner">
+                <div className="flex-1 min-h-0">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={data} margin={{ top: 14, right: 14, left: 4, bottom: 4 }}>
                     <defs>
@@ -439,12 +437,13 @@ function FleetOverview({ daily, loading }: { daily?: DailyOps; loading: boolean 
                     />
                   </AreaChart>
                 </ResponsiveContainer>
+                </div>
+                <div className="mt-1.5 flex items-center justify-center gap-6 px-2 pb-1 text-[11px] font-medium text-muted-foreground">
+                  <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full ring-2 ring-background" style={{ background: revColor }} /> Revenue</span>
+                  <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full ring-2 ring-background" style={{ background: fuelColor }} /> Fuel</span>
+                </div>
               </div>
             )}
-            <div className="mt-2 flex items-center justify-center gap-5 text-[11px] font-medium text-muted-foreground">
-              <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full ring-2 ring-background" style={{ background: revColor }} /> Revenue</span>
-              <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full ring-2 ring-background" style={{ background: fuelColor }} /> Fuel</span>
-            </div>
           </TabsContent>
 
           <TabsContent value="map" className="mt-2">
