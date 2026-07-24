@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { askCompanyAi } from "@/lib/ai.functions";
+import { AiOrbEmptyState } from "@/components/ai/AiOrbMount";
 
 export const Route = createFileRoute("/_authenticated/ai/")({
   head: () => ({ meta: [{ title: "AI Assistant — TransCore AI" }, { name: "robots", content: "noindex" }] }),
@@ -515,7 +516,11 @@ function AiPage() {
       <div className="flex flex-col h-[calc(100dvh-14rem)] sm:h-[calc(100dvh-13rem)] gap-3 overflow-hidden">
         <Card className="flex-1 min-h-0 overflow-hidden">
           <CardContent ref={scrollRef} className="space-y-3 py-4 h-full overflow-y-auto">
-            {messages.length === 0 && <AiOrbEmptyState />}
+            {messages.length === 0 && (
+              <div className="h-full">
+                <AiOrbEmptyState visible={input.trim().length === 0} />
+              </div>
+            )}
             {messages.map((m, i) => (
               <div key={i} className={m.role === "user" ? "text-right" : ""}>
                 <div className={`inline-block max-w-[90%] whitespace-pre-wrap rounded-2xl px-3.5 py-2.5 text-sm ${
