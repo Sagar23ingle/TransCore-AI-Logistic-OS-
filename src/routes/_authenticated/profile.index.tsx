@@ -4,10 +4,11 @@ import { motion } from "motion/react";
 import { z } from "zod";
 import {
   Camera, CheckCircle2, KeyRound, Loader2, Mail, Phone, ShieldCheck, Trash2,
-  Upload, User as UserIcon, Building2, Clock,
+  Upload, User as UserIcon, Building2, Clock, ArrowLeft,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useRouter } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/use-auth";
 import { ROLE_LABELS } from "@/lib/rbac";
 import { useProfile, useInvalidateProfile, initialsFrom } from "@/hooks/use-profile";
@@ -115,6 +116,7 @@ function ProfilePage() {
   const { user, roles } = useAuth();
   const { profile, avatarUrl, isLoading } = useProfile();
   const invalidateProfile = useInvalidateProfile();
+  const router = useRouter();
 
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
@@ -307,6 +309,18 @@ function ProfilePage() {
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 p-4 sm:p-6">
+      <div className="flex items-center gap-2">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => router.history.back()}
+          className="-ml-2 h-9 gap-1.5 px-2 text-muted-foreground hover:text-foreground"
+          aria-label="Go back"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          <span className="text-sm font-medium">Back</span>
+        </Button>
+      </div>
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: 12 }}
