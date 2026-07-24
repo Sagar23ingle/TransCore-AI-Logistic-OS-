@@ -111,6 +111,9 @@
   --shadow-neo-sm: -3px -3px 8px var(--neo-hi), 3px 3px 8px var(--neo-lo);
   --shadow-neo-inset: inset 4px 4px 8px var(--neo-lo), inset -4px -4px 8px var(--neo-hi);
   --shadow-card: var(--shadow-neo);
+  --gradient-primary: linear-gradient(135deg, #FF7A00 0%, #FF9D3D 100%);
+  --gradient-primary-soft: linear-gradient(135deg, oklch(0.72 0.19 45 / 18%), oklch(0.78 0.16 55 / 8%));
+  --glow-primary: 0 10px 30px -8px oklch(0.72 0.19 45 / 45%);
 }
 
 .dark {
@@ -159,6 +162,9 @@
   --shadow-neo-sm: -3px -3px 8px var(--neo-hi), 3px 3px 10px var(--neo-lo);
   --shadow-neo-inset: inset 3px 3px 8px var(--neo-lo), inset -2px -2px 6px var(--neo-hi);
   --shadow-card: var(--shadow-neo);
+  --gradient-primary: linear-gradient(135deg, #FF7A00 0%, #FF9D3D 100%);
+  --gradient-primary-soft: linear-gradient(135deg, oklch(0.72 0.19 45 / 22%), oklch(0.78 0.16 55 / 6%));
+  --glow-primary: 0 12px 40px -10px oklch(0.72 0.19 45 / 55%);
 }
 
 @theme inline {
@@ -226,6 +232,17 @@
   .neo-pressable:active {
     box-shadow: var(--shadow-neo-inset);
     transform: translateY(1px);
+  }
+
+  /* Primary gradient surface — used for CTAs and the center FAB. */
+  .bg-gradient-primary { background-image: var(--gradient-primary); }
+  .glow-primary { box-shadow: var(--glow-primary); }
+
+  /* Inset "pressed into background" input surface. */
+  .neo-input {
+    background: color-mix(in oklab, var(--color-background) 92%, var(--color-foreground) 8%);
+    box-shadow: var(--shadow-neo-inset);
+    border: 1px solid var(--color-border);
   }
 
   .num {
