@@ -16,7 +16,7 @@ export const Route = createFileRoute("/_authenticated/executive/")({
 });
 
 function Stat({ icon, label, value, hint, tone }: { icon: React.ReactNode; label: string; value: string; hint?: string; tone?: "good" | "bad" | "warn" }) {
-  const toneClass = tone === "bad" ? "text-destructive" : tone === "warn" ? "text-orange-500" : tone === "good" ? "text-emerald-500" : "";
+  const toneClass = tone === "bad" ? "text-destructive" : tone === "warn" ? "text-amber-500" : tone === "good" ? "text-primary" : "";
   return (
     <Card>
       <CardContent className="py-4">

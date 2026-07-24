@@ -39,9 +39,9 @@ function OrbCore() {
       {/* Inner solid core — dark warm base */}
       <Icosahedron args={[0.85, 6]}>
         <MeshDistortMaterial
-          color="#3a1a05"
-          emissive="#ff7a00"
-          emissiveIntensity={0.7}
+          color="#0B4650"
+          emissive="#0B4650"
+          emissiveIntensity={0.55}
           roughness={0.35}
           metalness={0.55}
           distort={0.42}
@@ -54,9 +54,9 @@ function OrbCore() {
         <MeshDistortMaterial
           wireframe
           transparent
-          color="#ffb066"
-          emissive="#ff7a00"
-          emissiveIntensity={1.2}
+          color="#0B4650"
+          emissive="#0B4650"
+          emissiveIntensity={1.0}
           distort={0.55}
           speed={2.1}
           opacity={0.9}
@@ -68,7 +68,7 @@ function OrbCore() {
         <icosahedronGeometry args={[1.28, 7]} />
         <pointsMaterial
           size={0.018}
-          color="#ffd18a"
+          color="#E6FF2B"
           transparent
           opacity={0.95}
           sizeAttenuation
@@ -100,12 +100,11 @@ export default function AiOrb() {
       frameloop="always"
       style={{ width: "100%", height: "100%", display: "block", background: "transparent" }}
     >
-      {/* Warm brand-orange key light */}
+      {/* Neon Lime key light + Deep Teal rim */}
       <ambientLight intensity={0.35} />
-      <pointLight position={[3, 2, 4]} intensity={2.2} color="#ff7a00" />
-      {/* Subtle purple + electric-blue rim accents (never rainbow) */}
-      <pointLight position={[-3, -1, 2]} intensity={0.9} color="#8b5cf6" />
-      <pointLight position={[0, -3, 3]} intensity={0.6} color="#3b82f6" />
+      <pointLight position={[3, 2, 4]} intensity={2.2} color="#E6FF2B" />
+      <pointLight position={[-3, -1, 2]} intensity={1.1} color="#0B4650" />
+      <pointLight position={[0, -3, 3]} intensity={0.6} color="#ffffff" />
 
       <Suspense fallback={null}>
         <OrbCore />

@@ -77,7 +77,7 @@ function loadGoogleMaps(): Promise<void> {
 
 const STATUS_COLOR: Record<NonNullable<MarkerData["status"]>, string> = {
   running: "#10B981",
-  idle: "#F59E0B",
+  idle: "#eab308",
   offline: "#6B7280",
 };
 
