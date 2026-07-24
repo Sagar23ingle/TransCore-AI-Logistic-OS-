@@ -203,6 +203,16 @@
     text-rendering: optimizeLegibility;
   }
 
+  html, body {
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+
+  /* Belt-and-braces: keep media inside their containers on mobile */
+  img, svg, video, canvas {
+    max-width: 100%;
+  }
+
   h1, h2, h3, h4, h5, h6, .font-display {
     font-family: var(--font-display);
     font-weight: 600;
