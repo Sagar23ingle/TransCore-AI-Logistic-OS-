@@ -185,9 +185,9 @@ function FuelPage() {
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-lg max-h-[92dvh] gap-3 overflow-hidden p-0 sm:p-6 flex flex-col">
+        <DialogContent className="max-w-lg max-h-[92dvh] gap-3 overflow-hidden p-0 sm:p-6 flex flex-col w-[calc(100vw-1rem)] sm:w-full">
           <DialogHeader className="px-4 pt-4 sm:px-0 sm:pt-0"><DialogTitle>Log fuel fill</DialogTitle></DialogHeader>
-          <form onSubmit={handleSubmit((v) => mut.mutate(v))} className="grid gap-3 sm:grid-cols-2 overflow-y-auto px-4 pb-4 sm:px-0 sm:pb-0 min-h-0 flex-1">
+          <form onSubmit={handleSubmit((v) => mut.mutate(v))} className="grid gap-3 sm:grid-cols-2 overflow-y-auto overflow-x-hidden px-4 pb-4 sm:px-0 sm:pb-0 min-h-0 flex-1 min-w-0">
             <F label="Vehicle *" full>
               <SearchableDropdown
                 placeholder="Select vehicle" ariaLabel="Vehicle"
