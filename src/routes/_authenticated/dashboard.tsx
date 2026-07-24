@@ -534,9 +534,6 @@ function AIInsightsSection({ daily, loading }: { daily?: DailyOps; loading: bool
         </Card>
       )}
 
-      <Suspense fallback={<Skeleton className="h-28 w-full rounded-2xl" />}>
-        <FleetInsightsCards />
-      </Suspense>
     </div>
   );
 }
