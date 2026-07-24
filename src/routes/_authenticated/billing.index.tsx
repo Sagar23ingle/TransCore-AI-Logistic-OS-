@@ -1,14 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery, queryOptions } from "@tanstack/react-query";
+import { useMutation, useQuery, queryOptions } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Check, FileText } from "lucide-react";
+import { Check, FileText, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { AppShell } from "@/components/layout/AppShell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { LoadingState } from "@/components/common/LoadingState";
 import { EmptyState } from "@/components/common/EmptyState";
-import { listPlans, listInvoices } from "@/lib/plans.functions";
+import { listPlans, listInvoices, requestPlanActivation } from "@/lib/plans.functions";
 import { formatDate, formatINR } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/billing/")({
@@ -19,8 +20,17 @@ export const Route = createFileRoute("/_authenticated/billing/")({
 function BillingPage() {
   const plansFn = useServerFn(listPlans);
   const invFn = useServerFn(listInvoices);
+  const activateFn = useServerFn(requestPlanActivation);
   const plans = useQuery(queryOptions({ queryKey: ["plans"], queryFn: () => plansFn() }));
   const invoices = useQuery(queryOptions({ queryKey: ["invoices"], queryFn: () => invFn() }));
+  const activate = useMutation({
+    mutationFn: (v: { plan_id: string; plan_name: string }) => activateFn({ data: v }),
+    onSuccess: (res, v) => {
+      if (res.ok) toast.success(`Request received — our team will activate ${v.plan_name} shortly.`);
+      else toast.error(res.error);
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Request failed"),
+  });
 
   return (
     <AppShell title="Billing & Plans" description="Choose a plan that fits your fleet. Invoices are itemised with GST.">
@@ -46,9 +56,20 @@ function BillingPage() {
                       <li key={f} className="flex items-center gap-2"><Check className="h-3.5 w-3.5 text-accent" /> {f}</li>
                     ))}
                   </ul>
-                  <Button disabled className="w-full" variant={p.id === "professional" ? "default" : "outline"}>
-                    {p.id === "free" ? "Current plan" : "Contact sales to activate"}
-                  </Button>
+                  {p.id === "free" ? (
+                    <Button disabled className="w-full" variant="outline">Current plan</Button>
+                  ) : (
+                    <Button
+                      className="w-full"
+                      variant={p.id === "professional" ? "default" : "outline"}
+                      disabled={activate.isPending}
+                      onClick={() => activate.mutate({ plan_id: p.id, plan_name: p.name })}
+                    >
+                      {activate.isPending && activate.variables?.plan_id === p.id
+                        ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Requesting…</>)
+                        : "Request activation"}
+                    </Button>
+                  )}
                 </CardContent>
               </Card>
             );
