@@ -9,19 +9,21 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground shadow hover:bg-primary/90",
+        default:
+          "bg-gradient-primary text-primary-foreground shadow-[var(--shadow-neo-sm)] hover:shadow-[var(--glow-primary)] active:translate-y-px active:shadow-[var(--shadow-neo-inset)] transition-[box-shadow,transform] duration-200",
         destructive: "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",
         outline:
-          "border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground",
-        secondary: "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80",
+          "border border-border/70 bg-card text-foreground shadow-[var(--shadow-neo-sm)] hover:border-primary/40 active:shadow-[var(--shadow-neo-inset)] active:translate-y-px transition-[box-shadow,transform,border-color] duration-200",
+        secondary:
+          "bg-secondary text-secondary-foreground shadow-[var(--shadow-neo-sm)] hover:brightness-110 active:shadow-[var(--shadow-neo-inset)] active:translate-y-px transition-[box-shadow,transform] duration-200",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {
-        default: "h-9 px-4 py-2",
-        sm: "h-8 rounded-md px-3 text-xs",
-        lg: "h-10 rounded-md px-8",
-        icon: "h-9 w-9",
+        default: "h-10 rounded-2xl px-5 py-2",
+        sm: "h-9 rounded-xl px-3.5 text-xs",
+        lg: "h-12 rounded-2xl px-8 text-[15px]",
+        icon: "h-10 w-10 rounded-xl",
       },
     },
     defaultVariants: {
