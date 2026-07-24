@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Truck, Map, Bell, MoreHorizontal, Plus } from "lucide-react";
+import { LayoutDashboard, Truck, Map, Bell, MoreHorizontal, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -25,14 +25,25 @@ export function MobileBottomBar() {
       <ul className="relative mx-auto grid h-16 max-w-md grid-cols-5 items-center rounded-[26px] border border-border/60 bg-card px-2 shadow-[var(--shadow-neo)]">
         {ITEMS.map((item, idx) => {
           if (!item) {
+            const aiActive = pathname === "/ai" || pathname.startsWith("/ai/");
             return (
               <li key="fab" className="relative">
                 <Link
-                  to="/trips"
-                  aria-label="New trip"
-                  className="absolute left-1/2 -top-7 -translate-x-1/2 grid h-14 w-14 place-items-center rounded-full bg-primary text-primary-foreground shadow-[var(--shadow-neo)] transition-transform active:scale-95"
+                  to="/ai"
+                  aria-label="Open AI Assistant"
+                  aria-current={aiActive ? "page" : undefined}
+                  className="group absolute left-1/2 -top-7 -translate-x-1/2 grid h-16 w-16 place-items-center rounded-full bg-gradient-primary text-primary-foreground shadow-[var(--glow-primary)] transition-transform active:scale-95"
                 >
-                  <Plus className="h-6 w-6" strokeWidth={2.5} />
+                  {/* Breathing pulse rings */}
+                  <span className="pointer-events-none absolute inset-0 rounded-full bg-primary/30 opacity-70 [animation:tc-breathe_2.4s_ease-in-out_infinite]" />
+                  <span className="pointer-events-none absolute inset-0 rounded-full bg-primary/20 opacity-60 [animation:tc-breathe_2.4s_ease-in-out_infinite] [animation-delay:0.9s]" />
+                  <span className="relative grid h-full w-full place-items-center rounded-full bg-gradient-primary shadow-[inset_0_2px_6px_rgba(255,255,255,0.35),inset_0_-3px_8px_rgba(0,0,0,0.25)]">
+                    <Sparkles className="h-6 w-6 [animation:tc-twinkle_2.2s_ease-in-out_infinite]" strokeWidth={2.25} />
+                  </span>
+                  <style>{`
+                    @keyframes tc-breathe { 0%,100% { transform: scale(1); opacity: 0.55 } 50% { transform: scale(1.28); opacity: 0 } }
+                    @keyframes tc-twinkle { 0%,100% { transform: rotate(0deg) scale(1); filter: drop-shadow(0 0 0 rgba(255,255,255,0)) } 50% { transform: rotate(8deg) scale(1.08); filter: drop-shadow(0 0 6px rgba(255,255,255,0.7)) } }
+                  `}</style>
                 </Link>
               </li>
             );

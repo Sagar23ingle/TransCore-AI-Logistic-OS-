@@ -26,12 +26,9 @@ import { GoogleMapView } from "@/components/tracking/GoogleMap";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { formatINR, formatNumber } from "@/lib/format";
 import {
-  Area, AreaChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
+  Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from "recharts";
 
-const FleetInsightsCards = lazy(() =>
-  import("@/components/dashboard/FleetInsightsCards").then((m) => ({ default: m.FleetInsightsCards })),
-);
 const FuelLevelGauges = lazy(() =>
   import("@/components/dashboard/FuelLevelGauges").then((m) => ({ default: m.FuelLevelGauges })),
 );
@@ -386,7 +383,8 @@ function FleetOverview({ daily, loading }: { daily?: DailyOps; loading: boolean 
             ) : !hasData ? (
               <EmptyChart message="No Data Available" hint="Log trips and fuel to see trends here." />
             ) : (
-              <div className="h-full w-full overflow-hidden rounded-xl border border-border/60 bg-gradient-to-br from-muted/30 via-background to-background p-1 shadow-inner">
+              <div className="flex h-full w-full flex-col overflow-hidden rounded-xl border border-border/60 bg-gradient-to-br from-muted/30 via-background to-background p-1 pb-2 shadow-inner">
+                <div className="flex-1 min-h-0">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={data} margin={{ top: 14, right: 14, left: 4, bottom: 4 }}>
                     <defs>
@@ -439,12 +437,13 @@ function FleetOverview({ daily, loading }: { daily?: DailyOps; loading: boolean 
                     />
                   </AreaChart>
                 </ResponsiveContainer>
+                </div>
+                <div className="mt-1.5 flex items-center justify-center gap-6 px-2 pb-1 text-[11px] font-medium text-muted-foreground">
+                  <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full ring-2 ring-background" style={{ background: revColor }} /> Revenue</span>
+                  <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full ring-2 ring-background" style={{ background: fuelColor }} /> Fuel</span>
+                </div>
               </div>
             )}
-            <div className="mt-2 flex items-center justify-center gap-5 text-[11px] font-medium text-muted-foreground">
-              <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full ring-2 ring-background" style={{ background: revColor }} /> Revenue</span>
-              <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full ring-2 ring-background" style={{ background: fuelColor }} /> Fuel</span>
-            </div>
           </TabsContent>
 
           <TabsContent value="map" className="mt-2">
@@ -535,9 +534,6 @@ function AIInsightsSection({ daily, loading }: { daily?: DailyOps; loading: bool
         </Card>
       )}
 
-      <Suspense fallback={<Skeleton className="h-28 w-full rounded-2xl" />}>
-        <FleetInsightsCards />
-      </Suspense>
     </div>
   );
 }
@@ -611,22 +607,13 @@ function StatusBadge({ status }: { status: string }) {
 
 /* ---------- Fuel Summary ---------- */
 function FuelSummary({ extras, loading }: { extras?: HomeExtras; loading: boolean }) {
-  const { theme } = useTheme();
-  const isDark = theme === "dark";
   const total = extras?.fuel.totalCost ?? 0;
   const budget = extras?.fuel.prevMonthTotal ?? 0;
   const rows = (["diesel", "petrol", "cng", "electric"] as const).map((k) => ({
     type: k,
     amount: extras?.fuel.byType.find((b) => b.type === k)?.amount ?? 0,
   }));
-  const trackColor = isDark ? "rgba(148,163,184,0.10)" : "rgba(148,163,184,0.18)";
-
-  // Segmented donut: each fuel type is its own gradient slice.
-  // If only one type has spend, that slice fills the entire ring.
   const segments = rows.filter((r) => r.amount > 0);
-  const chartData = segments.length > 0
-    ? segments.map((r) => ({ name: r.type, value: r.amount }))
-    : [{ name: "empty", value: 1 }];
   const hasBudget = budget > 0;
   const deltaPct = hasBudget ? Math.round(((total - budget) / budget) * 100) : 0;
   const overBudget = hasBudget && total > budget;
@@ -640,6 +627,16 @@ function FuelSummary({ extras, loading }: { extras?: HomeExtras; loading: boolea
     : overBudget
     ? "text-red-600 dark:text-red-400"
     : "text-emerald-600 dark:text-emerald-400";
+
+  // Budget-aware "fuel used" percentage — clamps to 100 for the pill visual,
+  // but the label shows the true number so overspend is obvious.
+  const budgetPct = hasBudget ? Math.round((total / budget) * 100) : 0;
+  const pillPct = Math.min(100, budgetPct);
+  const primaryFuel = segments.slice().sort((a, b) => b.amount - a.amount)[0];
+  const primaryLabel = primaryFuel ? FUEL_COLORS[primaryFuel.type].label : "—";
+  const primaryGrad = primaryFuel
+    ? `linear-gradient(90deg, ${FUEL_COLORS[primaryFuel.type].from}, ${FUEL_COLORS[primaryFuel.type].to})`
+    : "var(--gradient-primary)";
 
   return (
     <Card className="border-border/60">
@@ -656,91 +653,98 @@ function FuelSummary({ extras, loading }: { extras?: HomeExtras; loading: boolea
         {loading ? (
           <Skeleton className="h-40 w-full rounded-lg" />
         ) : (
-          <div className="flex items-center gap-3 sm:block">
-            <div className="relative h-28 w-28 shrink-0 sm:mx-auto sm:h-44 sm:w-44">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <defs>
-                    {(["diesel", "petrol", "cng", "electric", "other"] as const).map((k) => (
-                      <linearGradient key={k} id={`fs-${k}`} x1="0" y1="0" x2="1" y2="1">
-                        <stop offset="0%" stopColor={FUEL_COLORS[k].from} stopOpacity={0.98} />
-                        <stop offset="100%" stopColor={FUEL_COLORS[k].to} stopOpacity={0.98} />
-                      </linearGradient>
-                    ))}
-                  </defs>
-                  {/* Ring track behind segments so donut never looks empty. */}
-                  <Pie
-                    data={[{ name: "track", value: 1 }]} dataKey="value"
-                    innerRadius="65%" outerRadius="95%"
-                    stroke="none" isAnimationActive={false}
-                    fill={trackColor}
-                    startAngle={90} endAngle={-270}
+          <div className="space-y-3">
+            {/* iPhone-battery-style horizontal pill */}
+            <div>
+              <div className="mb-1.5 flex items-baseline justify-between">
+                <span className="text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">Fuel used</span>
+                <span className="num text-lg font-bold tabular-nums">
+                  {hasBudget ? `${budgetPct}%` : segments.length > 0 ? "—" : "0%"}
+                </span>
+              </div>
+              <div
+                className="relative h-8 w-full overflow-hidden rounded-full"
+                style={{ boxShadow: "var(--shadow-neo-inset)" }}
+                role="progressbar"
+                aria-valuenow={pillPct}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-label="Fuel budget used"
+              >
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${pillPct}%` }}
+                  transition={{ duration: 0.9, ease: "easeOut" }}
+                  className="absolute inset-y-0 left-0 rounded-full shadow-[inset_0_1px_0_rgba(255,255,255,0.35),inset_0_-2px_4px_rgba(0,0,0,0.25)]"
+                  style={{
+                    background: overBudget
+                      ? "linear-gradient(90deg, #ef4444, #f97316)"
+                      : primaryGrad,
+                  }}
+                />
+                {/* iOS-battery cap */}
+                <span className="pointer-events-none absolute right-1 top-1/2 h-4 w-1 -translate-y-1/2 rounded-full bg-foreground/20" />
+              </div>
+              <div className="mt-1.5 flex items-center justify-between text-[11px] text-muted-foreground">
+                <span>{hasBudget ? `of ${formatINR(budget)} budget` : "Set a baseline by logging last month's fuel"}</span>
+                {overBudget && <span className="font-semibold text-red-500">Over budget</span>}
+              </div>
+            </div>
+
+            {/* Total + primary fuel */}
+            <div className="grid grid-cols-2 gap-2">
+              <div className="rounded-2xl border border-border/60 bg-muted/20 p-3">
+                <div className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">Total fuel cost</div>
+                <div className="num mt-0.5 text-[18px] font-bold leading-tight sm:text-xl">{formatINR(total)}</div>
+              </div>
+              <div className="rounded-2xl border border-border/60 bg-muted/20 p-3">
+                <div className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">Fuel type</div>
+                <div className="mt-0.5 flex items-center gap-2 text-[15px] font-semibold leading-tight">
+                  <span
+                    className="h-2.5 w-2.5 rounded-full ring-2 ring-background"
+                    style={{ background: primaryGrad }}
                   />
-                  <Pie
-                    data={chartData} dataKey="value" nameKey="name"
-                    innerRadius="65%" outerRadius="95%"
-                    startAngle={90} endAngle={-270}
-                    stroke="none"
-                    cornerRadius={segments.length > 1 ? 4 : 8}
-                    paddingAngle={segments.length > 1 ? 2 : 0}
-                    animationDuration={900} animationBegin={100}
-                    isAnimationActive
-                  >
-                    {chartData.map((d, i) => (
-                      <Cell
-                        key={i}
-                        fill={d.name === "empty" ? trackColor : `url(#fs-${d.name})`}
-                      />
-                    ))}
-                  </Pie>
-                  {segments.length > 0 && (
-                    <Tooltip
-                      contentStyle={{
-                        background: isDark ? "rgba(15,15,20,0.92)" : "rgba(255,255,255,0.98)",
-                        border: "1px solid hsl(var(--border))",
-                        borderRadius: 12,
-                        fontSize: 12,
-                        padding: "6px 10px",
-                      }}
-                      formatter={(v: number, n: string) => [
-                        formatINR(v),
-                        FUEL_COLORS[n]?.label ?? n,
-                      ]}
-                    />
-                  )}
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center px-1 text-center">
-                <div className="text-[8px] uppercase tracking-[0.14em] text-muted-foreground sm:text-[10px]">Total spend</div>
-                <div className="num text-[14px] font-bold leading-tight tracking-tight sm:text-2xl">
-                  {formatINR(total)}
-                </div>
-                <div className="mt-0.5 text-[8px] text-muted-foreground sm:text-[10px]">
-                  {segments.length > 0
-                    ? `${segments.length} fuel type${segments.length === 1 ? "" : "s"}`
-                    : "No spend yet"}
+                  {primaryLabel}
                 </div>
               </div>
             </div>
-            <div className="flex-1 space-y-1.5 sm:mt-5">
-              {rows.map((r) => {
-                const pct = total > 0 ? Math.round((r.amount / total) * 100) : 0;
-                const c = FUEL_COLORS[r.type];
-                return (
-                  <div key={r.type} className="group flex items-center justify-between rounded-lg px-2 py-1.5 text-[11px] transition hover:bg-muted/40 sm:text-xs">
-                    <span className="flex items-center gap-2 text-foreground/80">
-                      <span
-                        className="h-2.5 w-2.5 rounded-full ring-2 ring-background"
-                        style={{ background: `linear-gradient(135deg, ${c.from}, ${c.to})` }}
-                      />
-                      <span className="font-medium">{c.label}</span>
-                      {r.amount > 0 && <span className="text-[10px] text-muted-foreground">{pct}%</span>}
-                    </span>
-                    <span className="num font-semibold tabular-nums">{formatINR(r.amount)}</span>
-                  </div>
-                );
-              })}
-            </div>
+
+            {/* Stacked per-type bars — only when >1 fuel type has spend */}
+            {segments.length > 1 && (
+              <div className="space-y-1.5">
+                {segments.map((r) => {
+                  const pct = total > 0 ? Math.round((r.amount / total) * 100) : 0;
+                  const c = FUEL_COLORS[r.type];
+                  return (
+                    <div key={r.type} className="space-y-1">
+                      <div className="flex items-center justify-between text-[11px]">
+                        <span className="flex items-center gap-1.5 font-medium">
+                          <span className="h-2 w-2 rounded-full" style={{ background: `linear-gradient(135deg, ${c.from}, ${c.to})` }} />
+                          {c.label}
+                          <span className="text-muted-foreground">· {pct}%</span>
+                        </span>
+                        <span className="num tabular-nums font-semibold">{formatINR(r.amount)}</span>
+                      </div>
+                      <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted/60">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${pct}%` }}
+                          transition={{ duration: 0.7, ease: "easeOut" }}
+                          className="h-full rounded-full"
+                          style={{ background: `linear-gradient(90deg, ${c.from}, ${c.to})` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {segments.length === 0 && (
+              <div className="rounded-2xl border border-dashed border-border/60 py-4 text-center text-[11px] text-muted-foreground">
+                No fuel spend logged yet.
+              </div>
+            )}
           </div>
         )}
       </CardContent>

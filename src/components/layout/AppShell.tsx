@@ -1,4 +1,6 @@
 import { type ReactNode } from "react";
+import { Link, useRouterState } from "@tanstack/react-router";
+import { ChevronLeft } from "lucide-react";
 import { Sidebar } from "./Sidebar";
 import { TopBar } from "./TopBar";
 import { MobileBottomBar } from "./MobileBottomBar";
@@ -11,12 +13,23 @@ interface AppShellProps {
 }
 
 export function AppShell({ children, title, description, action }: AppShellProps) {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const showBack = pathname !== "/dashboard" && pathname !== "/";
   return (
     <div className="min-h-dvh bg-background text-foreground">
       <Sidebar />
       <div className="lg:pl-64">
         <TopBar />
         <main className="mx-auto w-full max-w-[1400px] px-4 pt-3 pb-[calc(104px+env(safe-area-inset-bottom))] sm:px-6 sm:pt-5 lg:px-8 lg:pt-6 lg:pb-10">
+          {showBack && (
+            <Link
+              to="/dashboard"
+              aria-label="Back to dashboard"
+              className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-full bg-card text-foreground shadow-[var(--shadow-neo-sm)] transition-all duration-200 active:scale-95 active:shadow-[var(--shadow-neo-inset)] hover:shadow-[var(--glow-primary)] hover:text-primary lg:hidden"
+            >
+              <ChevronLeft className="h-5 w-5" strokeWidth={2.25} />
+            </Link>
+          )}
           {(title || action) && (
             <div className="mb-3 flex flex-col gap-2 sm:mb-6 sm:flex-row sm:items-end sm:justify-between sm:gap-3">
               <div className="min-w-0">
