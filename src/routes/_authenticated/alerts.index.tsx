@@ -28,7 +28,7 @@ const KIND_ICON: Record<string, { icon: React.ComponentType<{ className?: string
   permit_expiry: { icon: ScrollText, color: "text-violet-600 dark:text-violet-400" },
   fitness_expiry: { icon: ShieldCheck, color: "text-cyan-600 dark:text-cyan-400" },
   emi_due: { icon: Wallet, color: "text-rose-600 dark:text-rose-400" },
-  fuel: { icon: Fuel, color: "text-orange-600 dark:text-orange-400" },
+  fuel: { icon: Fuel, color: "text-amber-600 dark:text-amber-400" },
   license_expiry: { icon: IdCard, color: "text-indigo-600 dark:text-indigo-400" },
 };
 
