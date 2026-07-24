@@ -56,12 +56,12 @@ function OrbCore() {
 
   return (
     <group ref={group}>
-      {/* Luminous white/cyan energy core */}
+      {/* Luminous white core blending into electric cyan */}
       <Icosahedron ref={core} args={[0.78, 6]}>
         <MeshDistortMaterial
           color="#FFFFFF"
           emissive="#FFFFFF"
-          emissiveIntensity={1.15}
+          emissiveIntensity={1.2}
           roughness={0.2}
           metalness={0.1}
           transparent
@@ -70,14 +70,14 @@ function OrbCore() {
           speed={1.6}
         />
       </Icosahedron>
-      {/* Soft cyan halo layer around the core (radial gradient feel) */}
+      {/* Electric cyan halo around core (radial gradient feel) */}
       <Icosahedron args={[0.98, 5]}>
         <MeshDistortMaterial
-          color="#8BEFFF"
-          emissive="#8BEFFF"
-          emissiveIntensity={0.8}
+          color="#7DF9FF"
+          emissive="#7DF9FF"
+          emissiveIntensity={0.85}
           transparent
-          opacity={0.28}
+          opacity={0.3}
           roughness={0.3}
           metalness={0.2}
           distort={0.5}
@@ -85,38 +85,38 @@ function OrbCore() {
         />
       </Icosahedron>
 
-      {/* Wireframe mesh — Deep Teal lattice */}
+      {/* Wireframe mesh — bright cyan lattice */}
       <Icosahedron ref={wire} args={[1.12, 4]}>
         <MeshDistortMaterial
           wireframe
           transparent
-          color="#0B4650"
-          emissive="#0B4650"
-          emissiveIntensity={0.9}
+          color="#BDFBFF"
+          emissive="#BDFBFF"
+          emissiveIntensity={0.95}
           distort={0.55}
           speed={2.1}
-          opacity={0.85}
+          opacity={0.88}
         />
       </Icosahedron>
 
-      {/* Particle cloud — Neon Lime orbiting sparkles */}
+      {/* Particle cloud — crisp white orbiting sparkles */}
       <points ref={points}>
         <icosahedronGeometry args={[1.28, 7]} />
         <pointsMaterial
-          size={0.018}
-          color="#E6FF2B"
+          size={0.016}
+          color="#FFFFFF"
           transparent
-          opacity={0.95}
+          opacity={0.9}
           sizeAttenuation
           depthWrite={false}
           blending={THREE.AdditiveBlending}
         />
       </points>
 
-      {/* Soft cyan energy that travels across the mesh */}
-      <pointLight ref={cyanSweep} position={[2, 0, 1]} intensity={1.8} color="#8BEFFF" distance={6} decay={2} />
-      {/* Subtle brand lime pulse — off most of the time */}
-      <pointLight ref={limePulse} position={[0, 0, 1.2]} intensity={0} color="#E6FF2B" distance={4} decay={2} />
+      {/* Electric cyan energy sweeping across the mesh */}
+      <pointLight ref={cyanSweep} position={[2, 0, 1]} intensity={1.6} color="#00E5FF" distance={6} decay={2} />
+      {/* Kept ref for animation compatibility — unused pulse */}
+      <pointLight ref={limePulse} position={[0, 0, 1.2]} intensity={0} color="#7DF9FF" distance={4} decay={2} />
     </group>
   );
 }
@@ -142,10 +142,10 @@ export default function AiOrb() {
       style={{ width: "100%", height: "100%", display: "block", background: "transparent" }}
     >
       {/* White key + soft cyan rim, subtle lime accent */}
-      <ambientLight intensity={0.5} />
+      <ambientLight intensity={0.55} />
       <pointLight position={[3, 2, 4]} intensity={1.8} color="#FFFFFF" />
-      <pointLight position={[-3, -1, 2]} intensity={1.0} color="#8BEFFF" />
-      <pointLight position={[0, -3, 3]} intensity={0.35} color="#E6FF2B" />
+      <pointLight position={[-3, -1, 2]} intensity={1.1} color="#7DF9FF" />
+      <pointLight position={[0, -3, 3]} intensity={0.4} color="#00E5FF" />
 
       <Suspense fallback={null}>
         <OrbCore />
