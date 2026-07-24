@@ -10,11 +10,9 @@ import * as THREE from "three";
  * imported behind <ClientOnly> via React.lazy from AiOrbMount.
  */
 function OrbCore() {
-  const group = useRef<THREE.Group>(null!);
-  const wire = useRef<THREE.Mesh>(null!);
-  const inner = useRef<THREE.Mesh>(null!);
-  const points = useRef<THREE.Points>(null!);
-  const glow = useRef<THREE.Mesh>(null!);
+  const group = useRef<THREE.Group | null>(null);
+  const wire = useRef<THREE.Mesh | null>(null);
+  const points = useRef<THREE.Points | null>(null);
 
   useFrame(({ clock }) => {
     const t = clock.getElapsedTime();
@@ -35,22 +33,12 @@ function OrbCore() {
       wire.current.rotation.y = t * 0.22;
       wire.current.rotation.x = -t * 0.12;
     }
-    if (glow.current) {
-      const g = 1 + Math.sin(t * 0.9) * 0.05;
-      glow.current.scale.setScalar(g);
-    }
   });
 
   return (
     <group ref={group}>
-      {/* Soft outer volumetric halo */}
-      <mesh ref={glow}>
-        <sphereGeometry args={[1.9, 32, 32]} />
-        <meshBasicMaterial color="#ff7a00" transparent opacity={0.06} depthWrite={false} />
-      </mesh>
-
       {/* Inner solid core — dark warm base */}
-      <Icosahedron ref={inner} args={[0.85, 6]}>
+      <Icosahedron args={[0.85, 6]}>
         <MeshDistortMaterial
           color="#3a1a05"
           emissive="#ff7a00"
@@ -96,11 +84,21 @@ function OrbCore() {
 export default function AiOrb() {
   return (
     <Canvas
+      className="tc-ai-orb-canvas"
       dpr={[1, 1.75]}
-      gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
+      gl={{
+        antialias: true,
+        alpha: true,
+        premultipliedAlpha: true,
+        powerPreference: "high-performance",
+      }}
+      onCreated={({ gl, scene }) => {
+        gl.setClearColor(0x000000, 0);
+        scene.background = null;
+      }}
       camera={{ position: [0, 0, 3.6], fov: 45 }}
       frameloop="always"
-      style={{ width: "100%", height: "100%", background: "transparent" }}
+      style={{ width: "100%", height: "100%", display: "block", background: "transparent" }}
     >
       {/* Warm brand-orange key light */}
       <ambientLight intensity={0.35} />
