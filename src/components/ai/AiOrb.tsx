@@ -1,7 +1,6 @@
 import { useRef, Suspense } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Icosahedron, MeshDistortMaterial } from "@react-three/drei";
-import { EffectComposer, Bloom } from "@react-three/postprocessing";
 import * as THREE from "three";
 
 /**
@@ -94,6 +93,7 @@ export default function AiOrb() {
       }}
       onCreated={({ gl, scene }) => {
         gl.setClearColor(0x000000, 0);
+        gl.setClearAlpha(0);
         scene.background = null;
       }}
       camera={{ position: [0, 0, 3.6], fov: 45 }}
@@ -109,14 +109,6 @@ export default function AiOrb() {
 
       <Suspense fallback={null}>
         <OrbCore />
-        <EffectComposer multisampling={0} enableNormalPass={false}>
-          <Bloom
-            intensity={1.15}
-            luminanceThreshold={0.15}
-            luminanceSmoothing={0.4}
-            mipmapBlur
-          />
-        </EffectComposer>
       </Suspense>
     </Canvas>
   );
