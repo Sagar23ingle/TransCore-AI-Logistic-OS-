@@ -297,7 +297,7 @@ function KpiCard({ label, value, sub, icon: Icon, tone }: {
   tone: "primary" | "positive" | "negative" | "warn" | "info" | "neutral";
 }) {
   const toneRing = {
-    primary: "bg-primary/10 text-primary",
+    primary: "bg-gradient-primary text-primary-foreground shadow-[var(--glow-primary)]",
     positive: "bg-emerald-500/10 text-emerald-500",
     negative: "bg-destructive/10 text-destructive",
     warn: "bg-amber-500/10 text-amber-500",
@@ -305,16 +305,17 @@ function KpiCard({ label, value, sub, icon: Icon, tone }: {
     neutral: "bg-muted text-muted-foreground",
   }[tone];
   return (
-    <Card className="group relative h-full overflow-hidden rounded-2xl border-border/60 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5">
-      <CardContent className="p-3 sm:p-4">
+    <Card className="group relative h-full overflow-hidden rounded-[22px] border-border/40 bg-card shadow-[var(--shadow-neo)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[var(--glow-primary)]">
+      <div className="pointer-events-none absolute inset-0 rounded-[22px] bg-[var(--gradient-primary-soft)] opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+      <CardContent className="relative p-3.5 sm:p-4">
         <div className="flex items-center justify-between">
-          <span className="truncate text-[10px] font-medium uppercase tracking-wider text-muted-foreground sm:text-[11px]">{label}</span>
-          <div className={`grid h-7 w-7 shrink-0 place-items-center rounded-lg sm:h-8 sm:w-8 ${toneRing}`}>
-            <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+          <span className="truncate text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground sm:text-[11px]">{label}</span>
+          <div className={`grid h-8 w-8 shrink-0 place-items-center rounded-xl sm:h-9 sm:w-9 ${toneRing}`}>
+            <Icon className="h-4 w-4" />
           </div>
         </div>
-        <div className="num mt-2 text-xl font-semibold leading-tight tracking-tight sm:mt-3 sm:text-2xl">{value}</div>
-        <div className="mt-0.5 truncate text-[11px] text-muted-foreground sm:text-xs">{sub}</div>
+        <div className="num mt-3 text-[22px] font-semibold leading-none tracking-tight sm:mt-4 sm:text-2xl">{value}</div>
+        <div className="mt-1 truncate text-[11px] text-muted-foreground sm:text-xs">{sub}</div>
       </CardContent>
     </Card>
   );
