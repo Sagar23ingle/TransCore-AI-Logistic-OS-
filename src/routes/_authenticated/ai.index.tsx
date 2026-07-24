@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { askCompanyAi } from "@/lib/ai.functions";
+import { AiOrbEmptyState } from "@/components/ai/AiOrbMount";
 
 export const Route = createFileRoute("/_authenticated/ai/")({
   head: () => ({ meta: [{ title: "AI Assistant — TransCore AI" }, { name: "robots", content: "noindex" }] }),
@@ -515,7 +516,11 @@ function AiPage() {
       <div className="flex flex-col h-[calc(100dvh-14rem)] sm:h-[calc(100dvh-13rem)] gap-3 overflow-hidden">
         <Card className="flex-1 min-h-0 overflow-hidden">
           <CardContent ref={scrollRef} className="space-y-3 py-4 h-full overflow-y-auto">
-            {messages.length === 0 && <AiOrbEmptyState />}
+            {messages.length === 0 && (
+              <div className="h-full">
+                <AiOrbEmptyState visible={input.trim().length === 0} />
+              </div>
+            )}
             {messages.map((m, i) => (
               <div key={i} className={m.role === "user" ? "text-right" : ""}>
                 <div className={`inline-block max-w-[90%] whitespace-pre-wrap rounded-2xl px-3.5 py-2.5 text-sm ${
@@ -591,59 +596,6 @@ function AiPage() {
 
 /* Animated AI orb — glowing morphing gradient sphere with drifting blobs.
    Fades out automatically once the conversation starts. */
-function AiOrbEmptyState() {
-  return (
-    <div className="flex h-full flex-col items-center justify-center gap-5 px-6 py-8 text-center">
-      <div className="relative h-40 w-40 sm:h-52 sm:w-52">
-        {/* Ambient outer glow */}
-        <div
-          className="absolute inset-0 rounded-full blur-2xl opacity-70 [animation:tc-orb-glow_6s_ease-in-out_infinite]"
-          style={{ background: "radial-gradient(closest-side, rgba(255,122,0,0.55), rgba(168,85,247,0.45) 55%, rgba(59,130,246,0.35) 80%, transparent 100%)" }}
-        />
-        {/* Core sphere */}
-        <div
-          className="absolute inset-3 overflow-hidden rounded-full [animation:tc-orb-float_7s_ease-in-out_infinite]"
-          style={{
-            background: "conic-gradient(from 0deg, #FF7A1A, #ec4899, #a855f7, #3b82f6, #FF7A1A)",
-            filter: "saturate(1.15)",
-            boxShadow: "inset 0 0 40px rgba(255,255,255,0.25), inset 0 -30px 60px rgba(0,0,0,0.35), 0 20px 60px -10px rgba(255,122,0,0.35)",
-          }}
-        >
-          {/* Morphing blobs */}
-          <span
-            className="absolute -left-6 -top-6 h-24 w-24 rounded-full blur-2xl opacity-80 [animation:tc-orb-drift1_5s_ease-in-out_infinite]"
-            style={{ background: "radial-gradient(circle, #f472b6, transparent 70%)" }}
-          />
-          <span
-            className="absolute -right-4 top-6 h-20 w-20 rounded-full blur-2xl opacity-80 [animation:tc-orb-drift2_6.5s_ease-in-out_infinite]"
-            style={{ background: "radial-gradient(circle, #60a5fa, transparent 70%)" }}
-          />
-          <span
-            className="absolute bottom-2 left-6 h-16 w-16 rounded-full blur-2xl opacity-70 [animation:tc-orb-drift3_5.5s_ease-in-out_infinite]"
-            style={{ background: "radial-gradient(circle, #fbbf24, transparent 70%)" }}
-          />
-          {/* Specular highlight */}
-          <span
-            className="absolute left-6 top-4 h-10 w-10 rounded-full opacity-70 blur-md"
-            style={{ background: "radial-gradient(circle, rgba(255,255,255,0.9), transparent 65%)" }}
-          />
-        </div>
-        <style>{`
-          @keyframes tc-orb-glow  { 0%,100% { transform: scale(1); opacity: 0.7 } 50% { transform: scale(1.08); opacity: 0.95 } }
-          @keyframes tc-orb-float { 0%,100% { transform: translateY(0) rotate(0deg) } 50% { transform: translateY(-6px) rotate(180deg) } }
-          @keyframes tc-orb-drift1{ 0%,100% { transform: translate(0,0) scale(1) } 50% { transform: translate(14px, 12px) scale(1.15) } }
-          @keyframes tc-orb-drift2{ 0%,100% { transform: translate(0,0) scale(1) } 50% { transform: translate(-16px, 10px) scale(1.2) } }
-          @keyframes tc-orb-drift3{ 0%,100% { transform: translate(0,0) scale(1) } 50% { transform: translate(10px,-10px) scale(1.1) } }
-        `}</style>
-      </div>
-      <div className="space-y-1">
-        <div className="text-lg font-semibold tracking-tight sm:text-xl">Ask TransCore AI anything</div>
-        <div className="text-xs text-muted-foreground sm:text-sm">Trips · fuel · drivers · maintenance</div>
-      </div>
-    </div>
-  );
-}
-
 function VoiceWave() {
   return (
     <span className="inline-flex items-end gap-[2px] h-3">
