@@ -40,7 +40,7 @@ function ExecPage() {
   if (!activeCompanyId) {
     return <AppShell title="Executive dashboard"><EmptyState title="Select a company" description="Use the switcher in the top bar." /></AppShell>;
   }
-  if (q.isLoading || !q.data) return <AppShell title="Executive dashboard"><LoadingState /></AppShell>;
+  if (q.isLoading || !q.data) return <AppShell title="Executive dashboard"><LoadingState variant="page" /></AppShell>;
   const s = q.data;
 
   return (
