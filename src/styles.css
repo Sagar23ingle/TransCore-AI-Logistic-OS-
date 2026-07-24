@@ -224,6 +224,30 @@
     box-shadow: 0 1px 0 0 oklch(1 0 0 / 3%) inset;
   }
 
+  .tc-ai-orb-empty-state,
+  .tc-ai-orb-stage,
+  .tc-ai-orb-stage > div,
+  .tc-ai-orb-fallback,
+  .tc-ai-orb-canvas,
+  .tc-ai-orb-canvas canvas {
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    border: 0 !important;
+    outline: 0 !important;
+  }
+
+  .tc-ai-orb-stage {
+    overflow: visible !important;
+    isolation: auto;
+  }
+
+  .tc-ai-orb-canvas,
+  .tc-ai-orb-canvas canvas {
+    display: block;
+  }
+
   /* Neomorphic surface primitives */
   .neo {
     background: var(--color-card);

@@ -13,14 +13,13 @@ const AiOrb = lazy(() => import("./AiOrb"));
 export function AiOrbEmptyState({ visible = true }: { visible?: boolean }) {
   return (
     <div
-      className={`pointer-events-none flex h-full flex-col items-center justify-center gap-6 px-6 py-6 text-center transition-all duration-700 ease-out ${
+      className={`tc-ai-orb-empty-state pointer-events-none flex h-full flex-col items-center justify-center gap-6 px-6 py-6 text-center transition-all duration-700 ease-out ${
         visible ? "opacity-100 scale-100" : "opacity-0 scale-90"
       }`}
       aria-hidden={!visible}
     >
       <div
-        className="relative h-56 w-56 sm:h-64 sm:w-64"
-        style={{ background: "transparent" }}
+        className="tc-ai-orb-stage relative h-56 w-56 sm:h-64 sm:w-64"
       >
         <ClientOnly fallback={<OrbFallback />}>
           <Suspense fallback={<OrbFallback />}>
@@ -40,6 +39,6 @@ export function AiOrbEmptyState({ visible = true }: { visible?: boolean }) {
 
 function OrbFallback() {
   return (
-    <div className="absolute inset-0" aria-hidden="true" />
+    <div className="tc-ai-orb-fallback absolute inset-0" aria-hidden="true" />
   );
 }
