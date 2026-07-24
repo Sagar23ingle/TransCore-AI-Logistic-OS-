@@ -9,11 +9,15 @@ export const getDashboardStats = createServerFn({ method: "GET" })
     const now = new Date();
     const start = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
 
-    const [vehiclesR, driversR, tripsR, activeTripsR, expensesR, tripsMonthR] = await Promise.all([
+    // Use head+count queries for pure counters — avoids shipping every trip
+    // row over the wire just to derive totals. Revenue/expenses stay row
+    // queries because we need to sum amounts.
+    const [vehiclesR, driversR, totalTripsR, activeTripsR, completedTripsR, expensesR, tripsMonthR] = await Promise.all([
       supabase.from("vehicles").select("id, status", { count: "exact", head: false }).eq("owner_id", userId),
       supabase.from("drivers").select("id", { count: "exact", head: true }).eq("owner_id", userId),
-      supabase.from("trips").select("id, status, freight_amount, distance_km, actual_end", { count: "exact", head: false }).eq("owner_id", userId),
+      supabase.from("trips").select("id", { count: "exact", head: true }).eq("owner_id", userId),
       supabase.from("trips").select("id", { count: "exact", head: true }).eq("owner_id", userId).eq("status", "in_progress"),
+      supabase.from("trips").select("id", { count: "exact", head: true }).eq("owner_id", userId).eq("status", "completed"),
       supabase.from("expenses").select("amount, category, incurred_on").eq("owner_id", userId).gte("incurred_on", start.slice(0, 10)),
       supabase.from("trips").select("freight_amount, actual_end, distance_km").eq("owner_id", userId).eq("status", "completed").gte("actual_end", start),
     ]);
@@ -21,9 +25,9 @@ export const getDashboardStats = createServerFn({ method: "GET" })
     const totalVehicles = vehiclesR.count ?? vehiclesR.data?.length ?? 0;
     const activeVehicles = (vehiclesR.data ?? []).filter((v) => v.status === "active").length;
     const totalDrivers = driversR.count ?? 0;
-    const totalTrips = tripsR.count ?? 0;
+    const totalTrips = totalTripsR.count ?? 0;
     const activeTrips = activeTripsR.count ?? 0;
-    const completedTrips = (tripsR.data ?? []).filter((t) => t.status === "completed").length;
+    const completedTrips = completedTripsR.count ?? 0;
 
     const revenueMTD = (tripsMonthR.data ?? []).reduce((s, t) => s + (Number(t.freight_amount) || 0), 0);
     const distanceMTD = (tripsMonthR.data ?? []).reduce((s, t) => s + (Number(t.distance_km) || 0), 0);
