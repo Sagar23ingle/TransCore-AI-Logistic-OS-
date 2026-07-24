@@ -310,6 +310,56 @@
     animation: pulse-dot 1.2s ease-in-out infinite;
   }
 
+  /* ------- Premium neomorphic skeleton with shimmer ------- */
+  @keyframes tc-shimmer {
+    0%   { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+  @keyframes tc-skeleton-fade-in {
+    from { opacity: 0; transform: translateY(2px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .tc-skeleton {
+    position: relative;
+    overflow: hidden;
+    background-color: #ECECEC;
+    background-image: linear-gradient(
+      90deg,
+      transparent 0%,
+      #F7F7F7 45%,
+      rgba(255,255,255,0.9) 50%,
+      #F7F7F7 55%,
+      transparent 100%
+    );
+    background-size: 200% 100%;
+    background-repeat: no-repeat;
+    animation: tc-shimmer 1.4s linear infinite;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.03);
+  }
+  .dark .tc-skeleton {
+    background-color: #1A1E24;
+    background-image: linear-gradient(
+      90deg,
+      transparent 0%,
+      #2B313A 45%,
+      rgba(56,217,255,0.10) 50%,
+      #2B313A 55%,
+      transparent 100%
+    );
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);
+  }
+  .tc-skeleton-stroke {
+    stroke-dasharray: 4 6;
+    animation: tc-shimmer 1.6s linear infinite;
+  }
+  .tc-fade-in {
+    animation: tc-skeleton-fade-in 300ms ease-out both;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .tc-skeleton { animation: none; }
+    .tc-skeleton-stroke { animation: none; }
+  }
+
   /* Consistent, accessible focus ring across interactive elements */
   :focus-visible {
     outline: none;

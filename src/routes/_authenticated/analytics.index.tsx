@@ -21,7 +21,7 @@ function AnalyticsPage() {
   const profit = useQuery(queryOptions({ queryKey: ["profit-per-vehicle"], queryFn: () => profitFn() }));
   const fcast = useQuery(queryOptions({ queryKey: ["forecast"], queryFn: () => fcastFn() }));
 
-  if (profit.isLoading || fcast.isLoading) return <AppShell title="Analytics"><LoadingState /></AppShell>;
+  if (profit.isLoading || fcast.isLoading) return <AppShell title="Analytics"><LoadingState variant="page" /></AppShell>;
 
   const rows = profit.data ?? [];
   const isEmpty = rows.every((r) => r.trips === 0);

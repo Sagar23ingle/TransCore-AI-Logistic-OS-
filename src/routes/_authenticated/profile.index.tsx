@@ -299,10 +299,10 @@ function ProfilePage() {
 
   if (isLoading) {
     return (
-      <div className="mx-auto max-w-4xl space-y-4 p-4">
-        <div className="h-40 animate-pulse rounded-2xl bg-muted/40" />
-        <div className="h-64 animate-pulse rounded-2xl bg-muted/30" />
-        <div className="h-40 animate-pulse rounded-2xl bg-muted/30" />
+      <div className="tc-fade-in mx-auto max-w-4xl space-y-4 p-4">
+        <div className="tc-skeleton h-40 rounded-2xl" />
+        <div className="tc-skeleton h-64 rounded-2xl" />
+        <div className="tc-skeleton h-40 rounded-2xl" />
       </div>
     );
   }
