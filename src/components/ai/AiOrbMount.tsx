@@ -18,15 +18,10 @@ export function AiOrbEmptyState({ visible = true }: { visible?: boolean }) {
       }`}
       aria-hidden={!visible}
     >
-      <div className="relative h-56 w-56 sm:h-64 sm:w-64">
-        {/* Very subtle circular halo — depth only, no square/panel */}
-        <div
-          className="pointer-events-none absolute inset-4 rounded-full blur-3xl opacity-15"
-          style={{
-            background:
-              "radial-gradient(closest-side, rgba(255,122,0,0.9), rgba(255,122,0,0) 72%)",
-          }}
-        />
+      <div
+        className="relative h-56 w-56 sm:h-64 sm:w-64"
+        style={{ background: "transparent" }}
+      >
         <ClientOnly fallback={<OrbFallback />}>
           <Suspense fallback={<OrbFallback />}>
             <AiOrb />
@@ -45,6 +40,6 @@ export function AiOrbEmptyState({ visible = true }: { visible?: boolean }) {
 
 function OrbFallback() {
   return (
-    <div className="absolute inset-6 animate-pulse rounded-full bg-primary/15 blur-2xl" />
+    <div className="absolute inset-0" aria-hidden="true" />
   );
 }
