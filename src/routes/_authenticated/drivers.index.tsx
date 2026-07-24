@@ -52,9 +52,9 @@ function DriversPage() {
           {q.data.map((d) => {
             const initials = d.full_name.split(/\s+/).slice(0, 2).map(s => s[0]).join("").toUpperCase();
             return (
-              <Card key={d.id} className="list-perf rounded-2xl">
-                <CardContent className="p-3.5">
-                  <div className="flex items-center gap-3">
+              <Card key={d.id} className="list-perf rounded-2xl overflow-hidden">
+                <CardContent className="p-3.5 min-w-0">
+                  <div className="flex items-center gap-3 min-w-0">
                     <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-gradient-to-br from-primary/25 to-primary/10 text-sm font-semibold text-primary">
                       {initials || "?"}
                     </div>
