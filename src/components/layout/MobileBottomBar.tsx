@@ -1,9 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Truck, Map, Bell, MoreHorizontal, Sparkles } from "lucide-react";
-import { useState } from "react";
+import { LayoutDashboard, Truck, Map, Bell, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { SidebarInner } from "./Sidebar";
 
 const ITEMS = [
   { to: "/dashboard", label: "Home", icon: LayoutDashboard },
@@ -15,7 +12,6 @@ const ITEMS = [
 
 export function MobileBottomBar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const [moreOpen, setMoreOpen] = useState(false);
 
   return (
     <nav
@@ -75,26 +71,6 @@ export function MobileBottomBar() {
             </li>
           );
         })}
-        <li>
-          <Sheet open={moreOpen} onOpenChange={setMoreOpen}>
-            <SheetTrigger asChild>
-              <button
-                type="button"
-                className="relative mx-auto flex h-full w-full max-w-20 flex-col items-center justify-center gap-0.5 text-muted-foreground transition-colors hover:text-foreground"
-                aria-label="More navigation"
-              >
-                <span className="grid h-9 w-9 place-items-center rounded-full">
-                  <MoreHorizontal className="h-[22px] w-[22px]" strokeWidth={1.75} />
-                </span>
-                <span className="sr-only">More</span>
-              </button>
-            </SheetTrigger>
-            <SheetContent side="right" className="w-72 border-sidebar-border bg-sidebar p-0">
-              <SheetTitle className="sr-only">More navigation</SheetTitle>
-              <SidebarInner onNavigate={() => setMoreOpen(false)} />
-            </SheetContent>
-          </Sheet>
-        </li>
       </ul>
     </nav>
   );
