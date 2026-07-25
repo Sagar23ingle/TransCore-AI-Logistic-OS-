@@ -196,7 +196,6 @@ function KpiRow({ stats, daily, extras, loading }: {
     { label: "Total Fleet", value: stats ? formatNumber(stats.totalVehicles) : "0", sub: stats ? `${stats.activeVehicles} active` : "—", icon: Truck, tone: "primary" as const },
     { label: "Active Trips", value: stats ? formatNumber(stats.activeTrips) : "0", sub: stats ? `${stats.completedTrips} completed` : "—", icon: MapIcon, tone: "info" as const },
     { label: "Revenue (MTD)", value: stats ? formatINR(stats.revenueMTD) : "₹0", sub: daily ? deltaLabel(daily.periods.revenueMTD, daily.periods.revenuePrevMTD) : "—", icon: IndianRupee, tone: "positive" as const },
-    { label: "Fuel Efficiency", value: extras && extras.fuel.kmpl > 0 ? `${extras.fuel.kmpl} km/L` : "0 km/L", sub: "Fleet average", icon: Gauge, tone: "warn" as const },
     { label: "Alerts", value: daily ? formatNumber(daily.today.newAlerts) : "0", sub: daily && daily.today.overdueDocs > 0 ? `${daily.today.overdueDocs} overdue` : "All clear", icon: Bell, tone: (daily && daily.today.overdueDocs > 0 ? "negative" : "neutral") as "negative" | "neutral" },
   ];
 
