@@ -13,6 +13,7 @@ import { LoadingState } from "@/components/common/LoadingState";
 import { VehicleFormDialog } from "@/components/vehicles/VehicleFormDialog";
 import { deleteVehicle, listVehicles } from "@/lib/vehicles.functions";
 import { formatDate } from "@/lib/format";
+import { AnimatedList } from "@/components/ui/animated-list";
 import type { Tables } from "@/integrations/supabase/types";
 
 export const Route = createFileRoute("/_authenticated/vehicles/")({
@@ -60,7 +61,7 @@ function VehiclesPage() {
           action={<Button onClick={() => { setEditing(null); setOpen(true); }}><Plus className="mr-2 h-4 w-4" /> Add vehicle</Button>}
         />
       ) : (
-        <div className="grid gap-2.5 md:grid-cols-2 xl:grid-cols-3">
+        <AnimatedList>
           {q.data.map((v) => (
             <Card key={v.id} className="list-perf rounded-2xl overflow-hidden">
               <CardContent className="p-3.5 min-w-0">
@@ -104,7 +105,7 @@ function VehiclesPage() {
               </CardContent>
             </Card>
           ))}
-        </div>
+        </AnimatedList>
       )}
 
       <VehicleFormDialog
