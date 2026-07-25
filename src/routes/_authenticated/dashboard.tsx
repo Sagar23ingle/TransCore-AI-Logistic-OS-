@@ -89,7 +89,9 @@ function Dashboard() {
 
         <div className="grid gap-3 sm:gap-4 lg:grid-cols-3">
           <div className="lg:col-span-2">
-            <FleetOverview daily={daily.data} loading={daily.isLoading} />
+            <Suspense fallback={<Skeleton className="h-64 w-full rounded-2xl" />}>
+              <FleetOverview daily={daily.data} loading={daily.isLoading} />
+            </Suspense>
           </div>
           <FuelSummary extras={extras.data} loading={extras.isLoading} />
         </div>
