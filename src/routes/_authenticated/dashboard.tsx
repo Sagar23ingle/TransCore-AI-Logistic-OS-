@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, queryOptions, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { useProfile } from "@/hooks/use-profile";
 import { useAuth } from "@/hooks/use-auth";
 import { useTheme } from "@/hooks/use-theme";
@@ -200,84 +200,29 @@ function KpiRow({ stats, daily, extras, loading }: {
     { label: "Alerts", value: daily ? formatNumber(daily.today.newAlerts) : "0", sub: daily && daily.today.overdueDocs > 0 ? `${daily.today.overdueDocs} overdue` : "All clear", icon: Bell, tone: (daily && daily.today.overdueDocs > 0 ? "negative" : "neutral") as "negative" | "neutral" },
   ];
 
-  const scrollerRef = useRef<HTMLDivElement | null>(null);
-  const [progress, setProgress] = useState(0); // 0..(items.length - 1)
-
-  useEffect(() => {
-    const el = scrollerRef.current;
-    if (!el) return;
-    const update = () => {
-      const children = Array.from(el.children) as HTMLElement[];
-      if (children.length < 2) { setProgress(0); return; }
-      // Distance between consecutive card starts = card width + gap.
-      const step = children[1].offsetLeft - children[0].offsetLeft;
-      if (step <= 0) { setProgress(0); return; }
-      const raw = el.scrollLeft / step;
-      setProgress(Math.min(items.length - 1, Math.max(0, raw)));
-    };
-    update();
-    el.addEventListener("scroll", update, { passive: true });
-    window.addEventListener("resize", update);
-    return () => {
-      el.removeEventListener("scroll", update);
-      window.removeEventListener("resize", update);
-    };
-  }, [items.length]);
-
   if (loading) {
     return (
-      <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-px-6 px-6 py-2 sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-3 sm:overflow-visible sm:px-0 sm:py-0 lg:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         {Array.from({ length: 5 }).map((_, i) => (
-          <Skeleton key={i} className="h-24 w-36 shrink-0 snap-start rounded-2xl sm:h-28 sm:w-auto" />
+          <Skeleton key={i} className="h-24 w-full rounded-2xl sm:h-28" />
         ))}
       </div>
     );
   }
 
-  const activeDot = Math.round(progress);
-
   return (
-    <div>
-      <div
-        ref={scrollerRef}
-        className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-px-6 px-6 py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-3 sm:overflow-visible sm:px-0 sm:py-0 lg:grid-cols-5"
-      >
-        {items.map((k, i) => (
-          <motion.div
-            key={k.label}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.25, delay: i * 0.04, ease: "easeOut" }}
-            className="w-36 shrink-0 snap-start sm:w-auto sm:shrink"
-          >
-            <KpiCard {...k} />
-          </motion.div>
-        ))}
-      </div>
-      {/* Mobile-only swipe indicator */}
-      <div
-        className="mt-1.5 flex h-2 items-center justify-center gap-1.5 sm:hidden"
-        role="tablist"
-        aria-label="KPI cards pagination"
-      >
-        {items.map((k, i) => {
-          const distance = Math.min(1, Math.abs(progress - i));
-          const isActive = i === activeDot;
-          return (
-            <span
-              key={k.label}
-              role="tab"
-              aria-selected={isActive}
-              aria-label={k.label}
-              className="block h-1 rounded-full bg-primary transition-all duration-200 ease-out"
-              style={{
-                width: isActive ? 16 : 4,
-                opacity: 0.25 + (1 - distance) * 0.75,
-              }}
-            />
-          );
-        })}
-      </div>
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+      {items.map((k, i) => (
+        <motion.div
+          key={k.label}
+          initial={{ opacity: 0, y: 8, scale: 0.98 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.25, delay: i * 0.04, ease: "easeOut" }}
+          className="min-w-0"
+        >
+          <KpiCard {...k} />
+        </motion.div>
+      ))}
     </div>
   );
 }
