@@ -81,7 +81,7 @@ function ExpensesPage() {
           description="Log fuel, tolls, and maintenance to see spend broken down on your dashboard."
           action={<Button onClick={() => setOpen(true)}><Plus className="mr-2 h-4 w-4" /> Add expense</Button>} />
       ) : (
-        <div className="grid gap-2">
+        <AnimatedList>
           {q.data.map((e) => {
             const opt = CATEGORY_OPTIONS.find((c) => c.value === e.category);
             const Icon = opt?.icon ?? Receipt;
@@ -112,7 +112,7 @@ function ExpensesPage() {
               </Card>
             );
           })}
-        </div>
+        </AnimatedList>
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
