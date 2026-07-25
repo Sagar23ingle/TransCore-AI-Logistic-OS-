@@ -200,30 +200,6 @@ function KpiRow({ stats, daily, extras, loading }: {
     { label: "Alerts", value: daily ? formatNumber(daily.today.newAlerts) : "0", sub: daily && daily.today.overdueDocs > 0 ? `${daily.today.overdueDocs} overdue` : "All clear", icon: Bell, tone: (daily && daily.today.overdueDocs > 0 ? "negative" : "neutral") as "negative" | "neutral" },
   ];
 
-  const scrollerRef = useRef<HTMLDivElement | null>(null);
-  const [progress, setProgress] = useState(0); // 0..(items.length - 1)
-
-  useEffect(() => {
-    const el = scrollerRef.current;
-    if (!el) return;
-    const update = () => {
-      const children = Array.from(el.children) as HTMLElement[];
-      if (children.length < 2) { setProgress(0); return; }
-      // Distance between consecutive card starts = card width + gap.
-      const step = children[1].offsetLeft - children[0].offsetLeft;
-      if (step <= 0) { setProgress(0); return; }
-      const raw = el.scrollLeft / step;
-      setProgress(Math.min(items.length - 1, Math.max(0, raw)));
-    };
-    update();
-    el.addEventListener("scroll", update, { passive: true });
-    window.addEventListener("resize", update);
-    return () => {
-      el.removeEventListener("scroll", update);
-      window.removeEventListener("resize", update);
-    };
-  }, [items.length]);
-
   if (loading) {
     return (
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
