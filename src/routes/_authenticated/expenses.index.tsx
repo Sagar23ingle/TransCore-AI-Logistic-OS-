@@ -14,6 +14,7 @@ import { SelectCards, SearchableDropdown } from "@/components/ui/smart-select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/common/EmptyState";
+import { AnimatedList } from "@/components/ui/animated-list";
 import { LoadingState } from "@/components/common/LoadingState";
 import { deleteExpense, listExpenses, upsertExpense } from "@/lib/expenses.functions";
 import { listVehicles } from "@/lib/vehicles.functions";
@@ -81,7 +82,7 @@ function ExpensesPage() {
           description="Log fuel, tolls, and maintenance to see spend broken down on your dashboard."
           action={<Button onClick={() => setOpen(true)}><Plus className="mr-2 h-4 w-4" /> Add expense</Button>} />
       ) : (
-        <div className="grid gap-2">
+        <AnimatedList>
           {q.data.map((e) => {
             const opt = CATEGORY_OPTIONS.find((c) => c.value === e.category);
             const Icon = opt?.icon ?? Receipt;
@@ -112,7 +113,7 @@ function ExpensesPage() {
               </Card>
             );
           })}
-        </div>
+        </AnimatedList>
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>

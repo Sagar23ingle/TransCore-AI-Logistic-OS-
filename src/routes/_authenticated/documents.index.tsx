@@ -20,6 +20,7 @@ import { createDocument, deleteDocument, listDocuments, signDocumentUrl } from "
 import { listVehicles } from "@/lib/vehicles.functions";
 import { listDrivers } from "@/lib/drivers.functions";
 import { formatDate, daysUntil } from "@/lib/format";
+import { AnimatedList } from "@/components/ui/animated-list";
 
 export const Route = createFileRoute("/_authenticated/documents/")({
   head: () => ({ meta: [{ title: "Document Vault — TransCore AI" }, { name: "robots", content: "noindex" }] }),
@@ -129,7 +130,7 @@ function DocumentsPage() {
         <EmptyState icon={<FileText className="h-6 w-6" />} title="No documents yet"
           description="Upload the first document — we'll track expiry automatically." />
       ) : (
-        <div className="grid gap-2.5 md:grid-cols-2 xl:grid-cols-3">
+        <AnimatedList>
           {q.data.map((d) => {
             const days = daysUntil(d.expiry_date);
             const tone = days == null ? "" : days < 0 ? "text-destructive" : days <= 15 ? "text-warning" : "text-muted-foreground";
@@ -167,7 +168,7 @@ function DocumentsPage() {
               </Card>
             );
           })}
-        </div>
+        </AnimatedList>
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>

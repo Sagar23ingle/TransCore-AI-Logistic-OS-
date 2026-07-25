@@ -13,6 +13,7 @@ import { LoadingState } from "@/components/common/LoadingState";
 import { DriverFormDialog } from "@/components/drivers/DriverFormDialog";
 import { deleteDriver, listDrivers } from "@/lib/drivers.functions";
 import { formatDate } from "@/lib/format";
+import { AnimatedList } from "@/components/ui/animated-list";
 import type { Tables } from "@/integrations/supabase/types";
 
 export const Route = createFileRoute("/_authenticated/drivers/")({
@@ -48,7 +49,7 @@ function DriversPage() {
           action={<Button onClick={() => { setEditing(null); setOpen(true); }}><Plus className="mr-2 h-4 w-4" /> Add driver</Button>}
         />
       ) : (
-        <div className="grid gap-2.5 md:grid-cols-2 xl:grid-cols-3">
+        <AnimatedList>
           {q.data.map((d) => {
             const initials = d.full_name.split(/\s+/).slice(0, 2).map(s => s[0]).join("").toUpperCase();
             return (
@@ -80,7 +81,7 @@ function DriversPage() {
               </Card>
             );
           })}
-        </div>
+        </AnimatedList>
       )}
 
       <DriverFormDialog open={open} onOpenChange={setOpen} initial={editing ?? undefined} onSaved={() => qc.invalidateQueries({ queryKey: ["drivers"] })} />

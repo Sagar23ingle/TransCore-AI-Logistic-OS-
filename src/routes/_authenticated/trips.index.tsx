@@ -13,6 +13,7 @@ import { LoadingState } from "@/components/common/LoadingState";
 import { TripFormDialog } from "@/components/trips/TripFormDialog";
 import { deleteTrip, listTrips } from "@/lib/trips.functions";
 import { formatDateTime, formatINR, formatNumber } from "@/lib/format";
+import { AnimatedList } from "@/components/ui/animated-list";
 
 export const Route = createFileRoute("/_authenticated/trips/")({
   head: () => ({ meta: [{ title: "Trips — TransCore AI" }, { name: "robots", content: "noindex" }] }),
@@ -41,7 +42,7 @@ function TripsPage() {
           description="Create your first trip to start tracking revenue, expenses and distance."
           action={<Button onClick={() => { setEditing(null); setOpen(true); }}><Plus className="mr-2 h-4 w-4" /> New trip</Button>} />
       ) : (
-        <div className="grid gap-2.5">
+        <AnimatedList>
           {q.data.map((t) => (
             <Card key={t.id} className="list-perf rounded-2xl">
               <CardContent className="p-3.5">
@@ -73,7 +74,7 @@ function TripsPage() {
               </CardContent>
             </Card>
           ))}
-        </div>
+        </AnimatedList>
       )}
       <TripFormDialog open={open} onOpenChange={setOpen} initial={editing ?? undefined}
         onSaved={() => { qc.invalidateQueries({ queryKey: ["trips"] }); qc.invalidateQueries({ queryKey: ["dashboard-stats"] }); }} />
