@@ -15,6 +15,7 @@ import { LoadingState } from "@/components/common/LoadingState";
 import { dismissAlert, listAlerts, recomputeAlerts } from "@/lib/alerts.functions";
 import { formatDate } from "@/lib/format";
 import { usePushNotifications } from "@/hooks/use-push";
+import { AnimatedList } from "@/components/ui/animated-list";
 
 export const Route = createFileRoute("/_authenticated/alerts/")({
   head: () => ({ meta: [{ title: "Alerts — TransCore AI" }, { name: "robots", content: "noindex" }] }),
@@ -79,7 +80,7 @@ function AlertsPage() {
           description="We'll alert you 30, 15, 7, 3 and 0 days before any expiry, EMI or maintenance date."
         />
       ) : (
-        <div className="grid gap-2">
+        <AnimatedList>
           {q.data.map((a) => (
             <Card key={a.id}>
               <CardContent className="flex items-start justify-between gap-3 py-4">
@@ -102,7 +103,7 @@ function AlertsPage() {
               </CardContent>
             </Card>
           ))}
-        </div>
+        </AnimatedList>
       )}
     </AppShell>
   );

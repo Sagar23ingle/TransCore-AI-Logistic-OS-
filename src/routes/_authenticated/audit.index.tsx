@@ -13,6 +13,7 @@ import { EmptyState } from "@/components/common/EmptyState";
 import { LoadingState } from "@/components/common/LoadingState";
 import { listAudit, listAuditFilterOptions } from "@/lib/audit.functions";
 import { useCompanies } from "@/hooks/use-company";
+import { AnimatedList } from "@/components/ui/animated-list";
 
 export const Route = createFileRoute("/_authenticated/audit/")({
   head: () => ({ meta: [{ title: "Audit log — TransCore AI" }, { name: "robots", content: "noindex" }] }),
@@ -96,7 +97,7 @@ function AuditPage() {
           {grouped.map(([day, rows]) => (
             <div key={day}>
               <div className="mb-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">{day}</div>
-              <div className="space-y-1.5">
+              <AnimatedList>
                 {(rows ?? []).map((r) => {
                   const actor = r.actor_name || "System";
                   return (
@@ -112,7 +113,7 @@ function AuditPage() {
                     </Card>
                   );
                 })}
-              </div>
+              </AnimatedList>
             </div>
           ))}
           <div className="flex justify-between">
