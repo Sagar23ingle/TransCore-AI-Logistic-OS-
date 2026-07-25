@@ -14,6 +14,7 @@ import { SelectCards, SearchableDropdown } from "@/components/ui/smart-select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/common/EmptyState";
+import { AnimatedList } from "@/components/ui/animated-list";
 import { LoadingState } from "@/components/common/LoadingState";
 import { deleteExpense, listExpenses, upsertExpense } from "@/lib/expenses.functions";
 import { listVehicles } from "@/lib/vehicles.functions";
