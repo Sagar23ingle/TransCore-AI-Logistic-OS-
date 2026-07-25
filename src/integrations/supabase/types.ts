@@ -1774,6 +1774,7 @@ export type Database = {
         Returns: number
       }
       is_company_member: { Args: { _company: string }; Returns: boolean }
+      is_company_owner: { Args: { _company: string }; Returns: boolean }
       record_login_failure: {
         Args: {
           _email: string
