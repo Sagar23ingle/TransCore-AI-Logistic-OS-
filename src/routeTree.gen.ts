@@ -9,51 +9,42 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as McpRouteImport } from './routes/mcp'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
-import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
-import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
+import { Route as McpRouteImport } from './routes/mcp'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
-import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
-import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
-import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
-import { Route as AuthenticatedAiIndexRouteImport } from './routes/_authenticated/ai.index'
-import { Route as AuthenticatedAlertsIndexRouteImport } from './routes/_authenticated/alerts.index'
-import { Route as AuthenticatedAnalyticsIndexRouteImport } from './routes/_authenticated/analytics.index'
-import { Route as AuthenticatedAuditIndexRouteImport } from './routes/_authenticated/audit.index'
-import { Route as AuthenticatedBillingIndexRouteImport } from './routes/_authenticated/billing.index'
-import { Route as AuthenticatedDocumentsIndexRouteImport } from './routes/_authenticated/documents.index'
-import { Route as AuthenticatedDriversScoreboardIndexRouteImport } from './routes/_authenticated/drivers-scoreboard.index'
-import { Route as AuthenticatedDriversIndexRouteImport } from './routes/_authenticated/drivers.index'
-import { Route as AuthenticatedExecutiveIndexRouteImport } from './routes/_authenticated/executive.index'
-import { Route as AuthenticatedExpensesIndexRouteImport } from './routes/_authenticated/expenses.index'
-import { Route as AuthenticatedFuelIndexRouteImport } from './routes/_authenticated/fuel.index'
-import { Route as AuthenticatedMaintenanceIndexRouteImport } from './routes/_authenticated/maintenance.index'
-import { Route as AuthenticatedMarketplaceIndexRouteImport } from './routes/_authenticated/marketplace.index'
-import { Route as AuthenticatedMarketplaceTrucksRouteImport } from './routes/_authenticated/marketplace.trucks'
-import { Route as AuthenticatedProfileIndexRouteImport } from './routes/_authenticated/profile.index'
-import { Route as AuthenticatedSettingsIndexRouteImport } from './routes/_authenticated/settings.index'
-import { Route as AuthenticatedTrackingIndexRouteImport } from './routes/_authenticated/tracking.index'
-import { Route as AuthenticatedTripsIndexRouteImport } from './routes/_authenticated/trips.index'
+import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
+import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as AuthenticatedVehiclesIndexRouteImport } from './routes/_authenticated/vehicles.index'
-import { Route as ApiPublicGpsIngestRouteImport } from './routes/api/public/gps/ingest'
+import { Route as AuthenticatedTripsIndexRouteImport } from './routes/_authenticated/trips.index'
+import { Route as AuthenticatedTrackingIndexRouteImport } from './routes/_authenticated/tracking.index'
+import { Route as AuthenticatedSettingsIndexRouteImport } from './routes/_authenticated/settings.index'
+import { Route as AuthenticatedProfileIndexRouteImport } from './routes/_authenticated/profile.index'
+import { Route as AuthenticatedMarketplaceIndexRouteImport } from './routes/_authenticated/marketplace.index'
+import { Route as AuthenticatedMaintenanceIndexRouteImport } from './routes/_authenticated/maintenance.index'
+import { Route as AuthenticatedFuelIndexRouteImport } from './routes/_authenticated/fuel.index'
+import { Route as AuthenticatedExpensesIndexRouteImport } from './routes/_authenticated/expenses.index'
+import { Route as AuthenticatedExecutiveIndexRouteImport } from './routes/_authenticated/executive.index'
+import { Route as AuthenticatedDriversIndexRouteImport } from './routes/_authenticated/drivers.index'
+import { Route as AuthenticatedDriversScoreboardIndexRouteImport } from './routes/_authenticated/drivers-scoreboard.index'
+import { Route as AuthenticatedDocumentsIndexRouteImport } from './routes/_authenticated/documents.index'
+import { Route as AuthenticatedBillingIndexRouteImport } from './routes/_authenticated/billing.index'
+import { Route as AuthenticatedAuditIndexRouteImport } from './routes/_authenticated/audit.index'
+import { Route as AuthenticatedAnalyticsIndexRouteImport } from './routes/_authenticated/analytics.index'
+import { Route as AuthenticatedAlertsIndexRouteImport } from './routes/_authenticated/alerts.index'
+import { Route as AuthenticatedAiIndexRouteImport } from './routes/_authenticated/ai.index'
+import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
+import { Route as AuthenticatedMarketplaceTrucksRouteImport } from './routes/_authenticated/marketplace.trucks'
+import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
+import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as ApiPublicHooksComplianceScanRouteImport } from './routes/api/public/hooks/compliance-scan'
+import { Route as ApiPublicGpsIngestRouteImport } from './routes/api/public/gps/ingest'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
-  id: '/_authenticated',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthRoute = AuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const McpRoute = McpRouteImport.update({
@@ -61,129 +52,52 @@ const McpRoute = McpRouteImport.update({
   path: '/mcp',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
-  id: '/sitemap.xml',
-  path: '/sitemap.xml',
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const Char91DotmcpChar93ListToolsRoute =
-  Char91DotmcpChar93ListToolsRouteImport.update({
-    id: '/.mcp/list-tools',
-    path: '/.mcp/list-tools',
-    getParentRoute: () => rootRouteImport,
-  } as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const Char91DotwellKnownChar93OauthProtectedResourceRoute =
   Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
     id: '/.well-known/oauth-protected-resource',
     path: '/.well-known/oauth-protected-resource',
     getParentRoute: () => rootRouteImport,
   } as any)
-const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
-  id: '/.lovable/oauth/consent',
-  path: '/.lovable/oauth/consent',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const Char91DotmcpChar93InvokeToolToolRoute =
-  Char91DotmcpChar93InvokeToolToolRouteImport.update({
-    id: '/.mcp/invoke-tool/$tool',
-    path: '/.mcp/invoke-tool/$tool',
+const Char91DotmcpChar93ListToolsRoute =
+  Char91DotmcpChar93ListToolsRouteImport.update({
+    id: '/.mcp/list-tools',
+    path: '/.mcp/list-tools',
     getParentRoute: () => rootRouteImport,
   } as any)
-const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
-  id: '/admin/',
-  path: '/admin/',
+const AuthenticatedVehiclesIndexRoute =
+  AuthenticatedVehiclesIndexRouteImport.update({
+    id: '/vehicles/',
+    path: '/vehicles/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedTripsIndexRoute = AuthenticatedTripsIndexRouteImport.update({
+  id: '/trips/',
+  path: '/trips/',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedAiIndexRoute = AuthenticatedAiIndexRouteImport.update({
-  id: '/ai/',
-  path: '/ai/',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedAlertsIndexRoute =
-  AuthenticatedAlertsIndexRouteImport.update({
-    id: '/alerts/',
-    path: '/alerts/',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedAnalyticsIndexRoute =
-  AuthenticatedAnalyticsIndexRouteImport.update({
-    id: '/analytics/',
-    path: '/analytics/',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedAuditIndexRoute = AuthenticatedAuditIndexRouteImport.update({
-  id: '/audit/',
-  path: '/audit/',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedBillingIndexRoute =
-  AuthenticatedBillingIndexRouteImport.update({
-    id: '/billing/',
-    path: '/billing/',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedDocumentsIndexRoute =
-  AuthenticatedDocumentsIndexRouteImport.update({
-    id: '/documents/',
-    path: '/documents/',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedDriversScoreboardIndexRoute =
-  AuthenticatedDriversScoreboardIndexRouteImport.update({
-    id: '/drivers-scoreboard/',
-    path: '/drivers-scoreboard/',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedDriversIndexRoute =
-  AuthenticatedDriversIndexRouteImport.update({
-    id: '/drivers/',
-    path: '/drivers/',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedExecutiveIndexRoute =
-  AuthenticatedExecutiveIndexRouteImport.update({
-    id: '/executive/',
-    path: '/executive/',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedExpensesIndexRoute =
-  AuthenticatedExpensesIndexRouteImport.update({
-    id: '/expenses/',
-    path: '/expenses/',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedFuelIndexRoute = AuthenticatedFuelIndexRouteImport.update({
-  id: '/fuel/',
-  path: '/fuel/',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedMaintenanceIndexRoute =
-  AuthenticatedMaintenanceIndexRouteImport.update({
-    id: '/maintenance/',
-    path: '/maintenance/',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedMarketplaceIndexRoute =
-  AuthenticatedMarketplaceIndexRouteImport.update({
-    id: '/marketplace/',
-    path: '/marketplace/',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedMarketplaceTrucksRoute =
-  AuthenticatedMarketplaceTrucksRouteImport.update({
-    id: '/marketplace/trucks',
-    path: '/marketplace/trucks',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedProfileIndexRoute =
-  AuthenticatedProfileIndexRouteImport.update({
-    id: '/profile/',
-    path: '/profile/',
+const AuthenticatedTrackingIndexRoute =
+  AuthenticatedTrackingIndexRouteImport.update({
+    id: '/tracking/',
+    path: '/tracking/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedSettingsIndexRoute =
@@ -192,26 +106,107 @@ const AuthenticatedSettingsIndexRoute =
     path: '/settings/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedTrackingIndexRoute =
-  AuthenticatedTrackingIndexRouteImport.update({
-    id: '/tracking/',
-    path: '/tracking/',
+const AuthenticatedProfileIndexRoute =
+  AuthenticatedProfileIndexRouteImport.update({
+    id: '/profile/',
+    path: '/profile/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedTripsIndexRoute = AuthenticatedTripsIndexRouteImport.update({
-  id: '/trips/',
-  path: '/trips/',
+const AuthenticatedMarketplaceIndexRoute =
+  AuthenticatedMarketplaceIndexRouteImport.update({
+    id: '/marketplace/',
+    path: '/marketplace/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedMaintenanceIndexRoute =
+  AuthenticatedMaintenanceIndexRouteImport.update({
+    id: '/maintenance/',
+    path: '/maintenance/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedFuelIndexRoute = AuthenticatedFuelIndexRouteImport.update({
+  id: '/fuel/',
+  path: '/fuel/',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedVehiclesIndexRoute =
-  AuthenticatedVehiclesIndexRouteImport.update({
-    id: '/vehicles/',
-    path: '/vehicles/',
+const AuthenticatedExpensesIndexRoute =
+  AuthenticatedExpensesIndexRouteImport.update({
+    id: '/expenses/',
+    path: '/expenses/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const ApiPublicGpsIngestRoute = ApiPublicGpsIngestRouteImport.update({
-  id: '/api/public/gps/ingest',
-  path: '/api/public/gps/ingest',
+const AuthenticatedExecutiveIndexRoute =
+  AuthenticatedExecutiveIndexRouteImport.update({
+    id: '/executive/',
+    path: '/executive/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedDriversIndexRoute =
+  AuthenticatedDriversIndexRouteImport.update({
+    id: '/drivers/',
+    path: '/drivers/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedDriversScoreboardIndexRoute =
+  AuthenticatedDriversScoreboardIndexRouteImport.update({
+    id: '/drivers-scoreboard/',
+    path: '/drivers-scoreboard/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedDocumentsIndexRoute =
+  AuthenticatedDocumentsIndexRouteImport.update({
+    id: '/documents/',
+    path: '/documents/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedBillingIndexRoute =
+  AuthenticatedBillingIndexRouteImport.update({
+    id: '/billing/',
+    path: '/billing/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAuditIndexRoute = AuthenticatedAuditIndexRouteImport.update({
+  id: '/audit/',
+  path: '/audit/',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAnalyticsIndexRoute =
+  AuthenticatedAnalyticsIndexRouteImport.update({
+    id: '/analytics/',
+    path: '/analytics/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAlertsIndexRoute =
+  AuthenticatedAlertsIndexRouteImport.update({
+    id: '/alerts/',
+    path: '/alerts/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAiIndexRoute = AuthenticatedAiIndexRouteImport.update({
+  id: '/ai/',
+  path: '/ai/',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
+  id: '/admin/',
+  path: '/admin/',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedMarketplaceTrucksRoute =
+  AuthenticatedMarketplaceTrucksRouteImport.update({
+    id: '/marketplace/trucks',
+    path: '/marketplace/trucks',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const Char91DotmcpChar93InvokeToolToolRoute =
+  Char91DotmcpChar93InvokeToolToolRouteImport.update({
+    id: '/.mcp/invoke-tool/$tool',
+    path: '/.mcp/invoke-tool/$tool',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
+  id: '/.lovable/oauth/consent',
+  path: '/.lovable/oauth/consent',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicHooksComplianceScanRoute =
@@ -220,6 +215,11 @@ const ApiPublicHooksComplianceScanRoute =
     path: '/api/public/hooks/compliance-scan',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicGpsIngestRoute = ApiPublicGpsIngestRouteImport.update({
+  id: '/api/public/gps/ingest',
+  path: '/api/public/gps/ingest',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -441,25 +441,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated': {
-      id: '/_authenticated'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof AuthenticatedRouteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/mcp': {
@@ -469,25 +455,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof McpRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/sitemap.xml': {
-      id: '/sitemap.xml'
-      path: '/sitemap.xml'
-      fullPath: '/sitemap.xml'
-      preLoaderRoute: typeof SitemapDotxmlRouteImport
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/.mcp/list-tools': {
-      id: '/.mcp/list-tools'
-      path: '/.mcp/list-tools'
-      fullPath: '/.mcp/list-tools'
-      preLoaderRoute: typeof Char91DotmcpChar93ListToolsRouteImport
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/.well-known/oauth-protected-resource': {
-      id: '/.well-known/oauth-protected-resource'
-      path: '/.well-known/oauth-protected-resource'
-      fullPath: '/.well-known/oauth-protected-resource'
-      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/dashboard': {
@@ -497,144 +483,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/.lovable/oauth/consent': {
-      id: '/.lovable/oauth/consent'
-      path: '/.lovable/oauth/consent'
-      fullPath: '/.lovable/oauth/consent'
-      preLoaderRoute: typeof DotlovableOauthConsentRouteImport
+    '/.well-known/oauth-protected-resource': {
+      id: '/.well-known/oauth-protected-resource'
+      path: '/.well-known/oauth-protected-resource'
+      fullPath: '/.well-known/oauth-protected-resource'
+      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/.mcp/invoke-tool/$tool': {
-      id: '/.mcp/invoke-tool/$tool'
-      path: '/.mcp/invoke-tool/$tool'
-      fullPath: '/.mcp/invoke-tool/$tool'
-      preLoaderRoute: typeof Char91DotmcpChar93InvokeToolToolRouteImport
+    '/.mcp/list-tools': {
+      id: '/.mcp/list-tools'
+      path: '/.mcp/list-tools'
+      fullPath: '/.mcp/list-tools'
+      preLoaderRoute: typeof Char91DotmcpChar93ListToolsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/admin/': {
-      id: '/_authenticated/admin/'
-      path: '/admin'
-      fullPath: '/admin/'
-      preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/ai/': {
-      id: '/_authenticated/ai/'
-      path: '/ai'
-      fullPath: '/ai/'
-      preLoaderRoute: typeof AuthenticatedAiIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/alerts/': {
-      id: '/_authenticated/alerts/'
-      path: '/alerts'
-      fullPath: '/alerts/'
-      preLoaderRoute: typeof AuthenticatedAlertsIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/analytics/': {
-      id: '/_authenticated/analytics/'
-      path: '/analytics'
-      fullPath: '/analytics/'
-      preLoaderRoute: typeof AuthenticatedAnalyticsIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/audit/': {
-      id: '/_authenticated/audit/'
-      path: '/audit'
-      fullPath: '/audit/'
-      preLoaderRoute: typeof AuthenticatedAuditIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/billing/': {
-      id: '/_authenticated/billing/'
-      path: '/billing'
-      fullPath: '/billing/'
-      preLoaderRoute: typeof AuthenticatedBillingIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/documents/': {
-      id: '/_authenticated/documents/'
-      path: '/documents'
-      fullPath: '/documents/'
-      preLoaderRoute: typeof AuthenticatedDocumentsIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/drivers-scoreboard/': {
-      id: '/_authenticated/drivers-scoreboard/'
-      path: '/drivers-scoreboard'
-      fullPath: '/drivers-scoreboard/'
-      preLoaderRoute: typeof AuthenticatedDriversScoreboardIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/drivers/': {
-      id: '/_authenticated/drivers/'
-      path: '/drivers'
-      fullPath: '/drivers/'
-      preLoaderRoute: typeof AuthenticatedDriversIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/executive/': {
-      id: '/_authenticated/executive/'
-      path: '/executive'
-      fullPath: '/executive/'
-      preLoaderRoute: typeof AuthenticatedExecutiveIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/expenses/': {
-      id: '/_authenticated/expenses/'
-      path: '/expenses'
-      fullPath: '/expenses/'
-      preLoaderRoute: typeof AuthenticatedExpensesIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/fuel/': {
-      id: '/_authenticated/fuel/'
-      path: '/fuel'
-      fullPath: '/fuel/'
-      preLoaderRoute: typeof AuthenticatedFuelIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/maintenance/': {
-      id: '/_authenticated/maintenance/'
-      path: '/maintenance'
-      fullPath: '/maintenance/'
-      preLoaderRoute: typeof AuthenticatedMaintenanceIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/marketplace/': {
-      id: '/_authenticated/marketplace/'
-      path: '/marketplace'
-      fullPath: '/marketplace/'
-      preLoaderRoute: typeof AuthenticatedMarketplaceIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/marketplace/trucks': {
-      id: '/_authenticated/marketplace/trucks'
-      path: '/marketplace/trucks'
-      fullPath: '/marketplace/trucks'
-      preLoaderRoute: typeof AuthenticatedMarketplaceTrucksRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/profile/': {
-      id: '/_authenticated/profile/'
-      path: '/profile'
-      fullPath: '/profile/'
-      preLoaderRoute: typeof AuthenticatedProfileIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/settings/': {
-      id: '/_authenticated/settings/'
-      path: '/settings'
-      fullPath: '/settings/'
-      preLoaderRoute: typeof AuthenticatedSettingsIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/tracking/': {
-      id: '/_authenticated/tracking/'
-      path: '/tracking'
-      fullPath: '/tracking/'
-      preLoaderRoute: typeof AuthenticatedTrackingIndexRouteImport
+    '/_authenticated/vehicles/': {
+      id: '/_authenticated/vehicles/'
+      path: '/vehicles'
+      fullPath: '/vehicles/'
+      preLoaderRoute: typeof AuthenticatedVehiclesIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/trips/': {
@@ -644,18 +511,144 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTripsIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/vehicles/': {
-      id: '/_authenticated/vehicles/'
-      path: '/vehicles'
-      fullPath: '/vehicles/'
-      preLoaderRoute: typeof AuthenticatedVehiclesIndexRouteImport
+    '/_authenticated/tracking/': {
+      id: '/_authenticated/tracking/'
+      path: '/tracking'
+      fullPath: '/tracking/'
+      preLoaderRoute: typeof AuthenticatedTrackingIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/api/public/gps/ingest': {
-      id: '/api/public/gps/ingest'
-      path: '/api/public/gps/ingest'
-      fullPath: '/api/public/gps/ingest'
-      preLoaderRoute: typeof ApiPublicGpsIngestRouteImport
+    '/_authenticated/settings/': {
+      id: '/_authenticated/settings/'
+      path: '/settings'
+      fullPath: '/settings/'
+      preLoaderRoute: typeof AuthenticatedSettingsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/profile/': {
+      id: '/_authenticated/profile/'
+      path: '/profile'
+      fullPath: '/profile/'
+      preLoaderRoute: typeof AuthenticatedProfileIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/marketplace/': {
+      id: '/_authenticated/marketplace/'
+      path: '/marketplace'
+      fullPath: '/marketplace/'
+      preLoaderRoute: typeof AuthenticatedMarketplaceIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/maintenance/': {
+      id: '/_authenticated/maintenance/'
+      path: '/maintenance'
+      fullPath: '/maintenance/'
+      preLoaderRoute: typeof AuthenticatedMaintenanceIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/fuel/': {
+      id: '/_authenticated/fuel/'
+      path: '/fuel'
+      fullPath: '/fuel/'
+      preLoaderRoute: typeof AuthenticatedFuelIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/expenses/': {
+      id: '/_authenticated/expenses/'
+      path: '/expenses'
+      fullPath: '/expenses/'
+      preLoaderRoute: typeof AuthenticatedExpensesIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/executive/': {
+      id: '/_authenticated/executive/'
+      path: '/executive'
+      fullPath: '/executive/'
+      preLoaderRoute: typeof AuthenticatedExecutiveIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/drivers/': {
+      id: '/_authenticated/drivers/'
+      path: '/drivers'
+      fullPath: '/drivers/'
+      preLoaderRoute: typeof AuthenticatedDriversIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/drivers-scoreboard/': {
+      id: '/_authenticated/drivers-scoreboard/'
+      path: '/drivers-scoreboard'
+      fullPath: '/drivers-scoreboard/'
+      preLoaderRoute: typeof AuthenticatedDriversScoreboardIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/documents/': {
+      id: '/_authenticated/documents/'
+      path: '/documents'
+      fullPath: '/documents/'
+      preLoaderRoute: typeof AuthenticatedDocumentsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/billing/': {
+      id: '/_authenticated/billing/'
+      path: '/billing'
+      fullPath: '/billing/'
+      preLoaderRoute: typeof AuthenticatedBillingIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/audit/': {
+      id: '/_authenticated/audit/'
+      path: '/audit'
+      fullPath: '/audit/'
+      preLoaderRoute: typeof AuthenticatedAuditIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/analytics/': {
+      id: '/_authenticated/analytics/'
+      path: '/analytics'
+      fullPath: '/analytics/'
+      preLoaderRoute: typeof AuthenticatedAnalyticsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/alerts/': {
+      id: '/_authenticated/alerts/'
+      path: '/alerts'
+      fullPath: '/alerts/'
+      preLoaderRoute: typeof AuthenticatedAlertsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/ai/': {
+      id: '/_authenticated/ai/'
+      path: '/ai'
+      fullPath: '/ai/'
+      preLoaderRoute: typeof AuthenticatedAiIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/': {
+      id: '/_authenticated/admin/'
+      path: '/admin'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/marketplace/trucks': {
+      id: '/_authenticated/marketplace/trucks'
+      path: '/marketplace/trucks'
+      fullPath: '/marketplace/trucks'
+      preLoaderRoute: typeof AuthenticatedMarketplaceTrucksRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/.mcp/invoke-tool/$tool': {
+      id: '/.mcp/invoke-tool/$tool'
+      path: '/.mcp/invoke-tool/$tool'
+      fullPath: '/.mcp/invoke-tool/$tool'
+      preLoaderRoute: typeof Char91DotmcpChar93InvokeToolToolRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.lovable/oauth/consent': {
+      id: '/.lovable/oauth/consent'
+      path: '/.lovable/oauth/consent'
+      fullPath: '/.lovable/oauth/consent'
+      preLoaderRoute: typeof DotlovableOauthConsentRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/hooks/compliance-scan': {
@@ -663,6 +656,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/hooks/compliance-scan'
       fullPath: '/api/public/hooks/compliance-scan'
       preLoaderRoute: typeof ApiPublicHooksComplianceScanRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/gps/ingest': {
+      id: '/api/public/gps/ingest'
+      path: '/api/public/gps/ingest'
+      fullPath: '/api/public/gps/ingest'
+      preLoaderRoute: typeof ApiPublicGpsIngestRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -737,13 +737,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

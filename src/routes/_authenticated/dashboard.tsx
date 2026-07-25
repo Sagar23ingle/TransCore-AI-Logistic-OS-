@@ -1,10 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, queryOptions, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { useProfile } from "@/hooks/use-profile";
 import { useAuth } from "@/hooks/use-auth";
-import { useTheme } from "@/hooks/use-theme";
 import { motion } from "motion/react";
 import {
   Truck, Users, Map as MapIcon, IndianRupee, Fuel, AlertTriangle, Bell,
@@ -21,17 +20,12 @@ import { getDashboardStats } from "@/lib/dashboard.functions";
 import { getDailyOps, type DailyOps } from "@/lib/daily-ops.functions";
 import { getHomeExtras, type HomeExtras } from "@/lib/home.functions";
 import { recomputeAlerts } from "@/lib/alerts.functions";
-import { getFleetLive } from "@/lib/gps.functions";
-import { GoogleMapView } from "@/components/tracking/GoogleMap";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { formatINR, formatNumber } from "@/lib/format";
-import {
-  Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis,
-} from "recharts";
 
 const FuelLevelGauges = lazy(() =>
   import("@/components/dashboard/FuelLevelGauges").then((m) => ({ default: m.FuelLevelGauges })),
 );
+const FleetOverview = lazy(() => import("@/components/dashboard/FleetOverview"));
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — TransCore AI" }, { name: "robots", content: "noindex" }] }),
