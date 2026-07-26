@@ -507,25 +507,3 @@
   .tc-lift,
   .tc-icon-hover { animation: none !important; transition: none !important; transform: none !important; }
 }
-
-/* ============================================================
- * Global search bar — rotating conic border + listening pulse
- * ============================================================ */
-@property --tc-search-angle {
-  syntax: "<angle>";
-  inherits: false;
-  initial-value: 0deg;
-}
-@keyframes tc-search-rotate {
-  to { --tc-search-angle: 360deg; }
-}
-@keyframes tc-mic-ring {
-  0%   { box-shadow: 0 0 0 0 color-mix(in oklab, #38bdf8 55%, transparent); }
-  70%  { box-shadow: 0 0 0 14px color-mix(in oklab, #38bdf8 0%, transparent); }
-  100% { box-shadow: 0 0 0 0 color-mix(in oklab, #38bdf8 0%, transparent); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .tc-search-border,
-  .tc-mic-listening { animation: none !important; }
-}
-
