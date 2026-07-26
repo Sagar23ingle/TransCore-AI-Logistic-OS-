@@ -404,3 +404,106 @@
   scrollbar-width: none;
 }
 .scrollbar-none::-webkit-scrollbar { display: none; }
+
+/* ============================================================
+ * Premium micro-interactions
+ * - .tc-specular  : animated light sweep for buttons/cards
+ * - .tc-press     : tactile press scale + spring
+ * - .tc-lift      : hover elevation + subtle scale
+ * - .tc-glow      : soft primary glow on hover
+ * All GPU-friendly (transform + opacity only).
+ * ============================================================ */
+@keyframes tc-shine {
+  0%   { transform: translateX(-120%) skewX(-18deg); opacity: 0; }
+  15%  { opacity: 0.9; }
+  60%  { opacity: 0.9; }
+  100% { transform: translateX(220%) skewX(-18deg); opacity: 0; }
+}
+@keyframes tc-pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--primary) 35%, transparent); }
+  50%      { box-shadow: 0 0 0 8px color-mix(in oklab, var(--primary) 0%, transparent); }
+}
+
+@utility tc-specular {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.tc-specular::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    100deg,
+    transparent 20%,
+    color-mix(in oklab, white 55%, transparent) 45%,
+    color-mix(in oklab, white 30%, transparent) 55%,
+    transparent 80%
+  );
+  transform: translateX(-120%) skewX(-18deg);
+  opacity: 0;
+  transition: opacity 200ms ease;
+  z-index: 1;
+  mix-blend-mode: overlay;
+}
+.tc-specular:hover::before,
+.tc-specular:focus-visible::before {
+  animation: tc-shine 900ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+.dark .tc-specular::before {
+  background: linear-gradient(
+    100deg,
+    transparent 20%,
+    color-mix(in oklab, var(--primary) 55%, transparent) 45%,
+    color-mix(in oklab, white 20%, transparent) 55%,
+    transparent 80%
+  );
+  mix-blend-mode: screen;
+}
+
+@utility tc-press {
+  transition:
+    transform 180ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 220ms ease,
+    filter 200ms ease;
+  will-change: transform;
+}
+.tc-press:hover { transform: translateY(-1px) scale(1.02); }
+.tc-press:active { transform: translateY(0) scale(0.96); }
+
+@utility tc-lift {
+  transition:
+    transform 280ms cubic-bezier(0.22, 0.61, 0.36, 1),
+    box-shadow 280ms ease,
+    border-color 280ms ease;
+  will-change: transform;
+}
+.tc-lift:hover {
+  transform: translateY(-4px) scale(1.015);
+}
+
+@utility tc-glow-hover {
+  transition: box-shadow 260ms ease, filter 260ms ease;
+}
+.tc-glow-hover:hover {
+  box-shadow:
+    0 12px 32px -12px color-mix(in oklab, var(--primary) 45%, transparent),
+    0 0 0 1px color-mix(in oklab, var(--primary) 25%, transparent) inset;
+}
+
+@utility tc-icon-hover {
+  transition: transform 260ms cubic-bezier(0.34, 1.56, 0.64, 1), filter 260ms ease;
+}
+.group:hover .tc-icon-hover,
+.tc-icon-hover:hover {
+  transform: rotate(8deg) scale(1.12);
+  filter: drop-shadow(0 4px 10px color-mix(in oklab, var(--primary) 40%, transparent));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tc-specular::before,
+  .tc-press,
+  .tc-lift,
+  .tc-icon-hover { animation: none !important; transition: none !important; transform: none !important; }
+}
