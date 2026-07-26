@@ -21,6 +21,7 @@ import { getDailyOps, type DailyOps } from "@/lib/daily-ops.functions";
 import { getHomeExtras, type HomeExtras } from "@/lib/home.functions";
 import { recomputeAlerts } from "@/lib/alerts.functions";
 import { formatINR, formatNumber } from "@/lib/format";
+import { CountUp } from "@/components/ui/count-up";
 
 const FuelLevelGauges = lazy(() =>
   import("@/components/dashboard/FuelLevelGauges").then((m) => ({ default: m.FuelLevelGauges })),
@@ -242,16 +243,18 @@ function KpiCard({ label, value, sub, icon: Icon, tone }: {
     neutral: "bg-muted text-muted-foreground",
   }[tone];
   return (
-    <Card className="group relative h-full overflow-hidden rounded-[22px] border-border/40 bg-card shadow-[var(--shadow-neo)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[var(--glow-primary)]">
-      <div className="pointer-events-none absolute inset-0 rounded-[22px] bg-[var(--gradient-primary-soft)] opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+    <Card className="group tc-specular tc-lift tc-glow-hover relative h-full overflow-hidden rounded-[22px] border-border/40 bg-card shadow-[var(--shadow-neo)]">
+      <div className="pointer-events-none absolute inset-0 rounded-[22px] bg-[var(--gradient-primary-soft)] opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
       <CardContent className="relative p-3.5 sm:p-4">
         <div className="flex items-center justify-between">
           <span className="truncate text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground sm:text-[11px]">{label}</span>
-          <div className={`grid h-8 w-8 shrink-0 place-items-center rounded-xl sm:h-9 sm:w-9 ${toneRing}`}>
+          <div className={`tc-icon-hover grid h-8 w-8 shrink-0 place-items-center rounded-xl sm:h-9 sm:w-9 ${toneRing}`}>
             <Icon className="h-4 w-4" />
           </div>
         </div>
-        <div className="num mt-3 text-[22px] font-semibold leading-none tracking-tight sm:mt-4 sm:text-2xl">{value}</div>
+        <div className="num mt-3 text-[22px] font-semibold leading-none tracking-tight sm:mt-4 sm:text-2xl">
+          <CountUp value={value} duration={1200} />
+        </div>
         <div className="mt-1 truncate text-[11px] text-muted-foreground sm:text-xs">{sub}</div>
       </CardContent>
     </Card>
