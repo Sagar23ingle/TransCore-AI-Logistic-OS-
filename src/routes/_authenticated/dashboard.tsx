@@ -22,6 +22,7 @@ import { getHomeExtras, type HomeExtras } from "@/lib/home.functions";
 import { recomputeAlerts } from "@/lib/alerts.functions";
 import { formatINR, formatNumber } from "@/lib/format";
 import { CountUp } from "@/components/ui/count-up";
+import { GlassQuickActions } from "@/components/dashboard/GlassQuickActions";
 
 const FuelLevelGauges = lazy(() =>
   import("@/components/dashboard/FuelLevelGauges").then((m) => ({ default: m.FuelLevelGauges })),
@@ -585,38 +586,7 @@ function AlertsPanel({ daily, loading }: { daily?: DailyOps; loading: boolean })
 }
 
 /* ---------- Quick Actions ---------- */
-function QuickActions() {
-  const actions = [
-    { label: "Add Vehicle", href: "/vehicles", icon: Truck },
-    { label: "Add Driver", href: "/drivers", icon: Users },
-    { label: "Log Trip", href: "/trips", icon: MapIcon },
-    { label: "Fuel Entry", href: "/fuel", icon: Fuel },
-    { label: "Expenses", href: "/expenses", icon: Receipt },
-    { label: "Documents", href: "/documents", icon: FileText },
-    { label: "AI Chat", href: "/ai", icon: MessageSquare },
-  ] as const;
-  return (
-    <Card className="border-border/60">
-      <CardHeader className="p-3 pb-2 sm:p-6 sm:pb-3">
-        <CardTitle className="text-sm sm:text-base">Quick Actions</CardTitle>
-      </CardHeader>
-      <CardContent className="grid grid-cols-4 gap-1.5 p-3 pt-0 sm:grid-cols-2 sm:gap-2 sm:p-6 sm:pt-0">
-        {actions.map((a) => (
-          <Link
-            key={a.label}
-            to={a.href}
-            className="group flex flex-col items-center gap-1 rounded-2xl border border-border/60 bg-card p-2 text-center transition-all active:scale-95 hover:border-primary/40 hover:bg-primary/5 sm:flex-row sm:items-start sm:gap-2 sm:p-2.5 sm:text-left"
-          >
-            <div className="grid h-8 w-8 place-items-center rounded-xl bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-primary-foreground sm:h-8 sm:w-8 sm:rounded-lg">
-              <a.icon className="h-4 w-4" />
-            </div>
-            <span className="text-[10px] font-medium leading-tight sm:text-xs">{a.label}</span>
-          </Link>
-        ))}
-      </CardContent>
-    </Card>
-  );
-}
+const QuickActions = GlassQuickActions;
 
 /* ---------- Onboarding (new users) ---------- */
 function OnboardingCard({ daily }: { daily: DailyOps }) {
