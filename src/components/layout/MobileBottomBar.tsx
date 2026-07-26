@@ -72,14 +72,13 @@ function DockIcon({
 
   const [showLabel, setShowLabel] = useState(false);
   useEffect(() => {
-    if (isTouch) return;
     const unsub = size.on("change", (v) => setShowLabel(v > BASE + 8));
     return () => unsub();
-  }, [size, isTouch]);
+  }, [size]);
 
-  const finalSize = reduced ? BASE : isTouch ? (pressed ? MAX : BASE) : undefined;
+  const finalSize = reduced ? BASE : undefined;
   const style = finalSize != null ? { width: finalSize, height: finalSize } : { width: size, height: size };
-  const labelVisible = isTouch ? pressed : showLabel;
+  const labelVisible = showLabel || pressed;
 
   const Icon = item.icon;
   const aiActive = active && item.featured;
@@ -112,7 +111,6 @@ function DockIcon({
         aria-current={active ? "page" : undefined}
         onPointerDown={handlePointerDown}
         onPointerUp={onPressEnd}
-        onPointerLeave={onPressEnd}
         onPointerCancel={onPressEnd}
         onContextMenu={(e) => { if (isTouch) e.preventDefault(); }}
         onFocus={() => setShowLabel(true)}
