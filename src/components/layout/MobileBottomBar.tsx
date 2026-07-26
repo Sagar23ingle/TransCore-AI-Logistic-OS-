@@ -72,14 +72,13 @@ function DockIcon({
 
   const [showLabel, setShowLabel] = useState(false);
   useEffect(() => {
-    if (isTouch) return;
     const unsub = size.on("change", (v) => setShowLabel(v > BASE + 8));
     return () => unsub();
-  }, [size, isTouch]);
+  }, [size]);
 
-  const finalSize = reduced ? BASE : isTouch ? (pressed ? MAX : BASE) : undefined;
+  const finalSize = reduced ? BASE : undefined;
   const style = finalSize != null ? { width: finalSize, height: finalSize } : { width: size, height: size };
-  const labelVisible = isTouch ? pressed : showLabel;
+  const labelVisible = showLabel || pressed;
 
   const Icon = item.icon;
   const aiActive = active && item.featured;
@@ -112,7 +111,6 @@ function DockIcon({
         aria-current={active ? "page" : undefined}
         onPointerDown={handlePointerDown}
         onPointerUp={onPressEnd}
-        onPointerLeave={onPressEnd}
         onPointerCancel={onPressEnd}
         onContextMenu={(e) => { if (isTouch) e.preventDefault(); }}
         onFocus={() => setShowLabel(true)}
@@ -167,8 +165,11 @@ export function MobileBottomBar() {
     >
       <motion.ul
         role="toolbar"
-        onMouseMove={(e) => { if (!isTouch) mouseX.set(e.clientX); }}
-        onMouseLeave={() => mouseX.set(Number.POSITIVE_INFINITY)}
+        onPointerMove={(e) => mouseX.set(e.clientX)}
+        onPointerLeave={() => mouseX.set(Number.POSITIVE_INFINITY)}
+        onTouchStart={(e) => { const t = e.touches[0]; if (t) mouseX.set(t.clientX); }}
+        onTouchMove={(e) => { const t = e.touches[0]; if (t) mouseX.set(t.clientX); }}
+        onTouchEnd={() => mouseX.set(Number.POSITIVE_INFINITY)}
         animate={{ paddingLeft: isTouch && pressedTo ? 14 : 10, paddingRight: isTouch && pressedTo ? 14 : 10 }}
         transition={{ type: "spring", stiffness: 260, damping: 22 }}
         className="relative mx-auto flex h-[76px] w-fit max-w-[95vw] items-end justify-center gap-2 rounded-[24px] border border-border/60 bg-card/70 px-2.5 pb-2 pt-2 shadow-[var(--shadow-neo)] backdrop-blur-xl supports-[backdrop-filter]:bg-card/60"
