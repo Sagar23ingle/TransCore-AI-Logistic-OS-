@@ -1,17 +1,160 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { LayoutDashboard, Truck, Map, Bell, Sparkles } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import {
+  motion,
+  useMotionValue,
+  useSpring,
+  useTransform,
+  useReducedMotion,
+  type MotionValue,
+} from "motion/react";
 import { cn } from "@/lib/utils";
 
-const ITEMS = [
+type DockItem = {
+  to: string;
+  label: string;
+  icon: typeof LayoutDashboard;
+  featured?: boolean;
+};
+
+const ITEMS: DockItem[] = [
   { to: "/dashboard", label: "Home", icon: LayoutDashboard },
   { to: "/vehicles", label: "Fleet", icon: Truck },
-  null,
+  { to: "/ai", label: "AI", icon: Sparkles, featured: true },
   { to: "/trips", label: "Trips", icon: Map },
   { to: "/alerts", label: "Alerts", icon: Bell },
-] as const;
+];
+
+const BASE = 44;
+const MAX = 68;
+const RANGE = 130;
+
+function useIsTouch() {
+  const [touch, setTouch] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(hover: none), (pointer: coarse)");
+    const update = () => setTouch(mq.matches);
+    update();
+    mq.addEventListener?.("change", update);
+    return () => mq.removeEventListener?.("change", update);
+  }, []);
+  return touch;
+}
+
+function DockIcon({
+  item,
+  active,
+  mouseX,
+  isTouch,
+  pressed,
+  onPressStart,
+  onPressEnd,
+  reduced,
+}: {
+  item: DockItem;
+  active: boolean;
+  mouseX: MotionValue<number>;
+  isTouch: boolean;
+  pressed: boolean;
+  onPressStart: () => void;
+  onPressEnd: () => void;
+  reduced: boolean;
+}) {
+  const ref = useRef<HTMLLIElement>(null);
+
+  const distance = useTransform(mouseX, (val) => {
+    const rect = ref.current?.getBoundingClientRect() ?? { x: 0, width: BASE };
+    return val - rect.x - rect.width / 2;
+  });
+  const sizeTarget = useTransform(distance, [-RANGE, 0, RANGE], [BASE, MAX, BASE]);
+  const size = useSpring(sizeTarget, { mass: 0.1, stiffness: 170, damping: 14 });
+
+  const [showLabel, setShowLabel] = useState(false);
+  useEffect(() => {
+    if (isTouch) return;
+    const unsub = size.on("change", (v) => setShowLabel(v > BASE + 8));
+    return () => unsub();
+  }, [size, isTouch]);
+
+  const finalSize = reduced ? BASE : isTouch ? (pressed ? MAX : BASE) : undefined;
+  const style = finalSize != null ? { width: finalSize, height: finalSize } : { width: size, height: size };
+  const labelVisible = isTouch ? pressed : showLabel;
+
+  const Icon = item.icon;
+  const aiActive = active && item.featured;
+
+  const handlePointerDown = () => {
+    if (!isTouch) return;
+    onPressStart();
+    if ("vibrate" in navigator) {
+      try { navigator.vibrate?.(8); } catch { /* noop */ }
+    }
+  };
+
+  return (
+    <li ref={ref} className="relative flex items-end justify-center">
+      <motion.div
+        className="pointer-events-none absolute -top-9 select-none rounded-full border border-border/60 bg-card/90 px-2.5 py-1 text-[11px] font-medium text-foreground shadow-[var(--shadow-neo)] backdrop-blur"
+        initial={false}
+        animate={{
+          opacity: labelVisible ? 1 : 0,
+          y: labelVisible ? 0 : 6,
+          scale: labelVisible ? 1 : 0.9,
+        }}
+        transition={{ type: "spring", stiffness: 320, damping: 22 }}
+      >
+        {item.label}
+      </motion.div>
+      <Link
+        to={item.to}
+        aria-label={item.label}
+        aria-current={active ? "page" : undefined}
+        onPointerDown={handlePointerDown}
+        onPointerUp={onPressEnd}
+        onPointerLeave={onPressEnd}
+        onPointerCancel={onPressEnd}
+        onContextMenu={(e) => { if (isTouch) e.preventDefault(); }}
+        onFocus={() => setShowLabel(true)}
+        onBlur={() => setShowLabel(false)}
+        className="grid place-items-center outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-full"
+        style={{ willChange: "transform" }}
+      >
+        <motion.span
+          style={{ ...style, translateZ: 0 }}
+          className={cn(
+            "relative grid place-items-center rounded-full transition-colors",
+            "min-h-[48px] min-w-[48px]",
+            item.featured
+              ? "bg-gradient-primary text-primary-foreground shadow-[var(--glow-primary)]"
+              : active
+                ? "bg-primary/15 text-primary shadow-[0_0_16px_-2px_var(--color-primary)]"
+                : "text-muted-foreground",
+          )}
+        >
+          {item.featured && (
+            <>
+              <span className="pointer-events-none absolute inset-0 rounded-full bg-primary/25 opacity-70 [animation:tc-breathe_2.4s_ease-in-out_infinite]" />
+              <span className="pointer-events-none absolute inset-0 rounded-full bg-primary/20 opacity-60 [animation:tc-breathe_2.4s_ease-in-out_infinite] [animation-delay:0.9s]" />
+            </>
+          )}
+          <Icon
+            className={cn(item.featured ? "h-6 w-6" : "h-[22px] w-[22px]", "relative")}
+            strokeWidth={active || item.featured ? 2.25 : 1.75}
+          />
+          {aiActive && <span className="sr-only">Active</span>}
+        </motion.span>
+      </Link>
+    </li>
+  );
+}
 
 export function MobileBottomBar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const mouseX = useMotionValue(Number.POSITIVE_INFINITY);
+  const isTouch = useIsTouch();
+  const reduced = useReducedMotion() ?? false;
+  const [pressedTo, setPressedTo] = useState<string | null>(null);
 
   // Hide the bottom dashbar on the AI Assistant screen so the chat surface
   // owns the full viewport and the composer sits flush to the bottom.
@@ -22,60 +165,35 @@ export function MobileBottomBar() {
       aria-label="Primary"
       className="fixed inset-x-0 bottom-0 z-40 px-4 pb-[calc(env(safe-area-inset-bottom)+12px)] pt-2 lg:hidden"
     >
-      <ul className="relative mx-auto grid h-16 max-w-md grid-cols-5 items-center rounded-[26px] border border-border/60 bg-card px-2 shadow-[var(--shadow-neo)]">
-        {ITEMS.map((item, idx) => {
-          if (!item) {
-            const aiActive = pathname === "/ai" || pathname.startsWith("/ai/");
-            return (
-              <li key="fab" className="relative">
-                <Link
-                  to="/ai"
-                  aria-label="Open AI Assistant"
-                  aria-current={aiActive ? "page" : undefined}
-                  className="group absolute left-1/2 -top-7 -translate-x-1/2 grid h-16 w-16 place-items-center rounded-full bg-gradient-primary text-primary-foreground shadow-[var(--glow-primary)] transition-transform active:scale-95"
-                >
-                  {/* Breathing pulse rings */}
-                  <span className="pointer-events-none absolute inset-0 rounded-full bg-primary/30 opacity-70 [animation:tc-breathe_2.4s_ease-in-out_infinite]" />
-                  <span className="pointer-events-none absolute inset-0 rounded-full bg-primary/20 opacity-60 [animation:tc-breathe_2.4s_ease-in-out_infinite] [animation-delay:0.9s]" />
-                  <span className="relative grid h-full w-full place-items-center rounded-full bg-gradient-primary shadow-[inset_0_2px_6px_rgba(255,255,255,0.35),inset_0_-3px_8px_rgba(0,0,0,0.25)]">
-                    <Sparkles className="h-6 w-6 [animation:tc-twinkle_2.2s_ease-in-out_infinite]" strokeWidth={2.25} />
-                  </span>
-                  <style>{`
-                    @keyframes tc-breathe { 0%,100% { transform: scale(1); opacity: 0.55 } 50% { transform: scale(1.28); opacity: 0 } }
-                    @keyframes tc-twinkle { 0%,100% { transform: rotate(0deg) scale(1); filter: drop-shadow(0 0 0 rgba(255,255,255,0)) } 50% { transform: rotate(8deg) scale(1.08); filter: drop-shadow(0 0 6px rgba(255,255,255,0.7)) } }
-                  `}</style>
-                </Link>
-              </li>
-            );
-          }
-          const { to, label, icon: Icon } = item;
-          const active = pathname === to || pathname.startsWith(to + "/");
+      <motion.ul
+        role="toolbar"
+        onMouseMove={(e) => { if (!isTouch) mouseX.set(e.clientX); }}
+        onMouseLeave={() => mouseX.set(Number.POSITIVE_INFINITY)}
+        animate={{ paddingLeft: isTouch && pressedTo ? 14 : 10, paddingRight: isTouch && pressedTo ? 14 : 10 }}
+        transition={{ type: "spring", stiffness: 260, damping: 22 }}
+        className="relative mx-auto flex h-[76px] w-fit max-w-[95vw] items-end justify-center gap-2 rounded-[24px] border border-border/60 bg-card/70 px-2.5 pb-2 pt-2 shadow-[var(--shadow-neo)] backdrop-blur-xl supports-[backdrop-filter]:bg-card/60"
+        style={{ willChange: "transform" }}
+      >
+        {ITEMS.map((item) => {
+          const active = pathname === item.to || pathname.startsWith(item.to + "/");
           return (
-            <li key={to ?? idx}>
-              <Link
-                to={to}
-                aria-current={active ? "page" : undefined}
-                className={cn(
-                  "relative mx-auto flex h-full w-full max-w-20 flex-col items-center justify-center gap-0.5 text-[11px] font-medium transition-colors",
-                  active ? "text-foreground" : "text-muted-foreground/70 hover:text-foreground",
-                )}
-              >
-                <span
-                  className={cn(
-                    "grid h-9 w-9 place-items-center rounded-full transition-all",
-                    active
-                      ? "bg-primary/15 text-primary shadow-[0_0_16px_-2px_var(--color-primary)]"
-                      : "text-muted-foreground",
-                  )}
-                >
-                  <Icon className="h-[22px] w-[22px]" strokeWidth={active ? 2.25 : 1.75} />
-                </span>
-                <span className="sr-only">{label}</span>
-              </Link>
-            </li>
+            <DockIcon
+              key={item.to}
+              item={item}
+              active={active}
+              mouseX={mouseX}
+              isTouch={isTouch}
+              reduced={reduced}
+              pressed={pressedTo === item.to}
+              onPressStart={() => setPressedTo(item.to)}
+              onPressEnd={() => setPressedTo((p) => (p === item.to ? null : p))}
+            />
           );
         })}
-      </ul>
+      </motion.ul>
+      <style>{`
+        @keyframes tc-breathe { 0%,100% { transform: scale(1); opacity: 0.55 } 50% { transform: scale(1.28); opacity: 0 } }
+      `}</style>
     </nav>
   );
 }
