@@ -4,6 +4,7 @@ import { ChevronLeft } from "lucide-react";
 import { Sidebar } from "./Sidebar";
 import { TopBar } from "./TopBar";
 import { MobileBottomBar } from "./MobileBottomBar";
+import { GlobalSearchBar } from "@/components/search/GlobalSearchBar";
 
 interface AppShellProps {
   children: ReactNode;
@@ -25,7 +26,7 @@ export function AppShell({ children, title, description, action }: AppShellProps
           className={
             isAi
               ? "mx-auto flex w-full max-w-[1400px] flex-col overflow-hidden px-4 pt-3 pb-0 sm:px-6 sm:pt-5 lg:px-8 lg:pt-6 lg:pb-6"
-              : "mx-auto w-full max-w-[1400px] px-4 pt-3 pb-[calc(104px+env(safe-area-inset-bottom))] sm:px-6 sm:pt-5 lg:px-8 lg:pt-6 lg:pb-10"
+              : "mx-auto w-full max-w-[1400px] px-4 pt-3 pb-[calc(180px+env(safe-area-inset-bottom))] sm:px-6 sm:pt-5 lg:px-8 lg:pt-6 lg:pb-[160px]"
           }
         >
           {showBack && (
@@ -60,6 +61,7 @@ export function AppShell({ children, title, description, action }: AppShellProps
         </main>
       </div>
       <MobileBottomBar />
+      <GlobalSearchBar />
     </div>
   );
 }
