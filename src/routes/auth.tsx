@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { Truck } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
 import { attemptSignin, validateSignup } from "@/lib/auth.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -123,19 +122,18 @@ function AuthPage() {
     if (loading) return;
     setLoading(true);
     try {
-      const result = await lovable.auth.signInWithOAuth("google", {
-        // Same-origin public URL. We re-apply `next` after the session hydrates
-        // (goPostAuth in useEffect) — never send Google to a protected/consent URL.
-        redirect_uri: window.location.origin + "/auth" + (safe ? `?next=${encodeURIComponent(safe)}` : ""),
+      const redirectTo =
+        window.location.origin + "/auth" + (safe ? `?next=${encodeURIComponent(safe)}` : "");
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo },
       });
-      if (result.error) {
-        toast.error(result.error.message ?? "Google sign-in failed");
+      if (error) {
+        toast.error(error.message ?? "Google sign-in failed");
         setLoading(false);
         return;
       }
-      if (result.redirected) return;
-      if (safe) window.location.replace(safe);
-      else navigate({ to: "/dashboard", replace: true });
+      // Browser will redirect to Google; nothing else to do here.
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Google sign-in failed");
       setLoading(false);
