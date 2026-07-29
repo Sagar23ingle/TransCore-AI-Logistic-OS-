@@ -232,30 +232,32 @@ export const attemptSignin = createServerFn({ method: "POST" })
     }
     const email = data.data.email;
 
-    // Layer 1 — per-IP throttle (fails closed on RPC error).
-    try {
-      const { data: allowed } = await supabaseAdmin.rpc("check_rate_limit", {
-        _key: `login_ip:${ip}`,
-        _max: IP_MAX,
-        _window_seconds: IP_WINDOW_SEC,
-      });
-      if (allowed === false) {
-        await logAuthReject({
-          action: "auth.signin.reject",
-          email,
-          reasons: ["ip_rate_limited"],
-        });
-        throw new Error(GENERIC_SIGNIN_ERROR);
-      }
-    } catch (err) {
-      if (err instanceof Error && err.message === GENERIC_SIGNIN_ERROR) throw err;
-      console.error("[attemptSignin] rate-limit check failed", err);
-    }
+    // Run pre-flight security checks in parallel to shave a round-trip.
+    const [ipCheck, lockCheck] = await Promise.all([
+      supabaseAdmin
+        .rpc("check_rate_limit", {
+          _key: `login_ip:${ip}`,
+          _max: IP_MAX,
+          _window_seconds: IP_WINDOW_SEC,
+        })
+        .then((r) => r, (err) => ({ data: null, error: err })),
+      supabaseAdmin
+        .rpc("get_login_lock", { _email: email })
+        .maybeSingle<{ fail_count: number; locked_until: string | null }>()
+        .then((r) => r, (err) => ({ data: null, error: err })),
+    ]);
 
-    // Layer 2a — is the account currently locked?
-    const { data: lockRow } = await supabaseAdmin
-      .rpc("get_login_lock", { _email: email })
-      .maybeSingle<{ fail_count: number; locked_until: string | null }>();
+    if (ipCheck && "data" in ipCheck && ipCheck.data === false) {
+      await logAuthReject({
+        action: "auth.signin.reject",
+        email,
+        reasons: ["ip_rate_limited"],
+      });
+      throw new Error(GENERIC_SIGNIN_ERROR);
+    }
+    const lockRow = (lockCheck && "data" in lockCheck ? lockCheck.data : null) as
+      | { fail_count: number; locked_until: string | null }
+      | null;
     if (lockRow?.locked_until && new Date(lockRow.locked_until) > new Date()) {
       await logAuthReject({
         action: "auth.signin.reject",
@@ -310,8 +312,12 @@ export const attemptSignin = createServerFn({ method: "POST" })
       throw new Error(GENERIC_SIGNIN_ERROR);
     }
 
-    // Success — reset the counter and return tokens for the browser to persist.
-    await supabaseAdmin.rpc("reset_login_failures", { _email: email });
+    // Success — reset the counter (fire-and-forget; don't block the response)
+    // and return tokens for the browser to persist.
+    void supabaseAdmin.rpc("reset_login_failures", { _email: email }).then(
+      () => {},
+      (err) => console.error("[reset_login_failures]", err),
+    );
     return {
       access_token: signInData.session.access_token,
       refresh_token: signInData.session.refresh_token,

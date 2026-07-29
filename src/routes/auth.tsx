@@ -77,8 +77,11 @@ function AuthPage() {
       });
       if (error) throw new Error("Incorrect email or password");
       toast.success("Welcome back");
-      // onAuthStateChange handles navigation once the session is persisted,
-      // which avoids the _authenticated guard racing an unpersisted session.
+      // setSession has already persisted the session to localStorage
+      // synchronously by the time it resolves, so we can navigate right
+      // away without waiting for the onAuthStateChange event to fire.
+      if (safe) window.location.replace(safe);
+      else navigate({ to: "/dashboard", replace: true });
     } catch (err) {
       // Never surface the underlying reason — the server already normalised
       // it to a single generic string.
