@@ -132,13 +132,13 @@ function AuthPage() {
       });
       if (result.redirected) return;
       if (result.error) {
-        toast.error(result.error instanceof Error ? result.error.message : "Google sign-in failed");
+        toast.error(friendlyGoogleError(result.error));
         setLoading(false);
         return;
       }
       // Session set by helper; onAuthStateChange will navigate.
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Google sign-in failed");
+      toast.error(friendlyGoogleError(err));
       setLoading(false);
     }
   }
