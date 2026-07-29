@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Truck } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable";
 import { attemptSignin, validateSignup } from "@/lib/auth.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -122,18 +123,20 @@ function AuthPage() {
     if (loading) return;
     setLoading(true);
     try {
-      const redirectTo =
-        window.location.origin + "/auth" + (safe ? `?next=${encodeURIComponent(safe)}` : "");
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: { redirectTo },
+      if (safe) {
+        try { sessionStorage.setItem("tc:next", safe); } catch { /* ignore */ }
+      }
+      const result = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: window.location.origin + "/auth",
+        extraParams: { prompt: "select_account" },
       });
-      if (error) {
-        toast.error(error.message ?? "Google sign-in failed");
+      if (result.redirected) return;
+      if (result.error) {
+        toast.error(result.error instanceof Error ? result.error.message : "Google sign-in failed");
         setLoading(false);
         return;
       }
-      // Browser will redirect to Google; nothing else to do here.
+      // Session set by helper; onAuthStateChange will navigate.
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Google sign-in failed");
       setLoading(false);
