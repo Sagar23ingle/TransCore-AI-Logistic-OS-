@@ -234,3 +234,37 @@ function Separator() {
     </div>
   );
 }
+
+function friendlyGoogleError(err: unknown): string {
+  const raw = err instanceof Error ? err.message : typeof err === "string" ? err : "";
+  const m = raw.toLowerCase();
+  if (!m) return "Google sign-in failed. Please try again.";
+  if (m.includes("popup") && (m.includes("closed") || m.includes("close"))) {
+    return "Sign-in window closed before finishing. Please try again.";
+  }
+  if (m.includes("popup") && m.includes("block")) {
+    return "Your browser blocked the Google popup. Allow popups for this site and retry.";
+  }
+  if (m.includes("cancel") || m.includes("aborted") || m.includes("denied")) {
+    return "Google sign-in was cancelled.";
+  }
+  if (m.includes("network") || m.includes("failed to fetch") || m.includes("timeout")) {
+    return "Network problem reaching Google. Check your connection and try again.";
+  }
+  if (m.includes("unsupported provider") || m.includes("provider is not enabled") || m.includes("not enabled")) {
+    return "Google sign-in isn't enabled yet. Please contact support.";
+  }
+  if (m.includes("redirect") && m.includes("uri")) {
+    return "Google sign-in misconfigured (redirect URI). Please contact support.";
+  }
+  if (m.includes("invalid_client") || m.includes("client id")) {
+    return "Google sign-in misconfigured. Please contact support.";
+  }
+  if (m.includes("access_denied")) {
+    return "You declined access to your Google account.";
+  }
+  if (m.includes("rate") && m.includes("limit")) {
+    return "Too many attempts. Please wait a moment and try again.";
+  }
+  return "Google sign-in failed. Please try again.";
+}
