@@ -58,6 +58,8 @@ export type ComputedRoute = {
   toll_currency: string | null;
   has_tolls: boolean;
   summary: string;
+  /** True when this same route is also Google's most fuel-efficient option. */
+  also_fuel_efficient: boolean;
 };
 
 type RouteApiRoute = {
@@ -73,7 +75,7 @@ type RouteApiRoute = {
   };
 };
 
-function parseRoute(r: RouteApiRoute, kind: ComputedRoute["kind"]): ComputedRoute {
+function parseRoute(r: RouteApiRoute, kind: ComputedRoute["kind"], alsoFuelEfficient: boolean): ComputedRoute {
   const price = r.travelAdvisory?.tollInfo?.estimatedPrice?.[0];
   const toll = price
     ? Number(price.units ?? 0) + (price.nanos ?? 0) / 1e9
@@ -87,6 +89,7 @@ function parseRoute(r: RouteApiRoute, kind: ComputedRoute["kind"]): ComputedRout
     toll_currency: price?.currencyCode ?? null,
     has_tolls: Boolean(r.travelAdvisory?.tollInfo),
     summary: r.description ?? "",
+    also_fuel_efficient: alsoFuelEfficient,
   };
 }
 
@@ -131,11 +134,11 @@ export async function computeRoutes(params: {
   const out: ComputedRoute[] = [];
   for (const r of routes) {
     const labels = r.routeLabels ?? [];
-    const kind: ComputedRoute["kind"] = labels.includes("FUEL_EFFICIENT")
-      ? "fuel_efficient"
-      : "fastest";
+    const isEco = labels.includes("FUEL_EFFICIENT");
+    const isDefault = labels.includes("DEFAULT_ROUTE");
+    const kind: ComputedRoute["kind"] = isEco && !isDefault ? "fuel_efficient" : "fastest";
     if (out.some((existing) => existing.kind === kind)) continue;
-    out.push(parseRoute(r, kind));
+    out.push(parseRoute(r, kind, isEco));
   }
   return out;
 }
