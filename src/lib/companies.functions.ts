@@ -7,18 +7,31 @@ export const listMyCompanies = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("company_members")
-      .select("role, company:companies(id, name, gstin, contact_email, contact_phone, created_at)")
+      // Sensitive contact columns (gstin/contact_email/contact_phone/address) are
+      // revoked at the DB level for plain members — fetch them through
+      // getCompanyContact() (owner/manager only) when actually needed.
+      .select("role, company:companies(id, name, created_at)")
       .eq("user_id", context.userId)
       .order("created_at", { ascending: true });
     if (error) { console.error(error); throw new Error("Request failed. Please try again."); }
     return (data ?? []).map((m) => ({
       company_id: (m.company as { id: string } | null)?.id ?? "",
       name: (m.company as { name: string } | null)?.name ?? "",
-      gstin: (m.company as { gstin: string | null } | null)?.gstin ?? null,
-      contact_email: (m.company as { contact_email: string | null } | null)?.contact_email ?? null,
-      contact_phone: (m.company as { contact_phone: string | null } | null)?.contact_phone ?? null,
       role: m.role as "owner" | "manager" | "driver" | "broker" | "viewer",
     })).filter((c) => c.company_id);
+  });
+
+/** Owner/manager-only lookup for sensitive company contact fields. */
+export const getCompanyContact = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((raw: unknown) => z.object({ company_id: z.string().uuid() }).parse(raw))
+  .handler(async ({ context, data }) => {
+    const { data: rows, error } = await context.supabase
+      .rpc("company_contact", { _company: data.company_id });
+    if (error) { console.error(error); throw new Error("Request failed."); }
+    const row = (rows ?? [])[0] ?? null;
+    if (!row) throw new Error("You do not have permission to view these details.");
+    return row;
   });
 
 const CompanyInput = z.object({

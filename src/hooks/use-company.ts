@@ -10,9 +10,6 @@ const EVENT = "transcore:active-company-changed";
 export type CompanyMembership = {
   company_id: string;
   name: string;
-  gstin: string | null;
-  contact_email: string | null;
-  contact_phone: string | null;
   role: "owner" | "manager" | "driver" | "broker" | "viewer";
 };
 

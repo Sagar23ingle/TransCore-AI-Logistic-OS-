@@ -1749,6 +1749,16 @@ export type Database = {
         Args: { _key: string; _max: number; _window_seconds: number }
         Returns: boolean
       }
+      company_contact: {
+        Args: { _company: string }
+        Returns: {
+          address: string
+          contact_email: string
+          contact_phone: string
+          gstin: string
+          id: string
+        }[]
+      }
       company_role_of: {
         Args: { _company: string; _user: string }
         Returns: Database["public"]["Enums"]["company_role"]
