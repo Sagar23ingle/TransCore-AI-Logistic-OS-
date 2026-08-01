@@ -17,14 +17,14 @@ export function AppShell({ children, title, description, action }: AppShellProps
   const showBack = pathname !== "/dashboard" && pathname !== "/";
   const isAi = pathname === "/ai" || pathname.startsWith("/ai/");
   return (
-    <div className={isAi ? "h-[100dvh] overflow-hidden bg-background text-foreground" : "min-h-dvh bg-background text-foreground"}>
+    <div className={isAi ? "flex h-[100dvh] flex-col overflow-hidden bg-background text-foreground" : "min-h-dvh bg-background text-foreground"}>
       <Sidebar />
-      <div className="lg:pl-64">
+      <div className={isAi ? "flex min-h-0 flex-1 flex-col lg:pl-64" : "lg:pl-64"}>
         <TopBar />
         <main
           className={
             isAi
-              ? "mx-auto flex w-full max-w-[1000px] flex-col overflow-hidden px-3 pt-1.5 pb-0 sm:px-6 sm:pt-3 lg:px-8 lg:pt-4 lg:pb-4"
+              ? "mx-auto flex min-h-0 w-full max-w-[1000px] flex-1 flex-col overflow-hidden px-3 pt-1.5 pb-0 sm:px-6 sm:pt-3 lg:px-8 lg:pt-4 lg:pb-4"
               : "mx-auto w-full max-w-[1400px] px-4 pt-3 pb-[calc(104px+env(safe-area-inset-bottom))] sm:px-6 sm:pt-5 lg:px-8 lg:pt-6 lg:pb-10"
           }
         >
