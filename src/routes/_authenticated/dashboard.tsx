@@ -377,37 +377,62 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 /* ---------- Fuel Summary ---------- */
+const FUEL_KEYS = ["diesel", "petrol", "cng", "electric", "other"] as const;
+type FuelKey = (typeof FUEL_KEYS)[number];
+
 function FuelSummary({ extras, loading }: { extras?: HomeExtras; loading: boolean }) {
-  const total = extras?.fuel.totalCost ?? 0;
-  const budget = extras?.fuel.prevMonthTotal ?? 0;
-  const rows = (["diesel", "petrol", "cng", "electric"] as const).map((k) => ({
-    type: k,
-    amount: extras?.fuel.byType.find((b) => b.type === k)?.amount ?? 0,
-  }));
-  const segments = rows.filter((r) => r.amount > 0);
+  const [period, setPeriod] = useState<"mtd" | "prev">("mtd");
+  const [type, setType] = useState<FuelKey | "all">("all");
+
+  const mtd = extras?.fuel.byType ?? [];
+  const prev = extras?.fuel.prevByType ?? [];
+  const amountOf = (list: { type: string; amount: number }[], k: FuelKey) =>
+    list.find((b) => b.type === k)?.amount ?? 0;
+
+  // Fuel types that actually have spend in either period drive the chips.
+  const availableTypes = FUEL_KEYS.filter((k) => amountOf(mtd, k) > 0 || amountOf(prev, k) > 0);
+
+  // If the selected type no longer exists in the data, fall back to "all".
+  const activeType = type !== "all" && !availableTypes.includes(type) ? "all" : type;
+
+  const cur = period === "mtd" ? mtd : prev;
+  const base = period === "mtd" ? prev : [];
+  const sum = (list: { amount: number }[]) => list.reduce((s, r) => s + r.amount, 0);
+
+  const total = activeType === "all" ? sum(cur) : amountOf(cur, activeType);
+  const budget = activeType === "all" ? sum(base) : amountOf(base, activeType);
+
+  const segments = (activeType === "all" ? availableTypes : [activeType])
+    .map((k) => ({ type: k, amount: amountOf(cur, k) }))
+    .filter((r) => r.amount > 0);
+
   const hasBudget = budget > 0;
   const deltaPct = hasBudget ? Math.round(((total - budget) / budget) * 100) : 0;
   const overBudget = hasBudget && total > budget;
-  const trendLabel = !hasBudget
-    ? "No prior month"
-    : deltaPct === 0
-    ? "Same as last month"
-    : `${deltaPct > 0 ? "▲" : "▼"} ${Math.abs(deltaPct)}% vs last month`;
-  const trendTone = !hasBudget
-    ? "text-muted-foreground"
-    : overBudget
-    ? "text-red-600 dark:text-red-400"
-    : "text-emerald-600 dark:text-emerald-400";
+  const trendLabel =
+    period === "prev"
+      ? "Last month total"
+      : !hasBudget
+      ? "No prior month baseline"
+      : deltaPct === 0
+      ? "Same as last month"
+      : `${deltaPct > 0 ? "\u25B2" : "\u25BC"} ${Math.abs(deltaPct)}% vs last month`;
+  const trendTone =
+    period === "prev" || !hasBudget
+      ? "text-muted-foreground"
+      : overBudget
+      ? "text-red-600 dark:text-red-400"
+      : "text-emerald-600 dark:text-emerald-400";
 
-  // Budget-aware "fuel used" percentage — clamps to 100 for the pill visual,
-  // but the label shows the true number so overspend is obvious.
   const budgetPct = hasBudget ? Math.round((total / budget) * 100) : 0;
   const pillPct = Math.min(100, budgetPct);
   const primaryFuel = segments.slice().sort((a, b) => b.amount - a.amount)[0];
-  const primaryLabel = primaryFuel ? FUEL_COLORS[primaryFuel.type].label : "—";
+  const primaryLabel = primaryFuel ? FUEL_COLORS[primaryFuel.type].label : "\u2014";
   const primaryGrad = primaryFuel
     ? `linear-gradient(90deg, ${FUEL_COLORS[primaryFuel.type].from}, ${FUEL_COLORS[primaryFuel.type].to})`
     : "var(--gradient-primary)";
+
+  const hasAnyData = mtd.length > 0 || prev.length > 0;
 
   return (
     <Card className="border-border/60">
@@ -416,21 +441,82 @@ function FuelSummary({ extras, loading }: { extras?: HomeExtras; loading: boolea
           <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
             <Fuel className="h-4 w-4 text-primary" /> Fuel Summary
           </CardTitle>
-          <Badge variant="outline" className="text-[10px]">MTD</Badge>
+          {/* Period switcher — MTD data is often empty early in a month. */}
+          <div className="flex items-center gap-1 rounded-full border border-border/60 p-0.5">
+            {(["mtd", "prev"] as const).map((p) => (
+              <button
+                key={p}
+                type="button"
+                onClick={() => setPeriod(p)}
+                aria-pressed={period === p}
+                className={`tc-press rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide transition-colors ${
+                  period === p ? "bg-primary text-primary-foreground" : "text-muted-foreground"
+                }`}
+              >
+                {p === "mtd" ? "MTD" : "Last mo"}
+              </button>
+            ))}
+          </div>
         </div>
         <p className={`text-[11px] sm:text-xs ${trendTone}`}>{trendLabel}</p>
       </CardHeader>
       <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
         {loading ? (
           <Skeleton className="h-40 w-full rounded-lg" />
+        ) : !hasAnyData ? (
+          <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-border/60 py-6 text-center">
+            <div className="text-[11px] text-muted-foreground">No fuel spend logged yet.</div>
+            <Button asChild size="sm" className="h-8">
+              <Link to="/fuel">Log Fuel</Link>
+            </Button>
+          </div>
         ) : (
           <div className="space-y-3">
+            {/* Fuel type selector */}
+            <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <button
+                type="button"
+                onClick={() => setType("all")}
+                aria-pressed={activeType === "all"}
+                className={`tc-press shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors ${
+                  activeType === "all"
+                    ? "border-primary bg-primary/15 text-foreground"
+                    : "border-border/60 text-muted-foreground"
+                }`}
+              >
+                All types
+              </button>
+              {availableTypes.map((k) => {
+                const c = FUEL_COLORS[k];
+                const on = activeType === k;
+                return (
+                  <button
+                    key={k}
+                    type="button"
+                    onClick={() => setType(k)}
+                    aria-pressed={on}
+                    className={`tc-press flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors ${
+                      on ? "border-primary bg-primary/15 text-foreground" : "border-border/60 text-muted-foreground"
+                    }`}
+                  >
+                    <span
+                      className="h-2 w-2 rounded-full"
+                      style={{ background: `linear-gradient(135deg, ${c.from}, ${c.to})` }}
+                    />
+                    {c.label}
+                  </button>
+                );
+              })}
+            </div>
+
             {/* iPhone-battery-style horizontal pill */}
             <div>
               <div className="mb-1.5 flex items-baseline justify-between">
-                <span className="text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">Fuel used</span>
+                <span className="text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+                  {period === "mtd" ? "Fuel used" : "Share of month"}
+                </span>
                 <span className="num text-lg font-bold tabular-nums">
-                  {hasBudget ? `${budgetPct}%` : segments.length > 0 ? "—" : "0%"}
+                  {hasBudget ? `${budgetPct}%` : total > 0 ? formatINR(total) : "0%"}
                 </span>
               </div>
               <div
@@ -444,20 +530,23 @@ function FuelSummary({ extras, loading }: { extras?: HomeExtras; loading: boolea
               >
                 <motion.div
                   initial={{ width: 0 }}
-                  animate={{ width: `${pillPct}%` }}
+                  animate={{ width: `${hasBudget ? pillPct : total > 0 ? 100 : 0}%` }}
                   transition={{ duration: 0.9, ease: "easeOut" }}
                   className="absolute inset-y-0 left-0 rounded-full shadow-[inset_0_1px_0_rgba(255,255,255,0.35),inset_0_-2px_4px_rgba(0,0,0,0.25)]"
                   style={{
-                    background: overBudget
-                      ? "linear-gradient(90deg, #ef4444, #f97316)"
-                      : primaryGrad,
+                    background: overBudget ? "linear-gradient(90deg, #ef4444, #f97316)" : primaryGrad,
                   }}
                 />
-                {/* iOS-battery cap */}
                 <span className="pointer-events-none absolute right-1 top-1/2 h-4 w-1 -translate-y-1/2 rounded-full bg-foreground/20" />
               </div>
               <div className="mt-1.5 flex items-center justify-between text-[11px] text-muted-foreground">
-                <span>{hasBudget ? `of ${formatINR(budget)} budget` : "Set a baseline by logging last month's fuel"}</span>
+                <span>
+                  {period === "prev"
+                    ? "Previous calendar month"
+                    : hasBudget
+                    ? `of ${formatINR(budget)} budget`
+                    : "Set a baseline by logging last month's fuel"}
+                </span>
                 {overBudget && <span className="font-semibold text-red-500">Over budget</span>}
               </div>
             </div>
@@ -465,34 +554,37 @@ function FuelSummary({ extras, loading }: { extras?: HomeExtras; loading: boolea
             {/* Total + primary fuel */}
             <div className="grid grid-cols-2 gap-2">
               <div className="rounded-2xl border border-border/60 bg-muted/20 p-3">
-                <div className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">Total fuel cost</div>
+                <div className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                  {activeType === "all" ? "Total fuel cost" : `${FUEL_COLORS[activeType].label} cost`}
+                </div>
                 <div className="num mt-0.5 text-[18px] font-bold leading-tight sm:text-xl">{formatINR(total)}</div>
               </div>
               <div className="rounded-2xl border border-border/60 bg-muted/20 p-3">
                 <div className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">Fuel type</div>
                 <div className="mt-0.5 flex items-center gap-2 text-[15px] font-semibold leading-tight">
-                  <span
-                    className="h-2.5 w-2.5 rounded-full ring-2 ring-background"
-                    style={{ background: primaryGrad }}
-                  />
-                  {primaryLabel}
+                  <span className="h-2.5 w-2.5 rounded-full ring-2 ring-background" style={{ background: primaryGrad }} />
+                  {activeType === "all" ? primaryLabel : FUEL_COLORS[activeType].label}
                 </div>
               </div>
             </div>
 
-            {/* Stacked per-type bars — only when >1 fuel type has spend */}
-            {segments.length > 1 && (
+            {/* Per-type bars */}
+            {segments.length > 0 && (
               <div className="space-y-1.5">
                 {segments.map((r) => {
-                  const pct = total > 0 ? Math.round((r.amount / total) * 100) : 0;
+                  const denom = activeType === "all" ? sum(cur) : r.amount;
+                  const pct = denom > 0 ? Math.round((r.amount / denom) * 100) : 0;
                   const c = FUEL_COLORS[r.type];
                   return (
                     <div key={r.type} className="space-y-1">
                       <div className="flex items-center justify-between text-[11px]">
                         <span className="flex items-center gap-1.5 font-medium">
-                          <span className="h-2 w-2 rounded-full" style={{ background: `linear-gradient(135deg, ${c.from}, ${c.to})` }} />
+                          <span
+                            className="h-2 w-2 rounded-full"
+                            style={{ background: `linear-gradient(135deg, ${c.from}, ${c.to})` }}
+                          />
                           {c.label}
-                          <span className="text-muted-foreground">· {pct}%</span>
+                          <span className="text-muted-foreground">\u00B7 {pct}%</span>
                         </span>
                         <span className="num tabular-nums font-semibold">{formatINR(r.amount)}</span>
                       </div>
@@ -513,7 +605,7 @@ function FuelSummary({ extras, loading }: { extras?: HomeExtras; loading: boolea
 
             {segments.length === 0 && (
               <div className="rounded-2xl border border-dashed border-border/60 py-4 text-center text-[11px] text-muted-foreground">
-                No fuel spend logged yet.
+                No fuel spend in this period{activeType === "all" ? "" : ` for ${FUEL_COLORS[activeType].label}`}.
               </div>
             )}
           </div>
