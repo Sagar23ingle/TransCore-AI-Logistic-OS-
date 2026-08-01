@@ -1,4 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import {
   Truck,
   MapPin,
@@ -10,6 +11,9 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AuthSplash } from "@/components/common/AuthSplash";
+import { hasStoredSession } from "@/lib/session-hint";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -60,6 +64,27 @@ const FEATURES = [
 ];
 
 function Landing() {
+  const navigate = useNavigate();
+  // If a persisted session exists in storage, show the splash immediately
+  // (never the marketing page) and hand the user straight to the dashboard.
+  const [restoring, setRestoring] = useState(false);
+
+  useEffect(() => {
+    if (!hasStoredSession()) return;
+    setRestoring(true);
+    let cancelled = false;
+    supabase.auth.getSession().then(({ data }) => {
+      if (cancelled) return;
+      if (data.session) navigate({ to: "/dashboard", replace: true });
+      else setRestoring(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [navigate]);
+
+  if (restoring) return <AuthSplash />;
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6">

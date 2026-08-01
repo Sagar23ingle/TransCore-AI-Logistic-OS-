@@ -10,6 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AuthSplash } from "@/components/common/AuthSplash";
+import { hasStoredSession } from "@/lib/session-hint";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -37,12 +39,16 @@ function AuthPage() {
   const { next } = Route.useSearch();
   const safe = safeNext(next);
   const [loading, setLoading] = useState(false);
+  // Start in "checking" mode when a persisted session exists so the login form
+  // never flashes for an already-signed-in user.
+  const [checking, setChecking] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
 
   useEffect(() => {
     let cancelled = false;
+    if (hasStoredSession()) setChecking(true);
     function goPostAuth() {
       if (safe) {
         // Full navigation so route-based query parsing picks up `authorization_id`.
@@ -52,7 +58,9 @@ function AuthPage() {
       }
     }
     supabase.auth.getSession().then(({ data }) => {
-      if (!cancelled && data.session) goPostAuth();
+      if (cancelled) return;
+      if (data.session) goPostAuth();
+      else setChecking(false);
     });
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_IN" && session) goPostAuth();
@@ -62,6 +70,8 @@ function AuthPage() {
       sub.subscription.unsubscribe();
     };
   }, [navigate, safe]);
+
+  if (checking) return <AuthSplash />;
 
   async function handleSignIn(e: React.FormEvent) {
     e.preventDefault();
