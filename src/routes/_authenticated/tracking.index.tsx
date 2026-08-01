@@ -10,6 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { GoogleMapView } from "@/components/tracking/GoogleMap";
+import { RoutePlanner } from "@/components/tracking/RoutePlanner";
 import { getFleetLive } from "@/lib/gps.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDateTime } from "@/lib/format";
@@ -81,7 +82,7 @@ function TrackingPage() {
                   description="Point your GPS device or the driver PWA at /api/public/gps/ingest (HMAC-signed) or start a trip from the driver's phone to see vehicles here in real time."
                 />
               ) : (
-                <GoogleMapView markers={markers} className="h-[560px] w-full" zoom={5} />
+                <GoogleMapView markers={markers} className="h-[380px] w-full sm:h-[560px]" zoom={5} />
               )}
             </CardContent>
           </Card>
@@ -147,6 +148,9 @@ function TrackingPage() {
           </div>
         </div>
       )}
+      <div className="mt-4">
+        <RoutePlanner />
+      </div>
     </AppShell>
   );
 }

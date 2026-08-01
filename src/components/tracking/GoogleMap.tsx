@@ -10,10 +10,15 @@ type MarkerData = {
 };
 
 type Polyline = { path: Array<{ lat: number; lng: number }>; color?: string };
+type MapPolyline = Polyline & { dashed?: boolean; weight?: number };
 type Circle = { center: { lat: number; lng: number }; radius: number; color?: string };
 
 type LatLngLiteral = { lat: number; lng: number };
-type MapInstance = { fitBounds: (bounds: LatLngBoundsInstance, padding?: number) => void };
+type MapInstance = {
+  fitBounds: (bounds: LatLngBoundsInstance, padding?: number) => void;
+  setCenter: (point: LatLngLiteral) => void;
+  setZoom: (zoom: number) => void;
+};
 type OverlayInstance = { setMap: (map: MapInstance | null) => void };
 type MarkerInstance = OverlayInstance & { addListener: (eventName: "click", handler: () => void) => unknown };
 type PolylineInstance = OverlayInstance;
@@ -35,11 +40,13 @@ type GoogleMapsApi = {
 
 interface Props {
   markers?: MarkerData[];
-  polylines?: Polyline[];
+  polylines?: MapPolyline[];
   circles?: Circle[];
   center?: { lat: number; lng: number };
   zoom?: number;
   className?: string;
+  /** Set false when the container already has a height class. */
+  fill?: boolean;
 }
 
 declare global {
@@ -81,11 +88,12 @@ const STATUS_COLOR: Record<NonNullable<MarkerData["status"]>, string> = {
   offline: "#6B7280",
 };
 
-export function GoogleMapView({ markers = [], polylines = [], circles = [], center, zoom = 5, className }: Props) {
+export function GoogleMapView({ markers = [], polylines = [], circles = [], center, zoom = 5, className, fill = false }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapInstance | null>(null);
   const overlaysRef = useRef<OverlayInstance[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -109,6 +117,7 @@ export function GoogleMapView({ markers = [], polylines = [], circles = [], cent
             { featureType: "poi", stylers: [{ visibility: "off" }] },
           ],
         });
+        setReady(true);
       })
       .catch((e: Error) => setError(e.message));
     return () => { cancelled = true; };
@@ -117,7 +126,7 @@ export function GoogleMapView({ markers = [], polylines = [], circles = [], cent
 
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !window.google) return;
+    if (!ready || !map || !window.google) return;
     for (const o of overlaysRef.current) o.setMap(null);
     overlaysRef.current = [];
 
@@ -143,7 +152,20 @@ export function GoogleMapView({ markers = [], polylines = [], circles = [], cent
       if (p.path.length < 2) continue;
       const line = new window.google.maps.Polyline({
         path: p.path, map, geodesic: true,
-        strokeColor: p.color ?? "#22D3EE", strokeOpacity: 0.9, strokeWeight: 3,
+        strokeColor: p.color ?? "#22D3EE",
+        strokeOpacity: p.dashed ? 0 : 0.9,
+        strokeWeight: p.weight ?? 4,
+        ...(p.dashed
+          ? {
+              icons: [
+                {
+                  icon: { path: "M 0,-1 0,1", strokeOpacity: 0.9, strokeWeight: p.weight ?? 4, scale: 3 },
+                  offset: "0",
+                  repeat: "16px",
+                },
+              ],
+            }
+          : {}),
       });
       overlaysRef.current.push(line);
       for (const pt of p.path) { bounds.extend(pt); hasBounds = true; }
@@ -158,11 +180,18 @@ export function GoogleMapView({ markers = [], polylines = [], circles = [], cent
       const cb = circle.getBounds();
       if (cb) { bounds.union(cb); hasBounds = true; }
     }
-    if (hasBounds && (markers.length + polylines.length + circles.length) > 1) map.fitBounds(bounds, 60);
-  }, [markers, polylines, circles]);
+    const overlayCount = markers.length + polylines.length + circles.length;
+    if (hasBounds && overlayCount > 1) {
+      map.fitBounds(bounds, 40);
+    } else if (hasBounds && markers.length === 1) {
+      map.setCenter({ lat: markers[0]!.lat, lng: markers[0]!.lng });
+      map.setZoom(Math.max(zoom, 12));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [markers, polylines, circles, ready]);
 
   if (error) {
     return <div className={className}><div className="flex h-full items-center justify-center text-sm text-destructive">{error}</div></div>;
   }
-  return <div ref={containerRef} className={className} style={{ minHeight: 400 }} />;
+  return <div ref={containerRef} className={className} style={fill ? { minHeight: 400 } : undefined} />;
 }
