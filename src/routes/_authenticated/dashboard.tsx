@@ -584,7 +584,7 @@ function FuelSummary({ extras, loading }: { extras?: HomeExtras; loading: boolea
                             style={{ background: `linear-gradient(135deg, ${c.from}, ${c.to})` }}
                           />
                           {c.label}
-                          <span className="text-muted-foreground">\u00B7 {pct}%</span>
+                          <span className="text-muted-foreground">· {pct}%</span>
                         </span>
                         <span className="num tabular-nums font-semibold">{formatINR(r.amount)}</span>
                       </div>
