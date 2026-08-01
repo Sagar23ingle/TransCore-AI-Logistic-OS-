@@ -2,10 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Sparkles, Send, Mic, MicOff, Volume2, VolumeX, Square, RotateCcw, Loader2, Settings2 } from "lucide-react";
+import { Send, Mic, MicOff, Volume2, VolumeX, Square, RotateCcw, Loader2, Settings2 } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -513,82 +512,89 @@ function AiPage() {
       description="Ask Gemini about your fleet — grounded in your real data."
       action={settingsAction}
     >
-      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden h-[calc(100dvh-8.5rem)] sm:h-[calc(100dvh-10rem)]">
-        <Card className="flex-1 min-h-0 overflow-hidden">
-          <CardContent ref={scrollRef} className="space-y-3 py-4 h-full overflow-y-auto">
-            {messages.length === 0 && (
-              <div className="h-full">
-                <AiOrbEmptyState visible={input.trim().length === 0} />
-              </div>
-            )}
-            {messages.map((m, i) => (
-              <div key={i} className={m.role === "user" ? "text-right" : ""}>
-                <div className={`inline-block max-w-[90%] whitespace-pre-wrap rounded-2xl px-3.5 py-2.5 text-sm ${
-                  m.role === "user" ? "bg-gradient-primary text-primary-foreground shadow-[var(--glow-primary)]" :
-                  m.role === "error" ? "bg-destructive/15 text-destructive" :
-                  "text-foreground"
-                }`}>
-                  {m.text}
-                </div>
-              </div>
-            ))}
-            {statusLabel && (
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                {voiceState === "listening" && <VoiceWave />}
-                {voiceState === "processing" && <Loader2 className="h-3 w-3 animate-spin" />}
-                <span>{statusLabel}</span>
-                {continuous && (
-                  <button onClick={exitContinuous} className="ml-2 underline">Exit conversation</button>
-                )}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-        <div className="shrink-0 bg-background pt-2 pb-[calc(env(safe-area-inset-bottom)+8px)]">
-          <div className="flex items-end gap-2 rounded-3xl bg-card p-2 shadow-[var(--shadow-neo-sm)] transition-shadow duration-200 focus-within:shadow-[var(--glow-primary)]">
-          <Textarea rows={1} value={input} onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-            className="min-h-[44px] max-h-32 resize-none border-0 bg-transparent shadow-none focus-visible:ring-0"
-            placeholder={voiceState === "listening" ? "Listening..." : "Ask about trips, fuel, drivers, maintenance..."} />
-          <Button
-            type="button"
-            variant={voiceState === "listening" ? "destructive" : "secondary"}
-            disabled={micDisabled || send.isPending}
-            onPointerDown={onMicPointerDown}
-            onPointerUp={onMicPointerUp}
-            onPointerLeave={() => { if (longPressTimer.current) { clearTimeout(longPressTimer.current); longPressTimer.current = null; } }}
-            className={`relative h-11 w-11 rounded-full shrink-0 ${voiceState === "listening" ? "shadow-[0_0_0_10px_rgba(239,68,68,0.15)]" : ""}`}
-            title={micDisabled ? "Voice not supported in this browser" : "Tap to speak · Hold for continuous"}
-          >
-            {voiceState === "listening" && (
-              <>
-                <span className="absolute inset-0 rounded-full bg-destructive/30 animate-ping" />
-                <span className="absolute inset-0 rounded-full bg-destructive/20 animate-pulse" />
-              </>
-            )}
-            {voiceState === "listening" ? <MicOff className="h-5 w-5 relative" /> : <Mic className="h-5 w-5 relative" />}
-          </Button>
-          {ttsSupported && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              onClick={toggleMute}
-              className="h-11 w-11 rounded-full"
-              title={ttsEnabled ? "Mute replies" : "Unmute replies"}
-            >
-              {ttsEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
-            </Button>
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden h-[calc(100dvh-7rem)] sm:h-[calc(100dvh-8.5rem)]">
+        {/* Conversation — scrolls independently, takes all remaining height */}
+        <div ref={scrollRef} className="tc-scroll flex-1 min-h-0 space-y-3 overflow-y-auto overscroll-contain scroll-smooth px-0.5 pb-2">
+          {messages.length === 0 && (
+            <div className="flex h-full items-center justify-center">
+              <AiOrbEmptyState visible={input.trim().length === 0} />
+            </div>
           )}
-          <Button onClick={handleSend} disabled={send.isPending || !input.trim()} className="h-11 w-11 rounded-full p-0" aria-label="Send">
-            <Send className="h-4 w-4" />
-          </Button>
-          </div>
+          {messages.map((m, i) => (
+            <div key={i} className={`flex tc-fade-in ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+              <div className={`max-w-[88%] whitespace-pre-wrap break-words text-[15px] leading-relaxed ${
+                m.role === "user"
+                  ? "rounded-[20px] rounded-br-md bg-gradient-primary px-4 py-2.5 font-medium text-primary-foreground shadow-[var(--shadow-neo-sm)]"
+                  : m.role === "error"
+                    ? "rounded-[20px] bg-destructive/12 px-4 py-2.5 text-destructive"
+                    : "px-1 py-1 text-foreground"
+              }`}>
+                {m.text}
+              </div>
+            </div>
+          ))}
+          {statusLabel && (
+            <div className="flex items-center gap-2 px-1 text-xs text-muted-foreground">
+              {voiceState === "listening" && <VoiceWave />}
+              {voiceState === "processing" && <Loader2 className="h-3 w-3 animate-spin" />}
+              <span>{statusLabel}</span>
+              {continuous && (
+                <button onClick={exitContinuous} className="ml-2 underline">Exit conversation</button>
+              )}
+            </div>
+          )}
         </div>
 
-        {!SR && (
-          <p className="text-xs text-muted-foreground">Voice input isn't supported in this browser. Chrome (Android/Desktop) and Safari (iOS) work best.</p>
-        )}
+        {/* Composer — always visible, safe-area aware */}
+        <div className="shrink-0 bg-background pt-1.5 pb-[calc(env(safe-area-inset-bottom)+10px)]">
+          <div className="flex items-center gap-1.5 rounded-[30px] bg-card pl-4 pr-2 py-1.5 shadow-[var(--shadow-neo-sm)] transition-all duration-300 focus-within:shadow-[var(--glow-primary)] focus-within:-translate-y-0.5">
+            <Textarea
+              rows={1}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+              className="min-h-[44px] max-h-32 flex-1 resize-none border-0 bg-transparent px-0 py-[11px] text-[15px] leading-snug shadow-none placeholder:text-muted-foreground focus-visible:ring-0"
+              placeholder={voiceState === "listening" ? "Listening…" : "Ask anything about your fleet…"}
+            />
+            <Button
+              type="button"
+              variant={voiceState === "listening" ? "destructive" : "ghost"}
+              disabled={micDisabled || send.isPending}
+              onPointerDown={onMicPointerDown}
+              onPointerUp={onMicPointerUp}
+              onPointerLeave={() => { if (longPressTimer.current) { clearTimeout(longPressTimer.current); longPressTimer.current = null; } }}
+              className="tc-press relative grid h-11 w-11 shrink-0 place-items-center rounded-full p-0"
+              title={micDisabled ? "Voice not supported in this browser" : "Tap to speak · Hold for continuous"}
+            >
+              {voiceState === "listening" && (
+                <>
+                  <span className="absolute inset-0 rounded-full bg-destructive/30 animate-ping" />
+                  <span className="absolute inset-0 rounded-full bg-destructive/20 animate-pulse" />
+                </>
+              )}
+              {voiceState === "listening" ? <MicOff className="relative h-[18px] w-[18px]" /> : <Mic className="relative h-[18px] w-[18px]" />}
+            </Button>
+            {ttsSupported && (
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={toggleMute}
+                className="tc-press hidden h-11 w-11 shrink-0 place-items-center rounded-full p-0 sm:grid"
+                title={ttsEnabled ? "Mute replies" : "Unmute replies"}
+              >
+                {ttsEnabled ? <Volume2 className="h-[18px] w-[18px]" /> : <VolumeX className="h-[18px] w-[18px]" />}
+              </Button>
+            )}
+            <Button
+              onClick={handleSend}
+              disabled={send.isPending || !input.trim()}
+              className="tc-press grid h-11 w-11 shrink-0 place-items-center rounded-full p-0"
+              aria-label="Send"
+            >
+              {send.isPending ? <Loader2 className="h-[18px] w-[18px] animate-spin" /> : <Send className="h-[18px] w-[18px]" />}
+            </Button>
+          </div>
+        </div>
       </div>
     </AppShell>
   );

@@ -13,13 +13,13 @@ const AiOrb = lazy(() => import("./AiOrb"));
 export function AiOrbEmptyState({ visible = true }: { visible?: boolean }) {
   return (
     <div
-      className={`tc-ai-orb-empty-state pointer-events-none flex h-full flex-col items-center justify-center gap-6 px-6 py-6 text-center transition-all duration-700 ease-out ${
+      className={`tc-ai-orb-empty-state pointer-events-none flex h-full flex-col items-center justify-center gap-3 px-6 py-2 text-center transition-all duration-700 ease-out ${
         visible ? "opacity-100 scale-100" : "opacity-0 scale-90"
       }`}
       aria-hidden={!visible}
     >
       <div
-        className="tc-ai-orb-stage relative h-56 w-56 sm:h-64 sm:w-64"
+        className="tc-ai-orb-stage relative h-32 w-32 sm:h-40 sm:w-40"
       >
         <ClientOnly fallback={<OrbFallback />}>
           <Suspense fallback={<OrbFallback />}>
@@ -27,10 +27,10 @@ export function AiOrbEmptyState({ visible = true }: { visible?: boolean }) {
           </Suspense>
         </ClientOnly>
       </div>
-      <div className="space-y-1.5">
-        <div className="text-xl font-semibold tracking-tight sm:text-2xl">TransCore AI</div>
-        <p className="max-w-xs text-xs leading-relaxed text-muted-foreground sm:text-sm">
-          Ask anything about your fleet, trips, fuel, maintenance, or logistics.
+      <div className="space-y-1">
+        <div className="text-base font-semibold tracking-tight sm:text-lg">TransCore AI</div>
+        <p className="max-w-[16rem] text-[12px] leading-snug text-muted-foreground">
+          Ask anything about your fleet.
         </p>
       </div>
     </div>
