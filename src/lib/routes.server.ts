@@ -113,8 +113,10 @@ export async function computeRoutes(params: {
         location: { latLng: { latitude: params.destination.lat, longitude: params.destination.lng } },
       },
       travelMode: "DRIVE",
-      routingPreference: "TRAFFIC_AWARE",
+      // Required by the Routes API when a FUEL_EFFICIENT reference route is requested.
+      routingPreference: "TRAFFIC_AWARE_OPTIMAL",
       requestedReferenceRoutes: ["FUEL_EFFICIENT"],
+      computeAlternativeRoutes: true,
       extraComputations: ["TOLLS"],
       routeModifiers: {
         avoidTolls: params.avoidTolls,
