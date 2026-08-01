@@ -58,6 +58,9 @@ function Dashboard() {
   const daily = useQuery(queryOptions({ queryKey: ["dashboard-daily-ops"], queryFn: () => dailyFn(), staleTime: 60_000 }));
   const extras = useQuery(queryOptions({ queryKey: ["dashboard-home-extras"], queryFn: () => homeFn(), staleTime: 60_000 }));
 
+  // Live dashboard: any change to fleet data instantly recomputes every card.
+  useRealtimeRefresh(DASHBOARD_KEYS);
+
   useEffect(() => {
     // Throttle server-side alert recomputation: at most once per 5 minutes
     // per user. Prior behaviour fired on every dashboard mount, which was the
