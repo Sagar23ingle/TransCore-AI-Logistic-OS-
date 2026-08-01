@@ -766,18 +766,3 @@ function TypingDots() {
     </div>
   );
 }
-
-function VoiceWaveLegacy() {
-  return (
-    <span className="inline-flex items-end gap-[2px] h-3">
-      {[0, 1, 2, 3, 4].map((i) => (
-        <span
-          key={i}
-          className="w-[2px] bg-primary rounded-sm animate-[wave_1s_ease-in-out_infinite]"
-          style={{ animationDelay: `${i * 0.12}s`, height: "100%" }}
-        />
-      ))}
-      <style>{`@keyframes wave{0%,100%{transform:scaleY(0.3)}50%{transform:scaleY(1)}}`}</style>
-    </span>
-  );
-}
