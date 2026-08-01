@@ -244,6 +244,7 @@ function AiPage() {
   const submit = useCallback((raw: string) => {
     const p = cleanTranscript(raw);
     if (!p || send.isPending) return;
+    lastQuestionRef.current = p;
     // Build conversation memory (last 20 turns) for real follow-ups.
     const history = messages.slice(-20).filter((m) => m.role !== "error");
     const framed = history.length
@@ -261,12 +262,14 @@ function AiPage() {
   // returns the full response at once.
   function revealAssistant(full: string) {
     const text = full.trim();
+    const token = ++revealTokenRef.current;
     // Speak immediately in parallel (voice-first UX).
     if (ttsEnabled) speak(text); else if (continuous) startListening(); else setVoiceState("idle");
     setMessages((m) => [...m, { role: "assistant", text: "" }]);
     const words = text.split(/(\s+)/);
     let i = 0;
     const tick = () => {
+      if (token !== revealTokenRef.current) return;
       i += Math.max(1, Math.round(words.length / 40));
       if (i >= words.length) {
         setMessages((m) => {
@@ -285,6 +288,46 @@ function AiPage() {
       setTimeout(tick, 35);
     };
     tick();
+  }
+
+  // Stop generating: freeze the typewriter where it is and silence speech.
+  function stopGenerating() {
+    revealTokenRef.current += 1;
+    stopSpeaking();
+  }
+
+  function regenerate() {
+    const q = lastQuestionRef.current;
+    if (!q || send.isPending) return;
+    revealTokenRef.current += 1;
+    stopSpeaking();
+    // Drop the previous assistant/error reply, keep the question.
+    setMessages((m) => {
+      const copy = [...m];
+      while (copy.length && copy[copy.length - 1]!.role !== "user") copy.pop();
+      return copy;
+    });
+    setVoiceState("processing");
+    send.mutate(q);
+  }
+
+  function newChat() {
+    revealTokenRef.current += 1;
+    stopSpeaking();
+    stopListening();
+    setMessages([]);
+    setInput("");
+    lastQuestionRef.current = "";
+  }
+
+  async function copyMessage(text: string, idx: number) {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedIdx(idx);
+      setTimeout(() => setCopiedIdx((c) => (c === idx ? null : c)), 1500);
+    } catch {
+      toast.error("Copy failed");
+    }
   }
 
   function speak(text: string) {
