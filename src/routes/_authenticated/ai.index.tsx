@@ -512,12 +512,17 @@ function AiPage() {
       description="Ask Gemini about your fleet — grounded in your real data."
       action={settingsAction}
     >
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden h-[calc(100dvh-7rem)] sm:h-[calc(100dvh-8.5rem)]">
+      <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
         {/* Conversation — scrolls independently, takes all remaining height */}
         <div ref={scrollRef} className="tc-scroll flex-1 min-h-0 space-y-3 overflow-y-auto overscroll-contain scroll-smooth px-0.5 pb-2">
           {messages.length === 0 && (
-            <div className="flex h-full items-center justify-center">
-              <AiOrbEmptyState visible={input.trim().length === 0} />
+            <div className="flex h-full flex-col">
+              {/* Weighted spacers place the orb block around 42% of the height */}
+              <div className="flex-[42_1_0%]" aria-hidden="true" />
+              <div className="flex shrink-0 items-center justify-center">
+                <AiOrbEmptyState visible={input.trim().length === 0} />
+              </div>
+              <div className="flex-[58_1_0%]" aria-hidden="true" />
             </div>
           )}
           {messages.map((m, i) => (
@@ -546,7 +551,7 @@ function AiPage() {
         </div>
 
         {/* Composer — always visible, safe-area aware */}
-        <div className="shrink-0 bg-background pt-1.5 pb-[calc(env(safe-area-inset-bottom)+10px)]">
+        <div className="sticky bottom-0 z-10 shrink-0 bg-background pt-1.5 pb-[calc(env(safe-area-inset-bottom)+16px)]">
           <div className="flex items-center gap-1.5 rounded-[30px] bg-card pl-4 pr-2 py-1.5 shadow-[var(--shadow-neo-sm)] transition-all duration-300 focus-within:shadow-[var(--glow-primary)] focus-within:-translate-y-0.5">
             <Textarea
               rows={1}
