@@ -23,9 +23,6 @@ import { recomputeAlerts } from "@/lib/alerts.functions";
 import { formatINR, formatNumber } from "@/lib/format";
 import { CountUp } from "@/components/ui/count-up";
 
-const FuelLevelGauges = lazy(() =>
-  import("@/components/dashboard/FuelLevelGauges").then((m) => ({ default: m.FuelLevelGauges })),
-);
 const FleetOverview = lazy(() => import("@/components/dashboard/FleetOverview"));
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -96,10 +93,6 @@ function Dashboard() {
           </div>
           <FuelSummary extras={extras.data} loading={extras.isLoading} />
         </div>
-
-        <Suspense fallback={<Skeleton className="h-64 w-full rounded-2xl" />}>
-          <FuelLevelGauges />
-        </Suspense>
 
         <div className="grid gap-3 sm:gap-4 lg:grid-cols-3">
           <div className="lg:col-span-2 space-y-3 sm:space-y-4">
