@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Send, Mic, MicOff, Volume2, VolumeX, Square, RotateCcw, Loader2, Settings2 } from "lucide-react";
+import { Send, Mic, MicOff, Volume2, VolumeX, Square, RotateCcw, Loader2, Settings2, Copy, Check, Plus } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -14,6 +14,15 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { askCompanyAi } from "@/lib/ai.functions";
 import { AiOrbEmptyState } from "@/components/ai/AiOrbMount";
+import { MessageMarkdown } from "@/components/ai/MessageMarkdown";
+
+const HISTORY_KEY = "tc.ai.history";
+const SUGGESTIONS = [
+  "Which truck has the highest fuel expense?",
+  "Show pending maintenance",
+  "Which driver completed the most trips?",
+  "Calculate this month's operating cost",
+];
 
 export const Route = createFileRoute("/_authenticated/ai/")({
   head: () => ({ meta: [{ title: "AI Assistant — TransCore AI" }, { name: "robots", content: "noindex" }] }),
@@ -141,6 +150,8 @@ function sanitizeForSpeech(text: string): string {
 function AiPage() {
   const askFn = useServerFn(askCompanyAi);
   const [messages, setMessages] = useState<Msg[]>([]);
+  const [hydrated, setHydrated] = useState(false);
+  const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
   const [input, setInput] = useState("");
   const [voiceState, setVoiceState] = useState<VoiceState>("idle");
   const [ttsEnabled, setTtsEnabled] = useState(true);
@@ -160,6 +171,25 @@ function AiPage() {
   const silenceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastSpeechAt = useRef<number>(0);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const revealTokenRef = useRef(0);
+  const lastQuestionRef = useRef<string>("");
+
+  // Conversation history — restored after mount so SSR markup stays stable.
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(HISTORY_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw) as Msg[];
+        if (Array.isArray(parsed)) setMessages(parsed.slice(-60));
+      }
+    } catch { /* noop */ }
+    setHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    try { window.localStorage.setItem(HISTORY_KEY, JSON.stringify(messages.slice(-60))); } catch { /* noop */ }
+  }, [messages, hydrated]);
 
   const SR = useMemo(() => getSpeechRecognition(), []);
   const ttsSupported = typeof window !== "undefined" && "speechSynthesis" in window;
