@@ -521,6 +521,17 @@ function AiPage() {
   }
 
   const settingsAction = (
+    <div className="flex items-center gap-1">
+      <Button
+        size="icon"
+        variant="ghost"
+        aria-label="New chat"
+        title="New chat"
+        onClick={newChat}
+        disabled={messages.length === 0 && !input}
+      >
+        <Plus className="h-5 w-5" />
+      </Button>
     <Popover>
       <PopoverTrigger asChild>
         <Button size="icon" variant="ghost" aria-label="Voice settings">
@@ -577,6 +588,7 @@ function AiPage() {
         )}
       </PopoverContent>
     </Popover>
+    </div>
   );
 
   return (
@@ -592,8 +604,20 @@ function AiPage() {
             <div className="flex h-full flex-col">
               {/* Weighted spacers place the orb block around 42% of the height */}
               <div className="flex-[42_1_0%]" aria-hidden="true" />
-              <div className="flex shrink-0 items-center justify-center">
+              <div className="flex shrink-0 flex-col items-center justify-center gap-4">
                 <AiOrbEmptyState visible={input.trim().length === 0} />
+                <div className="flex w-full max-w-sm flex-wrap justify-center gap-2 px-2">
+                  {SUGGESTIONS.map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => submit(s)}
+                      className="tc-press rounded-full bg-card px-3 py-2 text-[12.5px] leading-tight text-muted-foreground shadow-[var(--shadow-neo-sm)] transition-colors hover:text-foreground"
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
               </div>
               <div className="flex-[58_1_0%]" aria-hidden="true" />
             </div>
@@ -607,15 +631,47 @@ function AiPage() {
                     ? "rounded-[20px] bg-destructive/12 px-4 py-2.5 text-destructive"
                     : "px-1 py-1 text-foreground"
               }`}>
-                {m.text}
+                {m.role === "assistant" ? (
+                  <>
+                    <MessageMarkdown text={m.text} />
+                    {m.text.length > 0 && (
+                      <div className="mt-1 flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => copyMessage(m.text, i)}
+                          className="tc-press grid h-8 w-8 place-items-center rounded-full text-muted-foreground transition-colors hover:text-foreground"
+                          aria-label="Copy response"
+                        >
+                          {copiedIdx === i ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                        </button>
+                        {i === messages.length - 1 && (
+                          <button
+                            type="button"
+                            onClick={regenerate}
+                            disabled={send.isPending}
+                            className="tc-press grid h-8 w-8 place-items-center rounded-full text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40"
+                            aria-label="Regenerate response"
+                          >
+                            <RotateCcw className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  m.text
+                )}
               </div>
             </div>
           ))}
+          {send.isPending && <TypingDots />}
           {statusLabel && (
             <div className="flex items-center gap-2 px-1 text-xs text-muted-foreground">
               {voiceState === "listening" && <VoiceWave />}
-              {voiceState === "processing" && <Loader2 className="h-3 w-3 animate-spin" />}
-              <span>{statusLabel}</span>
+              {voiceState !== "processing" && <span>{statusLabel}</span>}
+              {voiceState === "speaking" && (
+                <button onClick={stopGenerating} className="ml-1 underline">Stop</button>
+              )}
               {continuous && (
                 <button onClick={exitContinuous} className="ml-2 underline">Exit conversation</button>
               )}
