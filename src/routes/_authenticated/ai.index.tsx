@@ -750,3 +750,34 @@ function VoiceWave() {
     </span>
   );
 }
+
+/** Three-dot "assistant is typing" indicator. */
+function TypingDots() {
+  return (
+    <div className="flex items-center gap-1.5 px-1 py-2 tc-fade-in" aria-label="TransCore AI is typing">
+      {[0, 1, 2].map((i) => (
+        <span
+          key={i}
+          className="h-2 w-2 rounded-full bg-muted-foreground/60 animate-[tcdot_1.1s_ease-in-out_infinite]"
+          style={{ animationDelay: `${i * 0.15}s` }}
+        />
+      ))}
+      <style>{`@keyframes tcdot{0%,100%{opacity:.25;transform:translateY(0)}50%{opacity:1;transform:translateY(-3px)}}`}</style>
+    </div>
+  );
+}
+
+function VoiceWaveLegacy() {
+  return (
+    <span className="inline-flex items-end gap-[2px] h-3">
+      {[0, 1, 2, 3, 4].map((i) => (
+        <span
+          key={i}
+          className="w-[2px] bg-primary rounded-sm animate-[wave_1s_ease-in-out_infinite]"
+          style={{ animationDelay: `${i * 0.12}s`, height: "100%" }}
+        />
+      ))}
+      <style>{`@keyframes wave{0%,100%{transform:scaleY(0.3)}50%{transform:scaleY(1)}}`}</style>
+    </span>
+  );
+}
