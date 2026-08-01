@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Send, Mic, MicOff, Volume2, VolumeX, Square, RotateCcw, Loader2, Settings2 } from "lucide-react";
+import { Send, Mic, MicOff, Volume2, VolumeX, Square, RotateCcw, Loader2, Settings2, Copy, Check, Plus } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -14,6 +14,15 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { askCompanyAi } from "@/lib/ai.functions";
 import { AiOrbEmptyState } from "@/components/ai/AiOrbMount";
+import { MessageMarkdown } from "@/components/ai/MessageMarkdown";
+
+const HISTORY_KEY = "tc.ai.history";
+const SUGGESTIONS = [
+  "Which truck has the highest fuel expense?",
+  "Show pending maintenance",
+  "Which driver completed the most trips?",
+  "Calculate this month's operating cost",
+];
 
 export const Route = createFileRoute("/_authenticated/ai/")({
   head: () => ({ meta: [{ title: "AI Assistant — TransCore AI" }, { name: "robots", content: "noindex" }] }),
@@ -141,6 +150,8 @@ function sanitizeForSpeech(text: string): string {
 function AiPage() {
   const askFn = useServerFn(askCompanyAi);
   const [messages, setMessages] = useState<Msg[]>([]);
+  const [hydrated, setHydrated] = useState(false);
+  const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
   const [input, setInput] = useState("");
   const [voiceState, setVoiceState] = useState<VoiceState>("idle");
   const [ttsEnabled, setTtsEnabled] = useState(true);
@@ -160,6 +171,25 @@ function AiPage() {
   const silenceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastSpeechAt = useRef<number>(0);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const revealTokenRef = useRef(0);
+  const lastQuestionRef = useRef<string>("");
+
+  // Conversation history — restored after mount so SSR markup stays stable.
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(HISTORY_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw) as Msg[];
+        if (Array.isArray(parsed)) setMessages(parsed.slice(-60));
+      }
+    } catch { /* noop */ }
+    setHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    try { window.localStorage.setItem(HISTORY_KEY, JSON.stringify(messages.slice(-60))); } catch { /* noop */ }
+  }, [messages, hydrated]);
 
   const SR = useMemo(() => getSpeechRecognition(), []);
   const ttsSupported = typeof window !== "undefined" && "speechSynthesis" in window;
@@ -214,6 +244,7 @@ function AiPage() {
   const submit = useCallback((raw: string) => {
     const p = cleanTranscript(raw);
     if (!p || send.isPending) return;
+    lastQuestionRef.current = p;
     // Build conversation memory (last 20 turns) for real follow-ups.
     const history = messages.slice(-20).filter((m) => m.role !== "error");
     const framed = history.length
@@ -231,12 +262,14 @@ function AiPage() {
   // returns the full response at once.
   function revealAssistant(full: string) {
     const text = full.trim();
+    const token = ++revealTokenRef.current;
     // Speak immediately in parallel (voice-first UX).
     if (ttsEnabled) speak(text); else if (continuous) startListening(); else setVoiceState("idle");
     setMessages((m) => [...m, { role: "assistant", text: "" }]);
     const words = text.split(/(\s+)/);
     let i = 0;
     const tick = () => {
+      if (token !== revealTokenRef.current) return;
       i += Math.max(1, Math.round(words.length / 40));
       if (i >= words.length) {
         setMessages((m) => {
@@ -255,6 +288,46 @@ function AiPage() {
       setTimeout(tick, 35);
     };
     tick();
+  }
+
+  // Stop generating: freeze the typewriter where it is and silence speech.
+  function stopGenerating() {
+    revealTokenRef.current += 1;
+    stopSpeaking();
+  }
+
+  function regenerate() {
+    const q = lastQuestionRef.current;
+    if (!q || send.isPending) return;
+    revealTokenRef.current += 1;
+    stopSpeaking();
+    // Drop the previous assistant/error reply, keep the question.
+    setMessages((m) => {
+      const copy = [...m];
+      while (copy.length && copy[copy.length - 1]!.role !== "user") copy.pop();
+      return copy;
+    });
+    setVoiceState("processing");
+    send.mutate(q);
+  }
+
+  function newChat() {
+    revealTokenRef.current += 1;
+    stopSpeaking();
+    stopListening();
+    setMessages([]);
+    setInput("");
+    lastQuestionRef.current = "";
+  }
+
+  async function copyMessage(text: string, idx: number) {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedIdx(idx);
+      setTimeout(() => setCopiedIdx((c) => (c === idx ? null : c)), 1500);
+    } catch {
+      toast.error("Copy failed");
+    }
   }
 
   function speak(text: string) {
@@ -448,6 +521,17 @@ function AiPage() {
   }
 
   const settingsAction = (
+    <div className="flex items-center gap-1">
+      <Button
+        size="icon"
+        variant="ghost"
+        aria-label="New chat"
+        title="New chat"
+        onClick={newChat}
+        disabled={messages.length === 0 && !input}
+      >
+        <Plus className="h-5 w-5" />
+      </Button>
     <Popover>
       <PopoverTrigger asChild>
         <Button size="icon" variant="ghost" aria-label="Voice settings">
@@ -504,6 +588,7 @@ function AiPage() {
         )}
       </PopoverContent>
     </Popover>
+    </div>
   );
 
   return (
@@ -519,8 +604,20 @@ function AiPage() {
             <div className="flex h-full flex-col">
               {/* Weighted spacers place the orb block around 42% of the height */}
               <div className="flex-[42_1_0%]" aria-hidden="true" />
-              <div className="flex shrink-0 items-center justify-center">
+              <div className="flex shrink-0 flex-col items-center justify-center gap-4">
                 <AiOrbEmptyState visible={input.trim().length === 0} />
+                <div className="flex w-full max-w-sm flex-wrap justify-center gap-2 px-2">
+                  {SUGGESTIONS.map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => submit(s)}
+                      className="tc-press rounded-full bg-card px-3 py-2 text-[12.5px] leading-tight text-muted-foreground shadow-[var(--shadow-neo-sm)] transition-colors hover:text-foreground"
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
               </div>
               <div className="flex-[58_1_0%]" aria-hidden="true" />
             </div>
@@ -534,15 +631,47 @@ function AiPage() {
                     ? "rounded-[20px] bg-destructive/12 px-4 py-2.5 text-destructive"
                     : "px-1 py-1 text-foreground"
               }`}>
-                {m.text}
+                {m.role === "assistant" ? (
+                  <>
+                    <MessageMarkdown text={m.text} />
+                    {m.text.length > 0 && (
+                      <div className="mt-1 flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => copyMessage(m.text, i)}
+                          className="tc-press grid h-8 w-8 place-items-center rounded-full text-muted-foreground transition-colors hover:text-foreground"
+                          aria-label="Copy response"
+                        >
+                          {copiedIdx === i ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                        </button>
+                        {i === messages.length - 1 && (
+                          <button
+                            type="button"
+                            onClick={regenerate}
+                            disabled={send.isPending}
+                            className="tc-press grid h-8 w-8 place-items-center rounded-full text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40"
+                            aria-label="Regenerate response"
+                          >
+                            <RotateCcw className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  m.text
+                )}
               </div>
             </div>
           ))}
+          {send.isPending && <TypingDots />}
           {statusLabel && (
             <div className="flex items-center gap-2 px-1 text-xs text-muted-foreground">
               {voiceState === "listening" && <VoiceWave />}
-              {voiceState === "processing" && <Loader2 className="h-3 w-3 animate-spin" />}
-              <span>{statusLabel}</span>
+              {voiceState !== "processing" && <span>{statusLabel}</span>}
+              {voiceState === "speaking" && (
+                <button onClick={stopGenerating} className="ml-1 underline">Stop</button>
+              )}
               {continuous && (
                 <button onClick={exitContinuous} className="ml-2 underline">Exit conversation</button>
               )}
@@ -619,5 +748,21 @@ function VoiceWave() {
       ))}
       <style>{`@keyframes wave{0%,100%{transform:scaleY(0.3)}50%{transform:scaleY(1)}}`}</style>
     </span>
+  );
+}
+
+/** Three-dot "assistant is typing" indicator. */
+function TypingDots() {
+  return (
+    <div className="flex items-center gap-1.5 px-1 py-2 tc-fade-in" aria-label="TransCore AI is typing">
+      {[0, 1, 2].map((i) => (
+        <span
+          key={i}
+          className="h-2 w-2 rounded-full bg-muted-foreground/60 animate-[tcdot_1.1s_ease-in-out_infinite]"
+          style={{ animationDelay: `${i * 0.15}s` }}
+        />
+      ))}
+      <style>{`@keyframes tcdot{0%,100%{opacity:.25;transform:translateY(0)}50%{opacity:1;transform:translateY(-3px)}}`}</style>
+    </div>
   );
 }
