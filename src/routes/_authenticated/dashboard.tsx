@@ -40,6 +40,24 @@ const FUEL_COLORS: Record<string, { from: string; to: string; solid: string; lab
 };
 
 function greetingFor(hour: number) {
+  return hour >= 5 && hour < 12
+    ? "Good Morning"
+    : hour >= 12 && hour < 17
+      ? "Good Afternoon"
+      : hour >= 17 && hour < 21
+        ? "Good Evening"
+        : "Good Night";
+}
+
+const DASHBOARD_KEYS = [
+  "dashboard-stats",
+  "dashboard-daily-ops",
+  "dashboard-home-extras",
+  "alerts",
+  "fleet-insights",
+];
+
+function unusedGreeting(hour: number) {
   if (hour >= 5 && hour < 12) return "Good Morning";
   if (hour >= 12 && hour < 17) return "Good Afternoon";
   if (hour >= 17 && hour < 21) return "Good Evening";
