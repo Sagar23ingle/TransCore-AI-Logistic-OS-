@@ -50,13 +50,13 @@ export const getHomeExtras = createServerFn({ method: "GET" })
         .gte("incurred_on", startISO),
       supabase
         .from("fuel_logs")
-        .select("total_amount, filled_on")
+        .select("vehicle_id, total_amount, filled_on")
         .eq("owner_id", userId)
         .gte("filled_on", prevStartISO)
         .lt("filled_on", prevEndISO),
       supabase
         .from("expenses")
-        .select("amount, incurred_on")
+        .select("vehicle_id, amount, incurred_on")
         .eq("owner_id", userId)
         .eq("category", "fuel")
         .gte("incurred_on", prevStartISO)
@@ -124,8 +124,21 @@ export const getHomeExtras = createServerFn({ method: "GET" })
     // Previous-month fuel spend acts as a real, self-calibrating budget for
     // the live gauge. No hard-coded targets.
     let prevMonthTotal = 0;
-    for (const f of prevFuelR.data ?? []) prevMonthTotal += Number(f.total_amount ?? 0);
-    for (const e of prevExpR.data ?? []) prevMonthTotal += Number(e.amount ?? 0);
+    const prevByType: Record<string, number> = { diesel: 0, petrol: 0, cng: 0, electric: 0, other: 0 };
+    const bucket = (vehicleId: string | null) => {
+      const t = fuelTypeByVehicle.get((vehicleId ?? "") as string) ?? "other";
+      return ["diesel", "petrol", "cng", "electric"].includes(t) ? t : "other";
+    };
+    for (const f of prevFuelR.data ?? []) {
+      const amt = Number(f.total_amount ?? 0);
+      prevByType[bucket(f.vehicle_id as string | null)] += amt;
+      prevMonthTotal += amt;
+    }
+    for (const e of prevExpR.data ?? []) {
+      const amt = Number(e.amount ?? 0);
+      prevByType[bucket(e.vehicle_id as string | null)] += amt;
+      prevMonthTotal += amt;
+    }
 
     return {
       recentTrips,
@@ -133,6 +146,9 @@ export const getHomeExtras = createServerFn({ method: "GET" })
         totalCost: Math.round(totalFuelCost),
         prevMonthTotal: Math.round(prevMonthTotal),
         byType: Object.entries(fuelByType)
+          .filter(([, v]) => v > 0)
+          .map(([type, amount]) => ({ type, amount: Math.round(amount) })),
+        prevByType: Object.entries(prevByType)
           .filter(([, v]) => v > 0)
           .map(([type, amount]) => ({ type, amount: Math.round(amount) })),
         kmpl,
