@@ -516,3 +516,9 @@
   .tc-lift,
   .tc-icon-hover { animation: none !important; transition: none !important; transform: none !important; }
 }
+
+/* Splash progress sweep used by AuthSplash while restoring a persisted session. */
+@keyframes tc-slide {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(300%); }
+}
