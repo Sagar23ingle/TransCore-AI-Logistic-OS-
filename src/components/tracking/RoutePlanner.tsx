@@ -145,6 +145,9 @@ export function RoutePlanner() {
                     <span className="text-sm font-semibold">
                       {r.kind === "fastest" ? "Fastest route" : "Fuel-saving route"}
                     </span>
+                    {r.kind === "fastest" && r.also_fuel_efficient && (
+                      <Badge variant="outline" className="ml-auto text-[9px]">Also most fuel-efficient</Badge>
+                    )}
                   </div>
                   <div className="mt-1.5 grid grid-cols-2 gap-1.5 text-[11px] text-muted-foreground">
                     <span className="flex items-center gap-1"><RouteIcon className="h-3 w-3" />{r.distance_km} km</span>
