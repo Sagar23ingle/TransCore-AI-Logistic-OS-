@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { lazy, Suspense, useEffect, useState } from "react";
 import { useProfile } from "@/hooks/use-profile";
 import { useAuth } from "@/hooks/use-auth";
+import { useRealtimeRefresh } from "@/hooks/use-realtime-refresh";
 import { motion } from "motion/react";
 import {
   Truck, Users, Map as MapIcon, IndianRupee, Fuel, AlertTriangle, Bell,
@@ -40,11 +41,22 @@ const FUEL_COLORS: Record<string, { from: string; to: string; solid: string; lab
 };
 
 function greetingFor(hour: number) {
-  if (hour >= 5 && hour < 12) return "Good Morning";
-  if (hour >= 12 && hour < 17) return "Good Afternoon";
-  if (hour >= 17 && hour < 21) return "Good Evening";
-  return "Good Night";
+  return hour >= 5 && hour < 12
+    ? "Good Morning"
+    : hour >= 12 && hour < 17
+      ? "Good Afternoon"
+      : hour >= 17 && hour < 21
+        ? "Good Evening"
+        : "Good Night";
 }
+
+const DASHBOARD_KEYS = [
+  "dashboard-stats",
+  "dashboard-daily-ops",
+  "dashboard-home-extras",
+  "alerts",
+  "fleet-insights",
+];
 
 function Dashboard() {
   const statsFn = useServerFn(getDashboardStats);
@@ -57,6 +69,9 @@ function Dashboard() {
   const stats = useQuery(queryOptions({ queryKey: ["dashboard-stats"], queryFn: () => statsFn(), staleTime: 60_000 }));
   const daily = useQuery(queryOptions({ queryKey: ["dashboard-daily-ops"], queryFn: () => dailyFn(), staleTime: 60_000 }));
   const extras = useQuery(queryOptions({ queryKey: ["dashboard-home-extras"], queryFn: () => homeFn(), staleTime: 60_000 }));
+
+  // Live dashboard: any change to fleet data instantly recomputes every card.
+  useRealtimeRefresh(DASHBOARD_KEYS);
 
   useEffect(() => {
     // Throttle server-side alert recomputation: at most once per 5 minutes
